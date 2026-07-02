@@ -16,17 +16,17 @@ This project develops a next-generation intrusion detection interface that combi
 
 ```txt
 .
-├── docs/
-│   ├── features.md
-│   ├── progress-log.md
-│   ├── proposal.md
-│   ├── questions.md
-│   └── tech-stack.md
-├── prototype-demo/
-│   ├── app.js
-│   ├── index.html
-│   └── styles.css
-└── README.md
+|-- docs/
+|   |-- features.md
+|   |-- progress-log.md
+|   |-- proposal.md
+|   |-- questions.md
+|   `-- tech-stack.md
+|-- prototype-demo/
+|   |-- app.js
+|   |-- index.html
+|   `-- styles.css
+`-- README.md
 ```
 
 ## Prototype Demo
@@ -46,6 +46,21 @@ http://127.0.0.1:4173/prototype-demo/index.html
 ```
 
 Future formal development can be added separately without mixing it with the demo, for example in an `app/`, `frontend/`, or `src/` folder.
+
+## Stage 1 Dataset Plan
+
+Stage 1 will use CSE-CIC-IDS2018 as the formal dataset source. It is newer than CICIDS2017, suitable for intrusion detection, and can be sampled into dashboard-style IDS alerts.
+
+The Stage 1 data handling plan is:
+
+```txt
+CSE-CIC-IDS2018 raw CSV files
+-> sample selected rows
+-> convert sampled flow records into dashboard alert JSON
+-> use the converted alerts in the IDS dashboard prototype
+```
+
+Dataset files and processing scripts will be placed under the `stage-1/` folder. The current mock alert data remains in use for dashboard UX testing, feedback button testing, adaptive scoring testing, and Investigations / Feedback Model / Reports view testing before full dataset integration.
 
 ## Prototype Highlights
 

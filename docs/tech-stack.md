@@ -35,12 +35,37 @@ Recommended choice: Recharts or Chart.js for faster development.
 
 ## Dataset Options
 
+- CSE-CIC-IDS2018
 - CICIDS2017
 - UNSW-NB15
 - NSL-KDD
 - Simulated IDS alert logs
 
-Recommended prototype approach: start with simulated IDS alert logs or a cleaned public dataset sample, then expand if needed.
+Formal dataset decision: use CSE-CIC-IDS2018. It is newer than CICIDS2017, suitable for intrusion detection, and can be sampled and converted into dashboard-style IDS alerts.
+
+Stage 1 will not build the full dataset pipeline yet. The planned data handling flow is:
+
+```txt
+CSE-CIC-IDS2018 raw CSV files
+-> sample selected rows
+-> convert sampled flow records into dashboard alert JSON
+-> use the converted alerts in the IDS dashboard prototype
+```
+
+Stage 1 dataset-related files will be placed under:
+
+```txt
+stage-1/
+|-- data/
+|   |-- raw/
+|   |   `-- cse-cic-ids2018/
+|   `-- processed/
+|       `-- sample-alerts.json
+`-- scripts/
+    `-- sample_cse_cic_ids2018.py
+```
+
+The current mock alert data remains in use for dashboard UX testing, feedback button testing, adaptive scoring testing, and Investigations / Feedback Model / Reports view testing before full dataset integration.
 
 ## Adaptive Logic Options
 
@@ -58,4 +83,3 @@ Frontend dashboard sends user feedback to the backend API. The backend stores al
 
 - 中文备注：先做 rule-based，不要一开始就把 ML 做得太复杂。
 - 重点是 dashboard + feedback loop + clear evaluation。
-

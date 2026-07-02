@@ -19,6 +19,7 @@
 - Selected CSE-CIC-IDS2018 as the formal dataset for Stage 1.
 - Added Stage 1 folder structure for raw data, processed alert JSON, and sampling script preparation.
 - Kept current prototype mock data unchanged.
+- Added Stage 1 alert schema documentation to define the processed dashboard alert format for future CSE-CIC-IDS2018 integration.
 
 ## Week 3
 

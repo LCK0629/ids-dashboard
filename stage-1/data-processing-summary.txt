@@ -8,6 +8,7 @@ The project has prepared the Stage 1 data processing workflow, but the full real
 
 Data Processing Purpose:
 The goal is to convert CSE-CIC-IDS2018 network flow records into dashboard-style IDS alert objects.
+Stage 1 now separates observable detection features, ground truth labels, and the dashboard-ready alert sample.
 
 Planned / Prepared Processing Steps:
 
@@ -70,17 +71,35 @@ Infiltration -> 92
 Each sampled flow record is converted into a dashboard alert object following stage-1/alert-schema.md.
 The converted alert object keeps selected flow-level numeric features under flowFeatures so Stage 2 and Stage 3 can use detection inputs that come from network flow behavior rather than the dataset label.
 
-11. Schema Validation
+11. Feature / Label Separation
+The same sampled rows are exported into three aligned files:
+
+Observable detection features:
+stage-1/data/processed/flow-feature-sample.csv
+
+Ground truth labels for evaluation only:
+stage-1/data/processed/ground-truth.json
+
+Dashboard-ready labelled sample:
+stage-1/data/processed/sample-alerts.json
+
+Detection engines must use flow-feature-sample.csv and must not use attackType or groundTruth from sample-alerts.json as detection input.
+
+12. Schema Validation
 Converted alerts are validated to check required fields, unique IDs, valid severity, valid groundTruth, numeric port, valid risk scores, non-empty similarityKey, and flowFeatures.
 
-12. JSON Export
-The processed alerts will be exported as sample-alerts.json.
-In Colab, the temporary output is /content/sample-alerts.json.
-After review, the output can be copied into stage-1/data/processed/sample-alerts.json.
+13. File Export
+In Colab, the temporary outputs are:
+/content/flow-feature-sample.csv
+/content/ground-truth.json
+/content/sample-alerts.json
+
+After review, the outputs can be copied into stage-1/data/processed/.
 
 Important Notes:
 - Large raw CSV files should not be committed to GitHub.
 - The current dashboard mock data remains unchanged.
 - The processed JSON is not connected to the dashboard yet.
+- sample-alerts.json is retained as a dashboard-ready labelled sample / UI sample / evaluation reference, not detector input.
 - No backend or database has been added.
 - No machine learning model has been trained yet.

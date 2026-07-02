@@ -3,12 +3,14 @@ const path = require('path');
 
 const {
   loadJsonFile,
+  loadCsvFile,
   applySignatures,
   summariseSignatureResults,
 } = require('../core/signature-engine');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const alertsPath = path.join(repoRoot, 'stage-1', 'data', 'processed', 'sample-alerts.json');
+const featureInputPath = path.join(repoRoot, 'stage-1', 'data', 'processed', 'flow-feature-sample.csv');
+const groundTruthPath = path.join(repoRoot, 'stage-1', 'data', 'processed', 'ground-truth.json');
 const rulesPath = path.join(repoRoot, 'stage-2', 'rules', 'flow-signatures.json');
 const outputPath = path.join(repoRoot, 'stage-2', 'data', 'signature-output.sample.json');
 
@@ -26,12 +28,23 @@ function printObject(title, value) {
 }
 
 function main() {
-  const alerts = loadJsonFile(alertsPath);
+  const flowFeatures = loadCsvFile(featureInputPath);
   const signatureRules = loadJsonFile(rulesPath);
-  const signedAlerts = applySignatures(alerts, signatureRules);
-  const summary = summariseSignatureResults(signedAlerts);
+  const signedFlows = applySignatures(flowFeatures, signatureRules);
+  const groundTruth = loadJsonFile(groundTruthPath);
+
+  const signedAlerts = signedFlows.map((flow) => {
+    const truth = groundTruth[flow.id] || {};
+    return {
+      ...flow,
+      rawLabel: truth.rawLabel || null,
+      trueAttackType: truth.mappedAttackType || null,
+      groundTruth: truth.groundTruth || null,
+    };
+  });
 
   fs.writeFileSync(outputPath, `${JSON.stringify(signedAlerts, null, 2)}\n`, 'utf8');
+  const summary = summariseSignatureResults(signedAlerts);
 
   console.log(`Total alerts: ${summary.totalAlerts}`);
   console.log(`Signature hits: ${summary.signatureHits}`);

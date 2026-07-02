@@ -48,8 +48,9 @@ Stage 1 will not build the full dataset pipeline yet. The planned data handling 
 ```txt
 CSE-CIC-IDS2018 raw CSV files
 -> sample selected rows
--> convert sampled flow records into dashboard alert JSON
--> use the converted alerts in the IDS dashboard prototype
+-> export observable flow features for detection
+-> export ground truth labels for evaluation
+-> export dashboard-ready labelled alerts for UI/reference use
 ```
 
 Stage 1 dataset-related files will be placed under:
@@ -60,12 +61,19 @@ stage-1/
 |   |-- raw/
 |   |   `-- cse-cic-ids2018/
 |   `-- processed/
+|       |-- flow-feature-sample.csv
+|       |-- ground-truth.json
 |       `-- sample-alerts.json
+|-- schema/
+|   |-- flow-feature-schema.md
+|   `-- ground-truth-schema.md
 `-- scripts/
     `-- sample_cse_cic_ids2018.py
 ```
 
 The current mock alert data remains in use for dashboard UX testing, feedback button testing, adaptive scoring testing, and Investigations / Feedback Model / Reports view testing before full dataset integration.
+
+Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and must not use `attackType` or `groundTruth` from `sample-alerts.json` as detection input. `sample-alerts.json` is retained as a dashboard-ready labelled sample, UI sample, and evaluation reference.
 
 ## Formal Technical Direction
 

@@ -6,14 +6,14 @@
     "severity": "Medium",
     "condition": {
       "protocol": "TCP",
-      "port": 21,
-      "flowFeatures.flowPacketsPerSecond": {
+      "destinationPort": 21,
+      "flowPacketsPerSecond": {
         "min": 10
       },
-      "flowFeatures.totalFwdPackets": {
+      "totalFwdPackets": {
         "min": 10
       },
-      "flowFeatures.flowDuration": {
+      "flowDuration": {
         "max": 5000000
       }
     }
@@ -25,14 +25,14 @@
     "severity": "Medium",
     "condition": {
       "protocol": "TCP",
-      "port": 22,
-      "flowFeatures.flowPacketsPerSecond": {
+      "destinationPort": 22,
+      "flowPacketsPerSecond": {
         "min": 10
       },
-      "flowFeatures.totalFwdPackets": {
+      "totalFwdPackets": {
         "min": 10
       },
-      "flowFeatures.flowDuration": {
+      "flowDuration": {
         "max": 5000000
       }
     }
@@ -44,14 +44,14 @@
     "severity": "High",
     "condition": {
       "protocol": "TCP",
-      "flowFeatures.flowPacketsPerSecond": {
+      "flowPacketsPerSecond": {
         "min": 650,
         "max": 899
       },
-      "flowFeatures.totalFwdPackets": {
+      "totalFwdPackets": {
         "min": 80
       },
-      "flowFeatures.totalBackwardPackets": {
+      "totalBwdPackets": {
         "max": 10
       }
     }
@@ -63,13 +63,13 @@
     "severity": "High",
     "condition": {
       "protocol": "TCP",
-      "flowFeatures.flowPacketsPerSecond": {
+      "flowPacketsPerSecond": {
         "min": 900
       },
-      "flowFeatures.totalFwdPackets": {
+      "totalFwdPackets": {
         "min": 120
       },
-      "flowFeatures.totalBackwardPackets": {
+      "totalBwdPackets": {
         "max": 8
       }
     }
@@ -80,17 +80,17 @@
     "attackType": "Botnet",
     "severity": "High",
     "condition": {
-      "flowFeatures.flowDuration": {
+      "flowDuration": {
         "min": 10000000
       },
-      "flowFeatures.flowPacketsPerSecond": {
+      "flowPacketsPerSecond": {
         "min": 20,
         "max": 120
       },
-      "flowFeatures.totalFwdPackets": {
+      "totalFwdPackets": {
         "min": 20
       },
-      "flowFeatures.totalBackwardPackets": {
+      "totalBwdPackets": {
         "max": 15
       }
     }
@@ -102,16 +102,16 @@
     "severity": "High",
     "condition": {
       "protocol": "TCP",
-      "port": {
+      "destinationPort": {
         "oneOf": [80, 443]
       },
-      "flowFeatures.packetLengthMean": {
+      "packetLengthMean": {
         "min": 300
       },
-      "flowFeatures.fwdPacketLengthMean": {
+      "fwdPacketLengthMean": {
         "min": 250
       },
-      "flowFeatures.flowDuration": {
+      "flowDuration": {
         "max": 5000000
       }
     }
@@ -122,13 +122,13 @@
     "attackType": "Infiltration",
     "severity": "Critical",
     "condition": {
-      "flowFeatures.flowDuration": {
+      "flowDuration": {
         "min": 20000000
       },
-      "flowFeatures.totalBackwardPackets": {
+      "totalBwdPackets": {
         "min": 20
       },
-      "flowFeatures.flowBytesPerSecond": {
+      "flowBytesPerSecond": {
         "min": 10000
       }
     }

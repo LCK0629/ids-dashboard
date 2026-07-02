@@ -4,7 +4,7 @@
 
 Stage 2 adds a standalone flow-based signature detection engine for the Hybrid Human-in-the-Loop IDS Dashboard.
 
-It reads the processed Stage 1 alert sample, applies lightweight signature rules, and writes signed alert objects that can later be used by the fusion engine.
+It reads the Stage 1 feature-only CSV, applies lightweight signature rules, and writes signed flow objects that can later be used by the fusion engine.
 
 ## What Signature-Based Detection Means
 
@@ -14,15 +14,20 @@ Example:
 
 ```txt
 protocol = TCP
-port = 22
-flowFeatures.flowPacketsPerSecond >= 10
-flowFeatures.totalFwdPackets >= 10
-flowFeatures.flowDuration <= 5000000
+destinationPort = 22
+flowPacketsPerSecond >= 10
+totalFwdPackets >= 10
+flowDuration <= 5000000
 ```
 
 This represents an SSH brute-force flow pattern.
 
-`attackType` and `groundTruth` are not used as signature detection inputs. They are kept for evaluation summaries only, because a real flow does not directly tell the detection engine its attack category.
+`attackType` and `groundTruth` are not used as signature detection inputs. A real flow does not directly tell the detection engine its attack category.
+
+The demo script reads:
+
+- `stage-1/data/processed/flow-feature-sample.csv` for prediction input.
+- `stage-1/data/processed/ground-truth.json` only after prediction, for evaluation summaries.
 
 ## Why Flow-Based Signatures Are Used
 
@@ -40,11 +45,12 @@ node stage-2/scripts/run-signature-demo.js
 
 The script will:
 
-1. Load `stage-1/data/processed/sample-alerts.json`.
+1. Load `stage-1/data/processed/flow-feature-sample.csv`.
 2. Load `stage-2/rules/flow-signatures.json`.
 3. Apply the flow-based signature rules.
-4. Write signed alerts to `stage-2/data/signature-output.sample.json`.
-5. Print a summary of signature hits.
+4. Load `stage-1/data/processed/ground-truth.json` for evaluation only.
+5. Write signed alerts to `stage-2/data/signature-output.sample.json`.
+6. Print a summary of signature hits.
 
 ## Output
 
@@ -57,7 +63,7 @@ Each signed alert preserves the original Stage 1 alert fields and adds:
   "signatureName": "SSH Brute Force Flow Pattern",
   "signatureAttackType": "Brute Force",
   "signatureSeverity": "Medium",
-  "signatureEvidence": "Matched SSH Brute Force Flow Pattern using protocol=TCP, port=22, flowFeatures.flowPacketsPerSecond {\"min\":10}, flowFeatures.totalFwdPackets {\"min\":10}, flowFeatures.flowDuration {\"max\":5000000}."
+  "signatureEvidence": "Matched SSH Brute Force Flow Pattern using protocol=TCP, destinationPort=22, flowPacketsPerSecond {\"min\":10}, totalFwdPackets {\"min\":10}, flowDuration {\"max\":5000000}."
 }
 ```
 

@@ -8,6 +8,8 @@ The processed output file is:
 stage-1/data/processed/sample-alerts.json
 ```
 
+`sample-alerts.json` is a dashboard-ready labelled sample / UI sample / evaluation reference. It contains derived answer fields such as `attackType` and `groundTruth`, so detection engines must not use it as prediction input.
+
 ## Schema
 
 | Field | Type | Required | Description |

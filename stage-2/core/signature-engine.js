@@ -5,6 +5,48 @@ function loadJsonFile(filePath) {
   return JSON.parse(raw);
 }
 
+function parseCsvLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const nextChar = line[index + 1];
+
+    if (char === '"' && nextChar === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current);
+  return values;
+}
+
+function loadCsvFile(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf8').trim();
+  const [headerLine, ...lines] = raw.split(/\r?\n/);
+  const headers = parseCsvLine(headerLine);
+
+  return lines.map((line) => {
+    const values = parseCsvLine(line);
+    return headers.reduce((record, header, index) => {
+      const value = values[index] || '';
+      const numericValue = Number(value);
+      record[header] = value !== '' && !Number.isNaN(numericValue) ? numericValue : value;
+      return record;
+    }, {});
+  });
+}
+
 function normalizeValue(value) {
   if (typeof value === 'string') {
     return value.trim().toLowerCase();
@@ -46,6 +88,10 @@ function compareValue(actualValue, expectedValue) {
 
   if (typeof expectedValue === 'string') {
     return normalizeValue(actualValue) === normalizeValue(expectedValue);
+  }
+
+  if (typeof expectedValue === 'number') {
+    return Number(actualValue) === expectedValue;
   }
 
   return actualValue === expectedValue;
@@ -118,7 +164,7 @@ function summariseSignatureResults(signedAlerts) {
   for (const alert of signedAlerts) {
     if (alert.signatureHit) {
       hitsBySignature[alert.signatureId] = (hitsBySignature[alert.signatureId] || 0) + 1;
-      const evaluationAttackType = alert.attackType || 'Unknown';
+      const evaluationAttackType = alert.trueAttackType || alert.attackType || 'Unknown';
       hitsByAttackType[evaluationAttackType] = (hitsByAttackType[evaluationAttackType] || 0) + 1;
     }
 
@@ -140,6 +186,7 @@ function summariseSignatureResults(signedAlerts) {
 
 module.exports = {
   loadJsonFile,
+  loadCsvFile,
   matchCondition,
   matchSignature,
   applySignatures,

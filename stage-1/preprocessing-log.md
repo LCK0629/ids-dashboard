@@ -173,6 +173,16 @@ Repository sample repair:
 - Clarified that `attackType` and `groundTruth` are label-derived evaluation fields, not Stage 2 detection inputs.
 - Stage 2 signature rules now use `protocol`, `port`, and `flowFeatures` instead of checking `attackType`.
 
+## Follow-up - Detection Features Separated From Labels
+
+- Created `stage-1/data/processed/flow-feature-sample.csv` as the feature-only detection input.
+- Created `stage-1/data/processed/ground-truth.json` as the evaluation-only answer file.
+- Retained `stage-1/data/processed/sample-alerts.json` as a dashboard-ready labelled sample, UI sample, and evaluation reference.
+- Updated the preprocessing notebook to export all three files from the same sampled rows so IDs align.
+- Confirmed answer fields are separated from detection input:
+  - `flow-feature-sample.csv` does not contain `Label`, `rawLabel`, `attackType`, `mappedAttackType`, `groundTruth`, `severity`, or `similarityKey`.
+  - `ground-truth.json` should not be read by detection engines during prediction.
+
 ## Archive Inspection Notes
 
 Local file inspected:

@@ -49,7 +49,36 @@ For each preprocessing run, record:
 
 ## Current Status
 
-Notebook template prepared. Real dataset preprocessing has not been run yet.
+Stage 1 sample alert JSON has been generated, validated, and copied into `stage-1/data/processed/sample-alerts.json`. The processed JSON has not been connected to the dashboard yet.
+
+## Run Record - Sample Alerts Generated
+
+- Dataset file used: CSE-CIC-IDS2018 source accessed through the Stage 1 preprocessing notebook / KaggleHub workflow.
+- Generated file reviewed: `C:\Users\cheek\Downloads\sample-alerts.json`
+- Repository output path: `stage-1/data/processed/sample-alerts.json`
+- Number of processed alert objects: 766
+- Benign sample size: 266
+- Attack sample size: 500
+- Ground truth distribution after sampling:
+  - `benign`: 266
+  - `malicious`: 500
+- Severity distribution after conversion:
+  - `Low`: 266
+  - `Medium`: 500
+- Attack type distribution after conversion:
+  - `Benign`: 266
+  - `Unknown Attack`: 500
+- Schema validation result: passed
+- Validation checks completed:
+  - required fields exist
+  - alert IDs are unique
+  - severity values are valid
+  - `groundTruth` values are valid
+  - status is `Unreviewed`
+  - confidence and risk scores are within 0-100
+  - port is numeric
+  - `similarityKey` is not empty
+- Limitation noted: malicious records currently map to `Unknown Attack`, so future preprocessing should inspect raw `Label` values and improve label-to-attack-type mapping if needed.
 
 ## Archive Inspection Notes
 

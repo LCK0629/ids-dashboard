@@ -23,6 +23,7 @@
 - Added a Colab/Jupyter preprocessing notebook template for CSE-CIC-IDS2018 Stage 1 data exploration.
 - Added a preprocessing log to record dataset files, sampling ratio, cleaning decisions, and output JSON details.
 - Kept final reusable preprocessing logic planned under `stage-1/scripts/sample_cse_cic_ids2018.py`.
+- Inspected the local CSE-CIC-IDS2018 `archive.zip` and updated the notebook to handle its mixed CSV schema, including files without `Src IP` and `Dst IP` columns.
 
 ## Week 3
 

@@ -6,15 +6,32 @@
 - Proposed Title: Human-in-the-Loop Intrusion Detection Dashboard
 - Student:
 - Supervisor:
-- Current Status: High-fidelity hardcoded dashboard prototype created
+- Current Status: High-fidelity demo separated from future formal development
 
 ## Project Description
 
 This project develops a next-generation intrusion detection interface that combines automated security alerts with human feedback. The dashboard allows administrators to review, label, and respond to alerts, then uses their feedback to improve alert prioritization and reduce false positives.
 
-## Prototype
+## Repository Structure
 
-This repository currently contains a frontend-only prototype. The alert data is hardcoded, but the dashboard is dynamic and simulates the final system behavior.
+```txt
+.
+├── docs/
+│   ├── features.md
+│   ├── progress-log.md
+│   ├── proposal.md
+│   ├── questions.md
+│   └── tech-stack.md
+├── prototype-demo/
+│   ├── app.js
+│   ├── index.html
+│   └── styles.css
+└── README.md
+```
+
+## Prototype Demo
+
+The `prototype-demo` folder contains a frontend-only high-fidelity demo. The alert data is hardcoded, but the dashboard is dynamic and simulates the final system behavior.
 
 To run the prototype locally:
 
@@ -25,8 +42,10 @@ python -m http.server 4173 --bind 127.0.0.1
 Then open:
 
 ```txt
-http://127.0.0.1:4173/index.html
+http://127.0.0.1:4173/prototype-demo/index.html
 ```
+
+Future formal development can be added separately without mixing it with the demo, for example in an `app/`, `frontend/`, or `src/` folder.
 
 ## Prototype Highlights
 
@@ -48,8 +67,8 @@ http://127.0.0.1:4173/index.html
 
 ## Documentation
 
-- [Proposal](proposal.md)
-- [Features](features.md)
-- [Tech Stack](tech-stack.md)
-- [Progress Log](progress-log.md)
-- [Questions](questions.md)
+- [Proposal](docs/proposal.md)
+- [Features](docs/features.md)
+- [Tech Stack](docs/tech-stack.md)
+- [Progress Log](docs/progress-log.md)
+- [Questions](docs/questions.md)

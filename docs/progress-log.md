@@ -6,9 +6,10 @@
 - Identified the main idea: combine intrusion detection alerts with human feedback.
 - Created initial documentation structure.
 - Listed possible dashboard features and technology choices.
-- Created a high-fidelity hardcoded frontend prototype using `index.html`, `styles.css`, and `app.js`.
+- Created a high-fidelity hardcoded frontend prototype using `prototype-demo/index.html`, `prototype-demo/styles.css`, and `prototype-demo/app.js`.
 - Added dynamic SOC-style dashboard UI with alert queue, explanation panel, feedback controls, adaptive scoring, KPI cards, and charts.
 - Verified that feedback changes risk scores and updates dashboard metrics.
+- Separated documentation into `docs/` and the current demo into `prototype-demo/` so future formal development can be added cleanly.
 
 ## Week 2
 

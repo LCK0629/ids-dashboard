@@ -20,6 +20,9 @@
 - Added Stage 1 folder structure for raw data, processed alert JSON, and sampling script preparation.
 - Kept current prototype mock data unchanged.
 - Added Stage 1 alert schema documentation to define the processed dashboard alert format for future CSE-CIC-IDS2018 integration.
+- Added a Colab/Jupyter preprocessing notebook template for CSE-CIC-IDS2018 Stage 1 data exploration.
+- Added a preprocessing log to record dataset files, sampling ratio, cleaning decisions, and output JSON details.
+- Kept final reusable preprocessing logic planned under `stage-1/scripts/sample_cse_cic_ids2018.py`.
 
 ## Week 3
 

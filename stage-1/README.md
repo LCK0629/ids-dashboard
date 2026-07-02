@@ -28,6 +28,16 @@ The real dataset is not included in this repository. Large raw CSV files should 
 
 The processed dashboard alert JSON format is documented in `stage-1/alert-schema.md`.
 
+## Colab Preprocessing Notebook
+
+Stage 1 preprocessing may be prototyped in Google Colab using:
+
+`stage-1/notebooks/cse_cic_ids2018_preprocessing.ipynb`
+
+The notebook is for exploration and preprocessing records. The final reusable logic should remain in:
+
+`stage-1/scripts/sample_cse_cic_ids2018.py`
+
 ## Current Prototype Status
 
 The current `prototype-demo/` mock alert data remains unchanged. Stage 1 prepares the future dataset structure only and does not connect the processed JSON to the dashboard yet.

@@ -28,6 +28,10 @@ body {
   color: var(--text);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 button,
 select {
   font: inherit;
@@ -88,9 +92,11 @@ select {
   background: transparent;
   color: #c9d8e8;
   text-align: left;
-  padding: 11px 12px;
+  padding: 12px;
   border-radius: 6px;
   cursor: pointer;
+  display: grid;
+  gap: 4px;
 }
 
 .nav-item.active,
@@ -98,6 +104,24 @@ select {
   border-color: rgba(87, 169, 255, 0.24);
   background: rgba(87, 169, 255, 0.1);
   color: var(--text);
+}
+
+.nav-item.active {
+  border-left: 3px solid var(--cyan);
+}
+
+.nav-item strong,
+.nav-item span {
+  display: block;
+}
+
+.nav-item strong {
+  font-size: 0.9rem;
+}
+
+.nav-item span {
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 
 .model-card,
@@ -200,7 +224,53 @@ h2 {
   display: grid;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 12px;
-  margin: 20px 0;
+  margin: 14px 0 16px;
+}
+
+.view-header {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(63, 215, 228, 0.11), rgba(87, 169, 255, 0.04)),
+    var(--panel);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
+.view-title {
+  min-width: 0;
+}
+
+.view-title h2 {
+  font-size: 1.25rem;
+  margin-bottom: 5px;
+}
+
+.view-title p {
+  margin-bottom: 0;
+  color: #cbd8e6;
+  line-height: 1.4;
+}
+
+.view-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.view-chip {
+  border: 1px solid rgba(143, 174, 203, 0.2);
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #d8e5f2;
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .kpi-card {
@@ -235,7 +305,7 @@ h2 {
 }
 
 .alternate-view {
-  margin-top: 20px;
+  margin-top: 16px;
   display: grid;
   gap: 16px;
 }
@@ -256,6 +326,13 @@ h2 {
   border-radius: 8px;
   padding: 16px;
   min-width: 0;
+}
+
+.page-band {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 8px;
+  padding: 14px;
 }
 
 .work-card h3 {
@@ -695,9 +772,14 @@ tbody tr.selected {
 
   .topbar,
   .panel-header,
-  .queue-header {
+  .queue-header,
+  .view-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .view-meta {
+    justify-content: flex-start;
   }
 
   .kpi-grid,

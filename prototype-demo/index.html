@@ -17,10 +17,22 @@
           </div>
         </div>
         <nav class="nav-list">
-          <button class="nav-item active" data-view="operations" type="button">Operations</button>
-          <button class="nav-item" data-view="investigations" type="button">Investigations</button>
-          <button class="nav-item" data-view="feedback" type="button">Feedback Model</button>
-          <button class="nav-item" data-view="reports" type="button">Reports</button>
+          <button class="nav-item active" data-view="operations" type="button">
+            <strong>Operations</strong>
+            <span>Live alert triage</span>
+          </button>
+          <button class="nav-item" data-view="investigations" type="button">
+            <strong>Investigations</strong>
+            <span>Case timeline</span>
+          </button>
+          <button class="nav-item" data-view="feedback" type="button">
+            <strong>Feedback Model</strong>
+            <span>Adaptive scoring</span>
+          </button>
+          <button class="nav-item" data-view="reports" type="button">
+            <strong>Reports</strong>
+            <span>Outcome summary</span>
+          </button>
         </nav>
         <div class="model-card">
           <span class="label">Adaptive Model</span>
@@ -40,6 +52,8 @@
             <button class="ghost-button" id="resetButton" type="button">Reset demo</button>
           </div>
         </header>
+
+        <section class="view-header" id="viewHeader"></section>
 
         <section class="kpi-grid" id="kpiGrid" aria-label="Dashboard summary"></section>
 

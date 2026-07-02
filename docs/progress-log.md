@@ -13,7 +13,8 @@
 
 ## Week 2
 
-- To be updated.
+- Fixed sidebar view-switching UX so Operations, Investigations, Feedback Model, and Reports behave like separate views.
+- Ensured hidden sections are fully removed from display, sidebar active state stays consistent, and switching views scrolls back to the top of the selected workspace.
 
 ## Week 3
 

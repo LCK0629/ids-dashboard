@@ -328,6 +328,33 @@ const byId = (id) => document.getElementById(id);
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const selectedAlert = () => alerts.find((alert) => alert.id === selectedAlertId) || alerts[0];
 
+const viewCopy = {
+  operations: {
+    title: "Operations Center",
+    description:
+      "Monitor incoming IDS alerts, inspect explainable risk evidence, and submit analyst feedback from the live queue.",
+    chips: ["Live queue", "Alert triage", "Explainable risk"],
+  },
+  investigations: {
+    title: "Investigation Workspace",
+    description:
+      "Convert high-risk alerts into case-style investigations with timeline context, evidence, and recommended next steps.",
+    chips: ["Case queue", "Timeline", "Evidence review"],
+  },
+  feedback: {
+    title: "Feedback Model",
+    description:
+      "Review how human labels change pattern weights, reduce false positives, and adapt risk scoring across similar alerts.",
+    chips: ["Rule-based learning", "Pattern weights", "Noise reduction"],
+  },
+  reports: {
+    title: "Reporting Center",
+    description:
+      "Summarize alert workload, feedback outcomes, and current risk posture for supervisor review or FYP demonstration.",
+    chips: ["Executive summary", "Metrics", "Demo report"],
+  },
+};
+
 function riskColor(score) {
   if (score >= 85) return "var(--red)";
   if (score >= 70) return "var(--amber)";
@@ -452,6 +479,40 @@ function renderKpis() {
   byId("feedbackCount").textContent = `${reviewed} reviewed`;
   byId("modelConfidence").textContent = `${84 + Math.min(10, reviewed * 2)}%`;
   byId("impactMessage").textContent = lastImpact;
+}
+
+function renderViewHeader() {
+  const copy = viewCopy[currentView];
+  byId("viewHeader").innerHTML = `
+    <div class="view-title">
+      <p class="eyebrow">${currentView === "operations" ? "Primary module" : "Workspace module"}</p>
+      <h2>${copy.title}</h2>
+      <p>${copy.description}</p>
+    </div>
+    <div class="view-meta">
+      ${copy.chips.map((chip) => `<span class="view-chip">${chip}</span>`).join("")}
+    </div>
+  `;
+}
+
+function syncActiveNavigation() {
+  document
+    .querySelectorAll("[data-view]")
+    .forEach((item) => item.classList.toggle("active", item.dataset.view === currentView));
+}
+
+function scrollToViewTop() {
+  byId("viewHeader").scrollIntoView({ block: "start", behavior: "auto" });
+}
+
+function switchView(view, options = {}) {
+  currentView = view;
+  syncActiveNavigation();
+  render();
+
+  if (options.scroll !== false) {
+    scrollToViewTop();
+  }
 }
 
 function countBy(items, key) {
@@ -666,6 +727,7 @@ function renderInvestigations() {
   const selected = selectedAlert();
 
   return `
+    <section class="page-band">
     <section class="panel chart-panel">
       <div class="panel-header">
         <div>
@@ -705,6 +767,7 @@ function renderInvestigations() {
         </div>
       </div>
     </section>
+    </section>
   `;
 }
 
@@ -712,6 +775,7 @@ function renderFeedbackModel() {
   const patterns = groupedPatterns().sort((a, b) => b.avgRisk - a.avgRisk);
   const m = metrics();
   return `
+    <section class="page-band">
     <section class="panel chart-panel">
       <div class="panel-header">
         <div>
@@ -757,6 +821,7 @@ function renderFeedbackModel() {
         </div>
       </div>
     </section>
+    </section>
   `;
 }
 
@@ -765,6 +830,7 @@ function renderReports() {
   const severityCounts = countBy(alerts, "severity");
   const highest = [...alerts].sort((a, b) => scoreFor(b) - scoreFor(a))[0];
   return `
+    <section class="page-band">
     <section class="panel chart-panel">
       <div class="panel-header">
         <div>
@@ -809,6 +875,7 @@ function renderReports() {
         <p>This view can be used in the FYP demo to explain how human feedback changes operational metrics without requiring a backend database.</p>
       </div>
     </section>
+    </section>
   `;
 }
 
@@ -833,8 +900,7 @@ function renderAlternateView() {
   document.querySelectorAll("[data-case-id]").forEach((card) => {
     card.addEventListener("click", () => {
       selectedAlertId = card.dataset.caseId;
-      currentView = "operations";
-      render();
+      switchView("operations");
     });
   });
 
@@ -851,6 +917,7 @@ function renderAlternateView() {
 }
 
 function render() {
+  renderViewHeader();
   renderKpis();
   renderCharts();
   renderRows();
@@ -862,24 +929,17 @@ byId("severityFilter").addEventListener("change", render);
 byId("statusFilter").addEventListener("change", render);
 document.querySelectorAll("[data-view]").forEach((button) => {
   button.addEventListener("click", () => {
-    currentView = button.dataset.view;
-    document
-      .querySelectorAll("[data-view]")
-      .forEach((item) => item.classList.toggle("active", item.dataset.view === currentView));
-    render();
+    switchView(button.dataset.view);
   });
 });
 byId("resetButton").addEventListener("click", () => {
   alerts = structuredClone(initialAlerts);
   selectedAlertId = alerts[0].id;
-  currentView = "operations";
-  document
-    .querySelectorAll("[data-view]")
-    .forEach((item) => item.classList.toggle("active", item.dataset.view === currentView));
   byId("severityFilter").value = "all";
   byId("statusFilter").value = "all";
   lastImpact = "Waiting for analyst feedback";
-  render();
+  switchView("operations");
 });
 
+syncActiveNavigation();
 render();

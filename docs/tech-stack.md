@@ -71,7 +71,7 @@ The current mock alert data remains in use for dashboard UX testing, feedback bu
 
 - Python / Pandas for CSE-CIC-IDS2018 preprocessing.
 - CSE-CIC-IDS2018 as the formal flow-level intrusion detection dataset.
-- Flow-based signature rules for known attack pattern detection.
+- Flow-based signature rules for known attack pattern detection using `protocol`, `port`, and `flowFeatures`.
 - XGBoost for future ML-based intrusion detection.
 - Fusion engine to combine signature and ML results into final alert priority.
 - Exception Memory to store repeated analyst feedback patterns.
@@ -80,6 +80,8 @@ The current mock alert data remains in use for dashboard UX testing, feedback bu
 - ML + workload + usability evaluation for final project assessment.
 
 Full Snort or Suricata packet inspection is not implemented in the current prototype because the project uses flow-level CSE-CIC-IDS2018 records, not raw packet payloads.
+
+The Stage 2 signature engine should not use `attackType` or `groundTruth` as detection inputs. These fields come from dataset labels and are kept for evaluation, summary reporting, and dashboard explanation only.
 
 ## Staged Pipeline
 

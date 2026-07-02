@@ -166,6 +166,13 @@ Repository sample repair:
   - `similarityKey` is not empty
   - no alert uses `Unknown Attack`
 
+## Follow-up - Flow Features Added For Stage 2
+
+- Added `flowFeatures` to the processed alert schema and current `stage-1/data/processed/sample-alerts.json`.
+- Updated the preprocessing notebook so future exports preserve selected CSE-CIC-IDS2018 flow columns inside `flowFeatures`.
+- Clarified that `attackType` and `groundTruth` are label-derived evaluation fields, not Stage 2 detection inputs.
+- Stage 2 signature rules now use `protocol`, `port`, and `flowFeatures` instead of checking `attackType`.
+
 ## Archive Inspection Notes
 
 Local file inspected:

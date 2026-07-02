@@ -68,9 +68,10 @@ Infiltration -> 92
 
 10. Alert Conversion
 Each sampled flow record is converted into a dashboard alert object following stage-1/alert-schema.md.
+The converted alert object keeps selected flow-level numeric features under flowFeatures so Stage 2 and Stage 3 can use detection inputs that come from network flow behavior rather than the dataset label.
 
 11. Schema Validation
-Converted alerts are validated to check required fields, unique IDs, valid severity, valid groundTruth, numeric port, valid risk scores, and non-empty similarityKey.
+Converted alerts are validated to check required fields, unique IDs, valid severity, valid groundTruth, numeric port, valid risk scores, non-empty similarityKey, and flowFeatures.
 
 12. JSON Export
 The processed alerts will be exported as sample-alerts.json.
@@ -83,4 +84,3 @@ Important Notes:
 - The processed JSON is not connected to the dashboard yet.
 - No backend or database has been added.
 - No machine learning model has been trained yet.
-

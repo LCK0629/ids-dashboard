@@ -28,6 +28,8 @@ The real dataset is not included in this repository. Large raw CSV files should 
 
 The processed dashboard alert JSON format is documented in `stage-1/alert-schema.md`.
 
+The processed alerts include `attackType` and `groundTruth` for evaluation, but these fields should not be used as detection inputs. Stage 2 signature detection uses `protocol`, `port`, and `flowFeatures`.
+
 ## Colab Preprocessing Notebook
 
 Stage 1 preprocessing may be prototyped in Google Colab using:

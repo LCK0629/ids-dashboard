@@ -29,11 +29,28 @@ stage-1/data/processed/sample-alerts.json
 | `triggerReason` | string | Yes | Short explanation of why the alert was generated. |
 | `evidence` | string | Yes | Evidence based on sampled flow and dataset label. |
 | `recommendedAction` | string | Yes | Suggested analyst action. |
+| `flowFeatures` | object | Yes | Flow-level numeric features used by Stage 2 signature detection and future Stage 3 ML detection. |
+
+## `flowFeatures` Object
+
+| Field | Type | Required | Description |
+|---|---|---:|---|
+| `flowDuration` | number | Yes | Flow duration from the CSE-CIC-IDS2018 flow record. |
+| `totalFwdPackets` | number | Yes | Total forward packets. |
+| `totalBackwardPackets` | number | Yes | Total backward packets. |
+| `flowBytesPerSecond` | number | Yes | Flow bytes per second. |
+| `flowPacketsPerSecond` | number | Yes | Flow packets per second. |
+| `synFlagCount` | number | Yes | SYN flag count. |
+| `ackFlagCount` | number | Yes | ACK flag count. |
+| `rstFlagCount` | number | Yes | RST flag count. |
+| `fwdPacketLengthMean` | number | Yes | Mean forward packet length. |
+| `packetLengthMean` | number | Yes | Mean packet length. |
 
 ## Notes
 
 - `baseRiskScore` should not change after initial conversion.
 - `currentRiskScore` can change after analyst feedback.
 - `groundTruth` is for evaluation, not normal dashboard decision-making.
+- `attackType` is derived from dataset labels and is for evaluation and dashboard explanation. It should not be used as a Stage 2 detection condition.
+- `flowFeatures` should come from CSE-CIC-IDS2018 flow columns and can be used as detection input.
 - `similarityKey` is used for adaptive scoring across similar alerts.
-

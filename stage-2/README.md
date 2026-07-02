@@ -8,17 +8,21 @@ It reads the processed Stage 1 alert sample, applies lightweight signature rules
 
 ## What Signature-Based Detection Means
 
-Signature-based detection identifies known attack patterns using predefined rules. In this project, signatures are represented as simple conditions over dashboard alert fields such as `attackType`, `protocol`, and `port`.
+Signature-based detection identifies known attack patterns using predefined rules. In this project, signatures are represented as simple conditions over flow-level fields such as `protocol`, `port`, and `flowFeatures`.
 
 Example:
 
 ```txt
-attackType = Brute Force
 protocol = TCP
 port = 22
+flowFeatures.flowPacketsPerSecond >= 10
+flowFeatures.totalFwdPackets >= 10
+flowFeatures.flowDuration <= 5000000
 ```
 
 This represents an SSH brute-force flow pattern.
+
+`attackType` and `groundTruth` are not used as signature detection inputs. They are kept for evaluation summaries only, because a real flow does not directly tell the detection engine its attack category.
 
 ## Why Flow-Based Signatures Are Used
 
@@ -53,7 +57,7 @@ Each signed alert preserves the original Stage 1 alert fields and adds:
   "signatureName": "SSH Brute Force Flow Pattern",
   "signatureAttackType": "Brute Force",
   "signatureSeverity": "Medium",
-  "signatureEvidence": "Matched SSH Brute Force Flow Pattern using attackType=Brute Force, protocol=TCP, port=22."
+  "signatureEvidence": "Matched SSH Brute Force Flow Pattern using protocol=TCP, port=22, flowFeatures.flowPacketsPerSecond {\"min\":10}, flowFeatures.totalFwdPackets {\"min\":10}, flowFeatures.flowDuration {\"max\":5000000}."
 }
 ```
 

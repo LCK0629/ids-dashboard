@@ -36,6 +36,7 @@
 - Refined the project direction into a staged Hybrid Human-in-the-Loop IDS Dashboard.
 - Planned the formal pipeline as Stage 1 dataset preprocessing, Stage 2 flow-based signature detection, Stage 3 XGBoost ML detection, Stage 4 fusion, Stage 5 human feedback and Exception Memory, Stage 6 dashboard integration, and Stage 7 evaluation.
 - Started Stage 2 by adding a standalone flow-based signature detection engine.
+- Corrected the Stage 2 signature engine direction so rules use flow-level features instead of dataset-derived `attackType`, while `attackType` and `groundTruth` remain for evaluation only.
 
 ## Week 4
 

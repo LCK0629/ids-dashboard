@@ -38,7 +38,7 @@ function main() {
   console.log(`No signature hits: ${summary.noSignatureHits}`);
   console.log(`Signature hit rate: ${(summary.signatureHitRate * 100).toFixed(2)}%`);
   printObject('Hits by signature:', summary.hitsBySignature);
-  printObject('Hits by attack type:', summary.hitsByAttackType);
+  printObject('Hits by true attack type:', summary.hitsByAttackType);
   console.log(`Benign alerts with signature hit: ${summary.benignAlertsWithSignatureHit}`);
 
   if (summary.benignAlertsWithSignatureHit !== 0) {

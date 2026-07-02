@@ -105,6 +105,8 @@ Notebook update:
   - `Infiltration`
 - Changed sampling to group by mapped `attackType`, not only benign vs malicious.
 - Added target and collected sample count reporting for each mapped attack type.
+- Fixed repeated CSV header rows appearing inside sampled data, such as `Dst Port` appearing as a field value.
+- Added safer numeric port conversion so invalid port values fall back to `0` instead of stopping alert conversion.
 
 Next run should regenerate `stage-1/data/processed/sample-alerts.json` using the improved notebook and verify that the output includes the available target attack types.
 

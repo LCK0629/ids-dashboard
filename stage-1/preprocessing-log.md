@@ -80,6 +80,34 @@ Stage 1 sample alert JSON has been generated, validated, and copied into `stage-
   - `similarityKey` is not empty
 - Limitation noted: malicious records currently map to `Unknown Attack`, so future preprocessing should inspect raw `Label` values and improve label-to-attack-type mapping if needed.
 
+## Required Follow-up - Full Attack-Type Sampling
+
+The previous generated sample was valid, but it did not cover all desired attack categories. It contained:
+
+- `Benign`: 266
+- `Unknown Attack`: 500
+
+The root cause is that the notebook was loading a limited CSV selection, so only a narrow set of raw attack labels was available during sampling.
+
+Notebook update:
+
+- Updated the notebook to use all available CSV files instead of only `02-16-2018.csv`.
+- Added cross-file raw `Label` distribution auditing.
+- Added mapped `attackType` distribution auditing.
+- Improved raw label mapping for target attack types:
+  - `Benign`
+  - `Brute Force`
+  - `Heartbleed`
+  - `Botnet`
+  - `DoS`
+  - `DDoS`
+  - `Web Attack`
+  - `Infiltration`
+- Changed sampling to group by mapped `attackType`, not only benign vs malicious.
+- Added target and collected sample count reporting for each mapped attack type.
+
+Next run should regenerate `stage-1/data/processed/sample-alerts.json` using the improved notebook and verify that the output includes the available target attack types.
+
 ## Archive Inspection Notes
 
 Local file inspected:

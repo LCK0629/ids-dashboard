@@ -110,6 +110,26 @@ Notebook update:
 
 Next run should regenerate `stage-1/data/processed/sample-alerts.json` using the improved notebook and verify that the output includes the available target attack types.
 
+## Required Follow-up - Final Unknown Attack Mapping
+
+A later full-sample run produced 1000 valid alerts with 500 benign and 500 malicious records. The remaining `Unknown Attack` group was caused by raw web attack labels that should be mapped into the dashboard `Web Attack` category:
+
+- `Brute Force -XSS` -> `Web Attack`
+- `SQL Injection` -> `Web Attack`
+- `Brute Force -Web` -> `Web Attack`
+
+Notebook update:
+
+- Strengthened label normalization for hyphenated and spaced labels.
+- Added explicit mapping for `Brute Force -Web` to `Web Attack`.
+- Kept `Brute Force -XSS` and `SQL Injection` mapped to `Web Attack`.
+- Removed `Unknown Attack` from the target attack-type sampling list so future generated samples focus on known dashboard attack categories.
+
+Repository sample repair:
+
+- Updated the existing repository `stage-1/data/processed/sample-alerts.json` to remap the previous old `Unknown Attack` records with raw labels `DoS attacks-Hulk` and `DoS attacks-SlowHTTPTest` into `DoS`.
+- The current repository sample now has no `Unknown Attack` records, but it still reflects the earlier 766-alert sample. The next Colab export should regenerate the newer 1000-alert sample using the final mapping rules.
+
 ## Archive Inspection Notes
 
 Local file inspected:

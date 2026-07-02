@@ -25,6 +25,7 @@
 - Kept final reusable preprocessing logic planned under `stage-1/scripts/sample_cse_cic_ids2018.py`.
 - Inspected the local CSE-CIC-IDS2018 `archive.zip` and updated the notebook to handle its mixed CSV schema, including files without `Src IP` and `Dst IP` columns.
 - Improved the Stage 1 preprocessing notebook with stratified sampling, formal label mapping, severity/risk score mapping, stronger schema validation, and preprocessing summary records.
+- Added a Stage 1 data processing summary text file describing the planned CSE-CIC-IDS2018 loading, cleaning, sampling, label mapping, severity/risk mapping, alert conversion, validation, and JSON export workflow.
 
 ## Week 3
 

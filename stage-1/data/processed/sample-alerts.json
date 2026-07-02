@@ -1,0 +1,41 @@
+[
+  {
+    "id": "AL-0001",
+    "timestamp": "2018-02-16 10:42:13",
+    "sourceIp": "192.168.10.5",
+    "destinationIp": "205.174.165.73",
+    "protocol": "TCP",
+    "port": 80,
+    "attackType": "DoS",
+    "severity": "High",
+    "confidence": 86,
+    "baseRiskScore": 82,
+    "currentRiskScore": 82,
+    "status": "Unreviewed",
+    "groundTruth": "malicious",
+    "similarityKey": "dos",
+    "triggerReason": "Flow pattern matches a labelled CSE-CIC-IDS2018 intrusion scenario.",
+    "evidence": "The sampled network flow contains abnormal traffic features and a malicious dataset label.",
+    "recommendedAction": "Review related traffic and confirm whether escalation is needed."
+  },
+  {
+    "id": "AL-0002",
+    "timestamp": "2018-02-16 11:05:48",
+    "sourceIp": "192.168.10.14",
+    "destinationIp": "205.174.165.80",
+    "protocol": "TCP",
+    "port": 443,
+    "attackType": "Benign",
+    "severity": "Low",
+    "confidence": 72,
+    "baseRiskScore": 24,
+    "currentRiskScore": 24,
+    "status": "Unreviewed",
+    "groundTruth": "benign",
+    "similarityKey": "benign-web",
+    "triggerReason": "Flow record is included as a benign baseline sample from CSE-CIC-IDS2018.",
+    "evidence": "The sampled network flow has a benign dataset label and normal web traffic characteristics.",
+    "recommendedAction": "Use this alert as a baseline comparison for dashboard testing and scoring calibration."
+  }
+]
+

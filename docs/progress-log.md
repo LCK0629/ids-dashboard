@@ -16,6 +16,9 @@
 - Fixed sidebar view-switching UX so Operations, Investigations, Feedback Model, and Reports behave like separate views.
 - Ensured hidden sections are fully removed from display, sidebar active state stays consistent, and switching views scrolls back to the top of the selected workspace.
 - Documented the Stage 1 dataset plan: CSE-CIC-IDS2018 will be the formal dataset source, sampled from raw CSV files and converted into dashboard-style IDS alert JSON under the future `stage-1/` folder.
+- Selected CSE-CIC-IDS2018 as the formal dataset for Stage 1.
+- Added Stage 1 folder structure for raw data, processed alert JSON, and sampling script preparation.
+- Kept current prototype mock data unchanged.
 
 ## Week 3
 

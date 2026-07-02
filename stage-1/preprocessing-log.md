@@ -32,6 +32,21 @@ Explore the dataset, inspect labels, clean invalid values, sample rows, and conv
 - Record any columns dropped or renamed.
 - Record output file path.
 
+## Required Run Record
+
+For each preprocessing run, record:
+
+- Dataset file used
+- Number of rows loaded
+- Number of rows after cleaning
+- Missing / invalid values removed
+- Label distribution before sampling
+- Label distribution after sampling
+- Benign sample size
+- Attack sample size
+- Output JSON path
+- Any limitations, such as missing source/destination IP columns
+
 ## Current Status
 
 Notebook template prepared. Real dataset preprocessing has not been run yet.

@@ -1,0 +1,69 @@
+[
+  {
+    "id": "SIG-FTP-BRUTE-FORCE",
+    "name": "FTP Brute Force Flow Pattern",
+    "attackType": "Brute Force",
+    "severity": "Medium",
+    "condition": {
+      "attackType": "Brute Force",
+      "protocol": "TCP",
+      "port": 21
+    }
+  },
+  {
+    "id": "SIG-SSH-BRUTE-FORCE",
+    "name": "SSH Brute Force Flow Pattern",
+    "attackType": "Brute Force",
+    "severity": "Medium",
+    "condition": {
+      "attackType": "Brute Force",
+      "protocol": "TCP",
+      "port": 22
+    }
+  },
+  {
+    "id": "SIG-DOS-FLOW",
+    "name": "DoS Flow Pattern",
+    "attackType": "DoS",
+    "severity": "High",
+    "condition": {
+      "attackType": "DoS"
+    }
+  },
+  {
+    "id": "SIG-DDOS-FLOW",
+    "name": "DDoS Flow Pattern",
+    "attackType": "DDoS",
+    "severity": "High",
+    "condition": {
+      "attackType": "DDoS"
+    }
+  },
+  {
+    "id": "SIG-BOTNET-FLOW",
+    "name": "Botnet Flow Pattern",
+    "attackType": "Botnet",
+    "severity": "High",
+    "condition": {
+      "attackType": "Botnet"
+    }
+  },
+  {
+    "id": "SIG-WEB-ATTACK-FLOW",
+    "name": "Web Attack Flow Pattern",
+    "attackType": "Web Attack",
+    "severity": "High",
+    "condition": {
+      "attackType": "Web Attack"
+    }
+  },
+  {
+    "id": "SIG-INFILTRATION-FLOW",
+    "name": "Infiltration Flow Pattern",
+    "attackType": "Infiltration",
+    "severity": "Critical",
+    "condition": {
+      "attackType": "Infiltration"
+    }
+  }
+]

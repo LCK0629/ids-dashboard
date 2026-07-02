@@ -67,6 +67,32 @@ stage-1/
 
 The current mock alert data remains in use for dashboard UX testing, feedback button testing, adaptive scoring testing, and Investigations / Feedback Model / Reports view testing before full dataset integration.
 
+## Formal Technical Direction
+
+- Python / Pandas for CSE-CIC-IDS2018 preprocessing.
+- CSE-CIC-IDS2018 as the formal flow-level intrusion detection dataset.
+- Flow-based signature rules for known attack pattern detection.
+- XGBoost for future ML-based intrusion detection.
+- Fusion engine to combine signature and ML results into final alert priority.
+- Exception Memory to store repeated analyst feedback patterns.
+- Beta-Bernoulli feedback scoring to model repeated true-positive and false-positive feedback.
+- HTML / CSS / JavaScript dashboard for the current frontend prototype.
+- ML + workload + usability evaluation for final project assessment.
+
+Full Snort or Suricata packet inspection is not implemented in the current prototype because the project uses flow-level CSE-CIC-IDS2018 records, not raw packet payloads.
+
+## Staged Pipeline
+
+```txt
+Stage 1: CSE-CIC-IDS2018 dataset preprocessing
+Stage 2: Flow-based signature detection
+Stage 3: XGBoost ML detection
+Stage 4: Fusion engine
+Stage 5: Human feedback and Exception Memory
+Stage 6: Dashboard integration
+Stage 7: Evaluation
+```
+
 ## Adaptive Logic Options
 
 - Rule-based scoring

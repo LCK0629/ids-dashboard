@@ -26,8 +26,48 @@ This project develops a next-generation intrusion detection interface that combi
 |   |-- app.js
 |   |-- index.html
 |   `-- styles.css
+|-- stage-1/
+|   |-- data/
+|   |-- notebooks/
+|   |-- scripts/
+|   |-- alert-schema.md
+|   |-- data-processing-summary.txt
+|   |-- preprocessing-log.md
+|   `-- README.md
+|-- stage-2/
+|   |-- core/
+|   |-- data/
+|   |-- rules/
+|   |-- scripts/
+|   `-- README.md
 `-- README.md
 ```
+
+## Formal Development Direction
+
+The final system direction is a Hybrid Human-in-the-Loop IDS Dashboard, developed in stages:
+
+```txt
+Stage 1: CSE-CIC-IDS2018 dataset preprocessing
+Stage 2: Flow-based signature detection
+Stage 3: XGBoost ML detection
+Stage 4: Fusion engine
+Stage 5: Human feedback and Exception Memory
+Stage 6: Dashboard integration
+Stage 7: Evaluation
+```
+
+Signature-based detection:
+Identifies known attack patterns using lightweight flow-based rules.
+
+Machine-learning detection:
+Uses CSE-CIC-IDS2018 flow features to train a future XGBoost IDS classifier.
+
+Fusion engine:
+Combines signature and ML results into final alert priority.
+
+Human feedback:
+Administrator feedback adjusts repeated false-positive patterns through Exception Memory.
 
 ## Prototype Demo
 

@@ -30,8 +30,9 @@ The expected outcome is a functional prototype dashboard that demonstrates how h
 
 The project will focus on the dashboard interface, feedback workflow, and adaptive alert prioritization logic. It does not need to build a full production-grade intrusion detection engine from scratch. Public datasets or simulated IDS alert logs may be used as input data.
 
+The project will use a hybrid detection pipeline. Known attack patterns will be represented through lightweight flow-based signature rules, while ML-based detection will later be implemented using an XGBoost classifier trained on CSE-CIC-IDS2018 flow features. The dashboard will fuse these outputs and allow analyst feedback to adjust alert priority.
+
 ## Personal Notes
 
 - 中文备注：重点不是做完整 IDS，而是做一个能展示 human-in-the-loop 概念的 dashboard prototype。
 - Demo 时最好能展示 feedback 前后 alert ranking 的变化。
-

@@ -128,7 +128,43 @@ Notebook update:
 Repository sample repair:
 
 - Updated the existing repository `stage-1/data/processed/sample-alerts.json` to remap the previous old `Unknown Attack` records with raw labels `DoS attacks-Hulk` and `DoS attacks-SlowHTTPTest` into `DoS`.
-- The current repository sample now has no `Unknown Attack` records, but it still reflects the earlier 766-alert sample. The next Colab export should regenerate the newer 1000-alert sample using the final mapping rules.
+- The previous repository sample had no `Unknown Attack` records after repair, but it still reflected the earlier 766-alert sample. It has now been replaced by the final 1000-alert sample generated with the final mapping rules.
+
+## Run Record - Final 1000 Alert Sample
+
+- Generated file reviewed: `C:\Users\cheek\Downloads\sample-alerts (2).json`
+- Repository output path: `stage-1/data/processed/sample-alerts.json`
+- Number of processed alert objects: 1000
+- Benign sample size: 500
+- Attack sample size: 500
+- Ground truth distribution after sampling:
+  - `benign`: 500
+  - `malicious`: 500
+- Attack type distribution after conversion:
+  - `Benign`: 500
+  - `Brute Force`: 84
+  - `Botnet`: 84
+  - `DoS`: 83
+  - `DDoS`: 83
+  - `Web Attack`: 83
+  - `Infiltration`: 83
+  - `Unknown Attack`: 0
+- Severity distribution after conversion:
+  - `Low`: 500
+  - `Medium`: 84
+  - `High`: 333
+  - `Critical`: 83
+- Schema validation result: passed
+- Validation checks completed:
+  - required fields exist
+  - alert IDs are unique
+  - severity values are valid
+  - `groundTruth` values are valid
+  - status is `Unreviewed`
+  - confidence and risk scores are within 0-100
+  - port is numeric
+  - `similarityKey` is not empty
+  - no alert uses `Unknown Attack`
 
 ## Archive Inspection Notes
 

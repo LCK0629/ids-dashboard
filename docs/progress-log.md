@@ -29,6 +29,7 @@
 - Validated the generated Stage 1 `sample-alerts.json`, copied it into `stage-1/data/processed/`, and recorded preprocessing run details including sample counts, distributions, validation checks, and current label-mapping limitation.
 - Updated the Stage 1 preprocessing notebook to audit labels across all available CSE-CIC-IDS2018 CSV files and sample by mapped dashboard attack type so future samples can cover all available attack categories.
 - Finalized Stage 1 attack label mapping so web attack variants such as `Brute Force -XSS`, `SQL Injection`, and `Brute Force -Web` map to `Web Attack`, and repaired the existing repository sample so it no longer contains `Unknown Attack` records.
+- Validated and copied the final 1000-alert Stage 1 processed sample into `stage-1/data/processed/sample-alerts.json`, with 500 benign alerts, 500 malicious alerts, and no `Unknown Attack` records.
 
 ## Week 3
 

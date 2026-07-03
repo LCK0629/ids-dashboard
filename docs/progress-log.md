@@ -72,6 +72,7 @@
 - Adjusted Stage 4 ML-only fusion scoring so high-confidence ML predictions without signature support remain review-worthy but are slightly discounted, preserving Signature + ML agreement as the strongest evidence case.
 - Upgraded the Stage 6 React dashboard layout using the uploaded SOC-style HTML prototype as a visual reference while keeping the implementation in React, Vite, and TypeScript.
 - Added Stage 6B simulated alert replay and UI-only analyst feedback controls to demonstrate human-in-the-loop triage without backend persistence or live packet capture.
+- Added a Stage 6B Latest Activity replay feed so the dashboard can show newly replayed alerts gradually in arrival order, separate from the risk-prioritised alert queue.
 
 ## Notes
 

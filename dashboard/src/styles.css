@@ -835,3 +835,107 @@ button {
 .guardrail-message {
   color: #fed7aa;
 }
+
+/* Stage 6B latest replay activity */
+.operations-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+
+.operations-top-grid .overview-panel {
+  margin-bottom: 0;
+}
+
+.latest-activity-panel {
+  min-height: 100%;
+}
+
+.latest-activity-list {
+  display: grid;
+  gap: 8px;
+  max-height: 318px;
+  overflow: auto;
+  padding: 14px;
+}
+
+.latest-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  padding: 16px;
+  color: #94a3b8;
+  background: rgba(2, 6, 23, 0.22);
+}
+
+.latest-activity-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  color: #e5edf6;
+  background: rgba(2, 6, 23, 0.3);
+  cursor: pointer;
+}
+
+.latest-activity-item:hover,
+.latest-activity-item.selected {
+  border-color: rgba(56, 189, 248, 0.62);
+  background: rgba(14, 165, 233, 0.14);
+}
+
+.sequence-badge {
+  min-width: 44px;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: #bae6fd;
+  background: rgba(8, 47, 73, 0.38);
+  font-size: 12px;
+  text-align: center;
+}
+
+.latest-activity-main,
+.latest-activity-meta {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.latest-activity-main strong,
+.latest-activity-main span,
+.latest-activity-meta small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.latest-activity-main span,
+.latest-activity-meta small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.latest-activity-meta {
+  justify-items: end;
+}
+
+.latest-activity-meta b {
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: #082f49;
+  background: #38bdf8;
+}
+
+@media (max-width: 1260px) {
+  .operations-top-grid {
+    grid-template-columns: 1fr;
+  }
+}

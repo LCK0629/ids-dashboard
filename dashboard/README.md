@@ -48,6 +48,7 @@ npm run build
 - KPI cards for Stage 5 feedback and review impact.
 - Filter bar for review-required, adjusted, high-risk, guardrail, benign, and malicious views.
 - Alert queue sorted by feedback-adjusted `currentRiskScore`.
+- Latest Activity replay feed showing newly replayed alerts in arrival order, separate from the risk-sorted alert queue.
 - Alert detail panel showing signature evidence, ML prediction, fusion evidence, and feedback adjustment.
 - Score comparison between Stage 4 `fusionRiskScore` and Stage 5 `currentRiskScore`.
 - Sidebar navigation for Operations, Investigations, Feedback Model, and Reports views.
@@ -69,6 +70,8 @@ npm run build
 Stage 6B adds an offline replay mode and UI-only analyst feedback controls. Alerts are replayed from the static Stage 5 JSON output to simulate an operational triage queue. Analyst feedback changes the dashboard's local state and recalculates risk scores for demonstration purposes only.
 
 This does not write back to the Stage 5 JSON files, does not retrain the model, and does not perform live packet capture.
+
+The Latest Activity panel is driven by replay progress. It starts empty before replay, then grows as alerts are replayed so the demo can show incoming activity separately from the main risk-prioritised queue.
 
 Replay controls:
 

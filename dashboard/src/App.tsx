@@ -9,6 +9,7 @@ import { FilterBar } from './components/FilterBar';
 import { Header } from './components/Header';
 import { InvestigationsPanel } from './components/InvestigationsPanel';
 import { KpiCards } from './components/KpiCards';
+import { LatestActivityPanel } from './components/LatestActivityPanel';
 import { OperationalOverview } from './components/OperationalOverview';
 import { ReportsPanel } from './components/ReportsPanel';
 import { ReplayControls } from './components/ReplayControls';
@@ -175,7 +176,17 @@ export default function App() {
 
         {activeView === 'operations' && (
           <>
-            <OperationalOverview alerts={sortedAlerts} feedbackSummary={feedbackSummary} />
+            <div className="operations-top-grid">
+              <OperationalOverview alerts={sortedAlerts} feedbackSummary={feedbackSummary} />
+              <LatestActivityPanel
+                alerts={isReplayMode ? replayVisibleAlerts : []}
+                isReplayMode={isReplayMode}
+                onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
+                replayIndex={isReplayMode ? replayIndex : 0}
+                selectedAlertId={selectedAlert?.id}
+                totalAlerts={alerts.length}
+              />
+            </div>
             <FilterBar
               activeFilter={activeFilter}
               onFilterChange={(filter) => {

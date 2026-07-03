@@ -49,6 +49,7 @@
 - Added KaggleHub as a Stage 3 notebook dataset input option so Colab training can download `solarmainframe/ids-intrusion-csv` directly instead of requiring manual archive upload.
 - Adjusted the Stage 3 Colab notebook with memory-safe defaults, CSV row caps, optional CSV file limiting, numeric downcasting, and smaller class sampling to reduce RAM crashes during XGBoost training.
 - Imported Stage 3 Colab-generated XGBoost artifacts, sample ML predictions, and evaluation summaries into the correct `stage-3/models/`, `stage-3/outputs/`, and `stage-3/evaluation/` folders.
+- Added a Stage 2 signature detection notes notebook with a more natural walkthrough for checking feature-only input, signature rules, signature output, evaluation summaries, and Stage 2B audit files.
 
 ## Week 4
 

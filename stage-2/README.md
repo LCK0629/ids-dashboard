@@ -43,6 +43,14 @@ From the repository root:
 node stage-2/scripts/run-signature-demo.js
 ```
 
+For a notebook-style walkthrough of the Stage 2 files and outputs, see:
+
+```txt
+stage-2/notebooks/signature_detection_notes.ipynb
+```
+
+The notebook is for checking and explaining the signature workflow. It does not change the rules or tune thresholds.
+
 The script will:
 
 1. Load `stage-1/data/processed/flow-feature-sample.csv`.

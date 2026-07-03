@@ -74,6 +74,7 @@
 - Added Stage 6B simulated alert replay and UI-only analyst feedback controls to demonstrate human-in-the-loop triage without backend persistence or live packet capture.
 - Added a Stage 6B Latest Activity replay feed so the dashboard can show newly replayed alerts gradually in arrival order, separate from the risk-prioritised alert queue.
 - Added attack type filtering to the Stage 6 dashboard so analysts can filter the queue by Benign, Botnet, Brute Force, DDoS, DoS, Web Attack, or any future attack type present in the replayed data.
+- Added a dynamic internal structure HTML slide deck to explain the staged IDS pipeline, data separation, detection engines, fusion, feedback, dashboard replay, and current prototype limitations.
 
 ## Notes
 

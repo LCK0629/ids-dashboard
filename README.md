@@ -215,5 +215,6 @@ Dataset files and processing scripts will be placed under the `stage-1/` folder.
 - [Tech Stack](docs/tech-stack.md)
 - [Environment Setup](docs/environment.md)
 - [Signature-Based Detection Design](docs/signature-based-detection.md)
+- [Dynamic Internal Structure Slides](docs/system-architecture-slides.html)
 - [Progress Log](docs/progress-log.md)
 - [Questions](docs/questions.md)

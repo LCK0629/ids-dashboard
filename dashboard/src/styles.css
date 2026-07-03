@@ -125,6 +125,25 @@ button {
   gap: 8px;
 }
 
+.attack-type-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.attack-type-filter select {
+  min-height: 36px;
+  max-width: 190px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  padding: 0 10px;
+  color: #dbeafe;
+  background: rgba(30, 41, 59, 0.82);
+}
+
 .filter-buttons button {
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: rgba(30, 41, 59, 0.82);
@@ -369,6 +388,15 @@ button {
 
   .filter-buttons {
     justify-content: flex-start;
+  }
+
+  .attack-type-filter {
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .attack-type-filter select {
+    max-width: min(220px, 100%);
   }
 }
 

@@ -17,6 +17,7 @@ import { Sidebar, type DashboardView } from './components/Sidebar';
 import type {
   FeedbackAdjustedAlert,
   FeedbackEvaluationSummary,
+  AttackTypeFilter,
   FilterKey,
   FusionEvaluationSummary,
 } from './types/alerts';
@@ -26,7 +27,12 @@ import {
   calculateSessionKpis,
   createLocalFeedbackOverride,
 } from './utils/feedback';
-import { filterAlerts, sortAlerts } from './utils/alertFilters';
+import {
+  attackTypeOptions,
+  filterAlerts,
+  filterAlertsByAttackType,
+  sortAlerts,
+} from './utils/alertFilters';
 import { replayIntervalMs } from './utils/replay';
 
 const alerts = feedbackAdjustedAlerts as FeedbackAdjustedAlert[];
@@ -42,6 +48,7 @@ const viewLabels: Record<DashboardView, string> = {
 
 export default function App() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [activeAttackType, setActiveAttackType] = useState<AttackTypeFilter>('all');
   const [activeView, setActiveView] = useState<DashboardView>('operations');
   const [isReplayMode, setIsReplayMode] = useState(false);
   const [isReplayRunning, setIsReplayRunning] = useState(false);
@@ -58,10 +65,11 @@ export default function App() {
     [isReplayMode, locallyAdjustedAlerts, replayIndex]
   );
   const sortedAlerts = useMemo(() => sortAlerts(replayVisibleAlerts), [replayVisibleAlerts]);
-  const filteredAlerts = useMemo(
-    () => filterAlerts(sortedAlerts, activeFilter),
-    [activeFilter, sortedAlerts]
-  );
+  const attackTypes = useMemo(() => attackTypeOptions(replayVisibleAlerts), [replayVisibleAlerts]);
+  const filteredAlerts = useMemo(() => {
+    const stageFilteredAlerts = filterAlerts(sortedAlerts, activeFilter);
+    return filterAlertsByAttackType(stageFilteredAlerts, activeAttackType);
+  }, [activeAttackType, activeFilter, sortedAlerts]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | undefined>(sortedAlerts[0]?.id);
   const selectedAlert = filteredAlerts.find((alert) => alert.id === selectedAlertId)
     || filteredAlerts[0]
@@ -94,6 +102,12 @@ export default function App() {
       setSelectedAlertId(sortedAlerts[0]?.id);
     }
   }, [selectedAlertId, sortedAlerts]);
+
+  useEffect(() => {
+    if (activeAttackType !== 'all' && !attackTypes.includes(activeAttackType)) {
+      setActiveAttackType('all');
+    }
+  }, [activeAttackType, attackTypes]);
 
   function applyFeedback(alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) {
     setLocalFeedbackMap((currentMap) => ({
@@ -189,6 +203,12 @@ export default function App() {
             </div>
             <FilterBar
               activeFilter={activeFilter}
+              activeAttackType={activeAttackType}
+              attackTypes={attackTypes}
+              onAttackTypeChange={(attackType) => {
+                setActiveAttackType(attackType);
+                setSelectedAlertId(undefined);
+              }}
               onFilterChange={(filter) => {
                 setActiveFilter(filter);
                 setSelectedAlertId(undefined);

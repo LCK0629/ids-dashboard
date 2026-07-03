@@ -1,4 +1,4 @@
-import type { FilterKey } from '../types/alerts';
+import type { AttackTypeFilter, FilterKey } from '../types/alerts';
 
 interface FilterOption {
   key: FilterKey;
@@ -19,18 +19,43 @@ const filters: FilterOption[] = [
 
 interface FilterBarProps {
   activeFilter: FilterKey;
+  activeAttackType: AttackTypeFilter;
+  attackTypes: string[];
   onFilterChange: (filter: FilterKey) => void;
+  onAttackTypeChange: (attackType: AttackTypeFilter) => void;
   visibleCount: number;
   totalCount: number;
 }
 
-export function FilterBar({ activeFilter, onFilterChange, visibleCount, totalCount }: FilterBarProps) {
+export function FilterBar({
+  activeFilter,
+  activeAttackType,
+  attackTypes,
+  onFilterChange,
+  onAttackTypeChange,
+  visibleCount,
+  totalCount,
+}: FilterBarProps) {
   return (
     <section className="filter-bar" aria-label="Alert filters">
       <div>
         <strong>{visibleCount}</strong>
         <span> of {totalCount} alerts shown</span>
       </div>
+      <label className="attack-type-filter">
+        <span>Attack Type</span>
+        <select
+          onChange={(event) => onAttackTypeChange(event.target.value)}
+          value={activeAttackType}
+        >
+          <option value="all">All attack types</option>
+          {attackTypes.map((attackType) => (
+            <option key={attackType} value={attackType}>
+              {attackType}
+            </option>
+          ))}
+        </select>
+      </label>
       <div className="filter-buttons">
         {filters.map((filter) => (
           <button

@@ -1,4 +1,4 @@
-import type { FeedbackAdjustedAlert, FilterKey } from '../types/alerts';
+import type { AttackTypeFilter, FeedbackAdjustedAlert, FilterKey } from '../types/alerts';
 
 export function isHighRisk(alert: FeedbackAdjustedAlert): boolean {
   return Number(alert.currentRiskScore ?? 0) >= 70;
@@ -71,6 +71,26 @@ export function filterAlerts(alerts: FeedbackAdjustedAlert[], filter: FilterKey)
         return true;
     }
   });
+}
+
+export function alertAttackType(alert: FeedbackAdjustedAlert): string {
+  return alert.fusionAttackType || alert.signatureAttackType || alert.mlPredictedAttackType || 'Unknown';
+}
+
+export function attackTypeOptions(alerts: FeedbackAdjustedAlert[]): string[] {
+  return [...new Set(alerts.map(alertAttackType))]
+    .filter((attackType) => attackType.trim().length > 0)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+export function filterAlertsByAttackType(
+  alerts: FeedbackAdjustedAlert[],
+  attackType: AttackTypeFilter
+): FeedbackAdjustedAlert[] {
+  if (attackType === 'all') {
+    return alerts;
+  }
+  return alerts.filter((alert) => alertAttackType(alert) === attackType);
 }
 
 export function formatScore(score?: number | null): string {

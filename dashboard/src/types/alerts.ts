@@ -9,6 +9,8 @@ export type FilterKey =
   | 'benign'
   | 'malicious';
 
+export type AttackTypeFilter = 'all' | string;
+
 export interface FeedbackAdjustedAlert {
   id: string;
   fusionRiskScore?: number;

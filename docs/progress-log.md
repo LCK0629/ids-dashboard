@@ -73,6 +73,7 @@
 - Upgraded the Stage 6 React dashboard layout using the uploaded SOC-style HTML prototype as a visual reference while keeping the implementation in React, Vite, and TypeScript.
 - Added Stage 6B simulated alert replay and UI-only analyst feedback controls to demonstrate human-in-the-loop triage without backend persistence or live packet capture.
 - Added a Stage 6B Latest Activity replay feed so the dashboard can show newly replayed alerts gradually in arrival order, separate from the risk-prioritised alert queue.
+- Added attack type filtering to the Stage 6 dashboard so analysts can filter the queue by Benign, Botnet, Brute Force, DDoS, DoS, Web Attack, or any future attack type present in the replayed data.
 
 ## Notes
 

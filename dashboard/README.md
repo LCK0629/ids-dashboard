@@ -46,7 +46,7 @@ npm run build
 ## Dashboard Features
 
 - KPI cards for Stage 5 feedback and review impact.
-- Filter bar for review-required, adjusted, high-risk, guardrail, benign, and malicious views.
+- Filter bar for review-required, adjusted, high-risk, guardrail, benign, malicious, and attack type views.
 - Alert queue sorted by feedback-adjusted `currentRiskScore`.
 - Latest Activity replay feed showing newly replayed alerts in arrival order, separate from the risk-sorted alert queue.
 - Alert detail panel showing signature evidence, ML prediction, fusion evidence, and feedback adjustment.

@@ -44,6 +44,7 @@
 - Added a formal signature rule rationale document explaining how each Stage 2 rule was derived, why the selected flow features are reasonable, why the current perfect result should be interpreted carefully, and why threshold tuning is deferred until further validation.
 - Added Stage 2B feature distribution audit to analyse rule feature distributions, rule boundary behaviour, benign near-misses, and rule strength without changing thresholds or performing tuning.
 - Refined Stage 2B benign near-miss logic so near-miss records must be close to important numeric rule thresholds instead of merely matching broad conditions.
+- Started Stage 3 by adding an XGBoost ML detection scaffold, including training notebook template, script structure, model artifact plan, prediction output plan, and documentation for feature-label separation.
 
 ## Week 4
 

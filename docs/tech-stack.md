@@ -80,12 +80,39 @@ Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and 
 - Python / Pandas for CSE-CIC-IDS2018 preprocessing.
 - CSE-CIC-IDS2018 as the formal flow-level intrusion detection dataset.
 - Flow-based signature rules for known attack pattern detection using `protocol`, `port`, and `flowFeatures`.
-- XGBoost for future ML-based intrusion detection.
+- XGBoost for supervised flow-based attack classification in Stage 3.
+- Pandas and scikit-learn for ML preprocessing, train/test splitting, and evaluation metrics.
+- Notebook / Google Colab workflow for training experiments on larger CSE-CIC-IDS2018 data.
+- JSON artifacts for model metadata, feature columns, label mappings, preprocessing configuration, and later Fusion Engine integration.
 - Fusion engine to combine signature and ML results into final alert priority.
 - Exception Memory to store repeated analyst feedback patterns.
 - Beta-Bernoulli feedback scoring to model repeated true-positive and false-positive feedback.
 - HTML / CSS / JavaScript dashboard for the current frontend prototype.
 - ML + workload + usability evaluation for final project assessment.
+
+## Machine Learning Detection
+
+Stage 3 will use XGBoost as the supervised ML detection layer. Training may use observable flow features with ground-truth labels, but prediction must use feature-only input from `stage-1/data/processed/flow-feature-sample.csv`.
+
+The planned Stage 3 output is:
+
+```txt
+stage-3/outputs/ml-predictions.sample.json
+```
+
+The expected prediction fields are `id`, `predictedAttackType`, `modelConfidence`, and `baseRiskScore`. These ML outputs will later be combined with Stage 2 signature evidence in the Stage 4 Fusion Engine.
+
+Stage 3 model artifacts are planned under:
+
+```txt
+stage-3/models/
+|-- xgboost_ids_model.json
+|-- feature-columns.json
+|-- label-mapping.json
+`-- preprocessing-config.json
+```
+
+Ground truth should be joined only after prediction for evaluation under `stage-3/evaluation/`.
 
 ## Environment Requirements
 
@@ -103,7 +130,7 @@ The Stage 2 signature engine should not use `attackType` or `groundTruth` as det
 ```txt
 Stage 1: CSE-CIC-IDS2018 dataset preprocessing
 Stage 2: Flow-based signature detection
-Stage 3: XGBoost ML detection
+Stage 3: XGBoost ML Detection Engine
 Stage 4: Fusion engine
 Stage 5: Human feedback and Exception Memory
 Stage 6: Dashboard integration

@@ -20,27 +20,27 @@
     "outOfScopeMlPredictionIdsSample": []
   },
   "countByFusionDecision": {
-    "ML_ONLY_HIGH_CONFIDENCE": 409,
     "SIGNATURE_ONLY_ML_BENIGN": 15,
+    "ML_ONLY_HIGH_CONFIDENCE": 409,
     "ML_ONLY_MEDIUM_CONFIDENCE": 96,
     "LOW_RISK_BENIGN": 476,
     "LOW_RISK_NO_DETECTION_INPUT": 4
   },
   "countByFusionConfidenceLevel": {
-    "Critical": 381,
-    "High": 43,
+    "Critical": 317,
+    "High": 107,
     "Medium": 105,
     "Low": 471
   },
-  "countRequiringAnalystReview": 456,
-  "averageFusionRiskScore": 48.57,
-  "maxFusionRiskScore": 100,
+  "countRequiringAnalystReview": 424,
+  "averageFusionRiskScore": 43.56,
+  "maxFusionRiskScore": 90,
   "minFusionRiskScore": 0,
   "countByFusionAttackType": {
+    "Web Attack": 155,
     "DoS": 127,
     "Botnet": 84,
     "DDoS": 76,
-    "Web Attack": 155,
     "Brute Force": 78,
     "Benign": 480
   },
@@ -66,10 +66,10 @@
       "Infiltration": 83
     },
     "countByFusionAttackType": {
+      "Web Attack": 155,
       "DoS": 127,
       "Botnet": 84,
       "DDoS": 76,
-      "Web Attack": 155,
       "Brute Force": 78,
       "Benign": 480
     },
@@ -205,11 +205,11 @@
       "f1": 0.8059
     },
     "riskPrioritisationMetrics": {
-      "averageFusionRiskScoreBenign": 19.64,
-      "averageFusionRiskScoreMalicious": 77.51,
-      "top50Precision": 0.98,
-      "top100Precision": 0.99,
-      "top200Precision": 0.995,
+      "averageFusionRiskScoreBenign": 17.66,
+      "averageFusionRiskScoreMalicious": 69.47,
+      "top50Precision": 0.9,
+      "top100Precision": 0.95,
+      "top200Precision": 0.975,
       "highRiskThreshold": 70,
       "highRiskThresholdPrecision": 0.8467,
       "highRiskAlertCount": 424,
@@ -218,13 +218,13 @@
       "lowRiskThresholdForMalicious": 40
     },
     "analystReviewMetrics": {
-      "requiresAnalystReviewCount": 456,
-      "reviewRate": 0.456,
-      "reviewedMaliciousCount": 369,
-      "reviewedBenignCount": 87,
-      "reviewPrecision": 0.8092,
-      "maliciousRecordsNotRequiringReview": 131,
-      "benignRecordsRequiringReview": 87
+      "requiresAnalystReviewCount": 424,
+      "reviewRate": 0.424,
+      "reviewedMaliciousCount": 359,
+      "reviewedBenignCount": 65,
+      "reviewPrecision": 0.8467,
+      "maliciousRecordsNotRequiringReview": 141,
+      "benignRecordsRequiringReview": 65
     }
   }
 }

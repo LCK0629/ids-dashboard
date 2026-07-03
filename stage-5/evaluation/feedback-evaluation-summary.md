@@ -7,14 +7,14 @@ Ground truth is joined only after feedback adjustment for evaluation. This is a 
 ## Overall Counts
 
 - Total alerts: 1000
-- Alerts adjusted: 362
-- Alerts unchanged: 638
+- Alerts adjusted: 439
+- Alerts unchanged: 561
 - Direct feedback applied count: 5
 - Unmatched direct feedback count: 1
-- Exception memory applied count: 359
+- Exception memory applied count: 435
 - Ignored exception count: 119
-- Guardrail applied count: 219
-- Score adjustment guardrail count: 100
+- Guardrail applied count: 286
+- Score adjustment guardrail count: 167
 - Exception rejected by trust gate count: 119
 - Low confidence exception ignored count: 24
 - Insufficient feedback exception ignored count: 95
@@ -31,44 +31,43 @@ Trust-gate rejections do not change the risk score. For report writing, use the 
 
 ## Risk Before And After Feedback
 
-- Average risk before feedback: 48.57
-- Average risk after feedback: 42.26
-- Average risk change: -6.31
+- Average risk before feedback: 43.56
+- Average risk after feedback: 38.81
+- Average risk change: -4.75
 - High-risk threshold: 70
 - High-risk alerts before: 424
-- High-risk alerts after: 399
+- High-risk alerts after: 371
 
 ## Review Queue Before And After Feedback
 
-- Review queue before: 456
-- Review queue after: 401
-- Reviewed benign before: 87
-- Reviewed benign after: 42
-- Reviewed malicious before: 369
-- Reviewed malicious after: 359
+- Review queue before: 424
+- Review queue after: 376
+- Reviewed benign before: 65
+- Reviewed benign after: 21
+- Reviewed malicious before: 359
+- Reviewed malicious after: 355
 
 ## Ground Truth Evaluation
 
 - Evaluated with ground truth count: 1000
 - Benign high-risk before: 65
-- Benign high-risk after: 40
+- Benign high-risk after: 19
 - Malicious high-risk before: 359
-- Malicious high-risk after: 359
+- Malicious high-risk after: 352
 - True positive suppression count: 0
 - Infiltration adjusted count: 0
 - Infiltration guardrail count: 0
 
 ## Count By Analyst Feedback Status
 
-- unchanged: 517
-- adjusted_by_exception_memory: 260
-- guardrail_limited_adjustment: 100
+- unchanged: 441
+- adjusted_by_exception_memory: 270
+- guardrail_limited_adjustment: 167
 - ignored_insufficient_feedback: 95
 - ignored_low_confidence_exception: 24
 - confirmed_true_positive: 1
-- marked_expected_activity: 1
-- needs_investigation: 1
 - escalated: 1
+- needs_investigation: 1
 
 ## Notes
 

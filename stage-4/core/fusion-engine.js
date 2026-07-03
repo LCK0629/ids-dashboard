@@ -166,22 +166,20 @@ function fuseAlert(signatureRecord = null, mlPrediction = null) {
   } else if (!baseAlert.signatureHit && hasMlPrediction && mlAttackType !== 'Benign' && modelConfidence >= 0.8) {
     fusionAttackType = mlAttackType;
     fusionDecision = 'ML_ONLY_HIGH_CONFIDENCE';
-    fusionRiskScore = clampScore(baseAlert.baseRiskScore);
+    fusionRiskScore = clampScore(Math.max(baseAlert.baseRiskScore - 10, 70));
     requiresAnalystReview = fusionRiskScore >= 70;
     fusionEvidence = evidenceText([
-      'No signature rule matched.',
-      'ML detected an attack-like flow with high confidence.',
-      'This may represent a pattern not covered by current signature rules.',
+      'ML predicted a non-benign class with high confidence, but no signature rule matched.',
+      'The score is slightly discounted because the alert has ML-only evidence.',
     ]);
   } else if (!baseAlert.signatureHit && hasMlPrediction && mlAttackType !== 'Benign' && modelConfidence >= 0.5) {
     fusionAttackType = mlAttackType;
     fusionDecision = 'ML_ONLY_MEDIUM_CONFIDENCE';
-    fusionRiskScore = clampScore(baseAlert.baseRiskScore - 10);
+    fusionRiskScore = clampScore(Math.max(baseAlert.baseRiskScore - 20, 40));
     requiresAnalystReview = fusionRiskScore >= 60;
     fusionEvidence = evidenceText([
-      'ML produced a non-benign prediction.',
-      'No signature evidence supports it.',
-      'Risk is reduced slightly due to lack of signature evidence.',
+      'ML predicted a non-benign class with medium confidence, but no signature rule matched.',
+      'The score is discounted more strongly due to weaker ML-only evidence.',
     ]);
   } else if (!baseAlert.signatureHit && hasMlPrediction && mlAttackType === 'Benign') {
     fusionAttackType = 'Benign';

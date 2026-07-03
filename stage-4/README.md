@@ -71,6 +71,10 @@ Critical -> 95
 
 ML `baseRiskScore` is used when available. If it is missing, the score is derived from model confidence.
 
+ML-only high-confidence alerts remain high priority, but they are slightly discounted because no signature evidence supports the prediction. This keeps Signature + ML agreement as the strongest evidence case.
+
+ML-only medium-confidence alerts receive a stronger discount because both signature support and high ML confidence are absent.
+
 All final scores are clamped between 0 and 100.
 
 Fusion confidence level is based on the final score:

@@ -4,9 +4,9 @@ Stage 4 combines Stage 2 signature evidence and Stage 3 ML predictions. Ground t
 
 - Total fused alerts: 1000
 - Stage 3 predictions excluded as out of scope: 0
-- Requires analyst review: 456
-- Average fusion risk score: 48.57
-- Max fusion risk score: 100
+- Requires analyst review: 424
+- Average fusion risk score: 43.56
+- Max fusion risk score: 90
 - Min fusion risk score: 0
 - Signature / ML agreement count: 0
 - Signature / ML disagreement count: 15
@@ -50,9 +50,9 @@ Fusion is Stage-2-scoped. ML predictions are used only when IDs match Stage 2 re
 ## Count By Fusion Confidence Level
 
 - Low: 471
-- Critical: 381
+- Critical: 317
+- High: 107
 - Medium: 105
-- High: 43
 
 ## Count By Fusion Attack Type
 
@@ -121,11 +121,11 @@ Fusion is Stage-2-scoped. ML predictions are used only when IDs match Stage 2 re
 
 ## Risk Prioritisation Metrics
 
-- Average fusion risk score for benign records: 19.64
-- Average fusion risk score for malicious records: 77.51
-- Top-50 precision: 0.98
-- Top-100 precision: 0.99
-- Top-200 precision: 0.995
+- Average fusion risk score for benign records: 17.66
+- Average fusion risk score for malicious records: 69.47
+- Top-50 precision: 0.9
+- Top-100 precision: 0.95
+- Top-200 precision: 0.975
 - High-risk threshold precision, fusionRiskScore >= 70: 0.8467
 - High-risk alert count: 424
 - Benign records with high fusionRiskScore: 65
@@ -133,13 +133,13 @@ Fusion is Stage-2-scoped. ML predictions are used only when IDs match Stage 2 re
 
 ## Analyst Review Metrics
 
-- Requires analyst review count: 456
-- Review rate: 0.456
-- Reviewed malicious count: 369
-- Reviewed benign count: 87
-- Review precision: 0.8092
-- Malicious records not requiring review: 131
-- Benign records requiring review: 87
+- Requires analyst review count: 424
+- Review rate: 0.424
+- Reviewed malicious count: 359
+- Reviewed benign count: 65
+- Review precision: 0.8467
+- Malicious records not requiring review: 141
+- Benign records requiring review: 65
 
 ### Count By True Attack Type
 

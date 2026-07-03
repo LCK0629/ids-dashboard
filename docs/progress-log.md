@@ -69,6 +69,7 @@
 - Clarified Stage 5 guardrail evaluation metrics by separating score adjustment guardrails from exception trust-gate rejections for more accurate report interpretation.
 - Added Stage 6 React dashboard integration to visualise Stage 5 feedback-adjusted alerts, including alert queue, KPI cards, filters, score comparison, signature evidence, ML prediction, fusion evidence, and feedback adjustment details.
 - Clarified Stage 6 dashboard model confidence wording and formatting so near-100% XGBoost scores are displayed as confidence scores rather than absolute certainty.
+- Adjusted Stage 4 ML-only fusion scoring so high-confidence ML predictions without signature support remain review-worthy but are slightly discounted, preserving Signature + ML agreement as the strongest evidence case.
 
 ## Notes
 

@@ -221,10 +221,14 @@ function indexById(records) {
 function fuseAlerts(signatureRecords, mlPredictions) {
   const signatureById = indexById(signatureRecords);
   const mlById = indexById(mlPredictions);
-  const ids = new Set([...signatureById.keys(), ...mlById.keys()]);
 
-  return [...ids]
-    .map((id) => fuseAlert(signatureById.get(id) || null, mlById.get(id) || null))
+  // Stage 2 signature records define the fusion scope: they cover every flow
+  // in the Stage 1 sample. Stage 3 predictions are only joined in when their
+  // id falls inside that scope; predictions for ids outside it come from a
+  // different Stage 3 test set and are not the same flows, so they must not
+  // be unioned into the fused alert count.
+  const fusedAlerts = [...signatureById.keys()]
+    .map((id) => fuseAlert(signatureById.get(id), mlById.get(id) || null))
     .sort((a, b) => {
       if (b.fusionRiskScore !== a.fusionRiskScore) {
         return b.fusionRiskScore - a.fusionRiskScore;
@@ -234,6 +238,10 @@ function fuseAlerts(signatureRecords, mlPredictions) {
       }
       return String(a.id).localeCompare(String(b.id));
     });
+
+  const outOfScopeMlPredictionIds = [...mlById.keys()].filter((id) => !signatureById.has(id));
+
+  return { fusedAlerts, outOfScopeMlPredictionIds };
 }
 
 function incrementCounter(counter, key) {
@@ -241,9 +249,10 @@ function incrementCounter(counter, key) {
   counter[safeKey] = (counter[safeKey] || 0) + 1;
 }
 
-function summariseFusionResults(fusedAlerts, groundTruth = null) {
+function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPredictionIds = []) {
   const summary = {
     totalFusedAlerts: fusedAlerts.length,
+    outOfScopeMlPredictionCount: outOfScopeMlPredictionIds.length,
     countByFusionDecision: {},
     countByFusionConfidenceLevel: {},
     countRequiringAnalystReview: 0,
@@ -259,8 +268,15 @@ function summariseFusionResults(fusedAlerts, groundTruth = null) {
       'Stage 4 is a prototype fusion evaluation, not final IDS performance.',
       'Ground truth is joined only after fusion for evaluation.',
       'Current Stage 3 ML artifacts do not include Infiltration; Stage 4 retains Infiltration signature alerts.',
+      'Fusion scope is defined by Stage 2 signature records (the Stage 1 sample). Stage 3 predictions whose id is outside that scope come from a different Stage 3 test set and are excluded from fusion rather than unioned in.',
     ],
   };
+
+  if (outOfScopeMlPredictionIds.length > 0) {
+    summary.notes.push(
+      `${outOfScopeMlPredictionIds.length} Stage 3 ML prediction(s) were excluded as out of scope because their id does not match any Stage 2 signature record.`
+    );
+  }
 
   const scores = fusedAlerts.map((alert) => alert.fusionRiskScore);
   summary.averageFusionRiskScore = scores.length

@@ -44,9 +44,9 @@ The fusion engine handles these cases:
 - No signature hit but ML predicts a non-benign class with medium confidence.
 - No signature hit and ML predicts Benign.
 - Signature record exists but no ML prediction exists.
-- ML prediction exists but no signature record exists.
+- ML prediction exists but no signature record exists, which is reported as out of scope instead of being added to the fused dashboard output.
 
-The script also handles IDs that appear only on one side. This matters because the current Stage 2 and Stage 3 sample outputs do not use exactly the same ID set.
+The fused dashboard output is scoped to Stage 2 signature records. Stage 3 predictions are joined only when their IDs match those records. This prevents held-out ML evaluation predictions from inflating the Stage 4 dashboard output.
 
 ## Risk Scoring
 
@@ -132,4 +132,3 @@ node stage-4/scripts/run-fusion-demo.js
 - Stage 3 currently excludes Infiltration.
 - Future validation is still needed.
 - Stage 5 will later adjust risk using human feedback.
-

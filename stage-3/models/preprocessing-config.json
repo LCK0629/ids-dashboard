@@ -112,9 +112,22 @@
     "Infilteration": "Infiltration",
     "Infiltration": "Infiltration"
   },
+  "expectedAttackTypes": [
+    "Benign",
+    "Botnet",
+    "Brute Force",
+    "DDoS",
+    "DoS",
+    "Infiltration",
+    "Web Attack"
+  ],
+  "missingExpectedAttackTypes": [
+    "Infiltration"
+  ],
   "notes": [
     "Training uses labels for supervised learning.",
     "Prediction must use feature-only records.",
-    "Ground truth is joined only after prediction for evaluation."
+    "Ground truth is joined only after prediction for evaluation.",
+    "If Infiltration is missing, the selected training source or row caps should be checked before claiming class coverage."
   ]
 }

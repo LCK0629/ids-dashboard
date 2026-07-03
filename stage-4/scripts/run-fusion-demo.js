@@ -32,6 +32,7 @@ function renderEvaluationMarkdown(summary) {
     'Stage 4 combines Stage 2 signature evidence and Stage 3 ML predictions. Ground truth is joined only after fusion for this summary.',
     '',
     `- Total fused alerts: ${summary.totalFusedAlerts}`,
+    `- Stage 3 predictions excluded as out of scope: ${summary.outOfScopeMlPredictionCount}`,
     `- Requires analyst review: ${summary.countRequiringAnalystReview}`,
     `- Average fusion risk score: ${summary.averageFusionRiskScore}`,
     `- Max fusion risk score: ${summary.maxFusionRiskScore}`,
@@ -83,9 +84,9 @@ function renderEvaluationMarkdown(summary) {
 function main() {
   const signatureOutput = loadJsonFile(signatureOutputPath);
   const mlPredictions = loadJsonFile(mlPredictionsPath);
-  const fusedAlerts = fuseAlerts(signatureOutput, mlPredictions);
+  const { fusedAlerts, outOfScopeMlPredictionIds } = fuseAlerts(signatureOutput, mlPredictions);
   const groundTruth = loadJsonFile(groundTruthPath, null);
-  const evaluationSummary = summariseFusionResults(fusedAlerts, groundTruth);
+  const evaluationSummary = summariseFusionResults(fusedAlerts, groundTruth, outOfScopeMlPredictionIds);
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
@@ -96,6 +97,7 @@ function main() {
   console.log(`Signature records loaded: ${signatureOutput.length}`);
   console.log(`ML predictions loaded: ${mlPredictions.length}`);
   console.log(`Fused alerts written: ${fusedAlerts.length}`);
+  console.log(`Stage 3 predictions excluded as out of scope: ${outOfScopeMlPredictionIds.length}`);
   console.log(`Requires analyst review: ${evaluationSummary.countRequiringAnalystReview}`);
   console.log(`Fusion output: ${fusionOutputPath}`);
   console.log(`Evaluation summary: ${evaluationMarkdownPath}`);

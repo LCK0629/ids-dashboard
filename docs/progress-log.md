@@ -56,7 +56,12 @@
 
 ## Week 4
 
-- To be updated.
+- Diagnosed the Stage 4 fusion output showing `1000 + 2186 = 3186` records instead of a true fusion: Stage 2 signature output (1000 `AL-XXXX` records, from the Stage 1 sample) and Stage 3 ML predictions (2186 records) were never the same flows. Stage 3's predictions came from the trained model's own internal Colab train/test split of the full KaggleHub dataset, with row-index ids unrelated to Stage 2, and the feature schema also did not match (Stage 1's `flow-feature-sample.csv` has 17 dashboard-only columns, while the trained model expects the full 79 raw CSE-CIC-IDS2018 feature columns).
+- Fixed the Stage 4 Fusion Engine (`stage-4/core/fusion-engine.js`, `stage-4/scripts/run-fusion-demo.js`) so fusion scope is defined by Stage 2 signature records instead of unioning both id sets. Stage 3 predictions are only joined in when their id matches; unmatched Stage 3 predictions are now reported separately as out-of-scope instead of inflating the fused alert count.
+- Updated the Stage 1 preprocessing notebook to additionally export `flow-feature-full.csv`: the full raw-feature columns for the same 1000 sampled rows, in the same row order used to assign `AL-XXXX` ids, so Stage 3 has a feature-only input that actually matches Stage 2's sample.
+- Updated the Stage 3 training notebook to add a prediction step that runs the already-trained model on `flow-feature-full.csv` and writes `ml-predictions.sample.json` keyed by `AL-XXXX` ids, aligned with Stage 2. Renamed the notebook's previous internal test-split predictions to `held-out-test-predictions.json` since that split is for model evaluation only and should not be consumed by Stage 4.
+- Imported the regenerated Stage 3 artifacts from the latest Colab run. `ml-predictions.sample.json` now uses aligned `AL-XXXX` ids for the Stage 1 / Stage 2 sample, while the notebook's internal model test predictions are kept separately as `held-out-test-predictions.json`.
+- Reran Stage 4 fusion with the aligned Stage 3 predictions. The fused output now contains 1000 alerts, matching the Stage 2 signature scope, instead of incorrectly combining unrelated Stage 3 held-out test rows into the dashboard fusion output.
 
 ## Notes
 

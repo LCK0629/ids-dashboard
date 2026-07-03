@@ -30,11 +30,19 @@ For Colab training, use either:
 
 Raw CSE-CIC-IDS2018 CSV files and dataset archives should not be committed to GitHub.
 
-For local demo prediction, the intended feature-only input is:
+For local demo prediction, the smaller documented feature-only input is:
 
 ```txt
 stage-1/data/processed/flow-feature-sample.csv
 ```
+
+For aligned Stage 4 fusion, the current Colab workflow also exports:
+
+```txt
+stage-1/data/processed/flow-feature-full.csv
+```
+
+`flow-feature-full.csv` keeps the fuller CSE-CIC-IDS2018 feature set for the same sampled `AL-XXXX` rows, so the trained XGBoost model can generate predictions that align with the Stage 2 signature output.
 
 Ground truth for evaluation is:
 
@@ -90,6 +98,12 @@ Future prediction output should be written to:
 
 ```txt
 stage-3/outputs/ml-predictions.sample.json
+```
+
+This file should use the same `AL-XXXX` IDs as the Stage 1 / Stage 2 sample when it is intended for Stage 4 fusion. Notebook held-out test predictions should be kept separately, for example:
+
+```txt
+stage-3/outputs/held-out-test-predictions.json
 ```
 
 Each prediction should eventually include:

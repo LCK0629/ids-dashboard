@@ -1,62 +1,63 @@
 {
-  "totalFusedAlerts": 3186,
+  "totalFusedAlerts": 1000,
+  "outOfScopeMlPredictionCount": 0,
   "countByFusionDecision": {
-    "ML_ONLY_NO_SIGNATURE_RECORD": 2186,
-    "SIGNATURE_ONLY_ML_LIMITATION": 83,
-    "SIGNATURE_ONLY_NO_ML": 417,
-    "LOW_RISK_NO_DETECTION_INPUT": 500
+    "ML_ONLY_HIGH_CONFIDENCE": 409,
+    "SIGNATURE_ONLY_ML_BENIGN": 15,
+    "ML_ONLY_MEDIUM_CONFIDENCE": 96,
+    "LOW_RISK_BENIGN": 476,
+    "LOW_RISK_NO_DETECTION_INPUT": 4
   },
   "countByFusionConfidenceLevel": {
-    "Critical": 1820,
-    "High": 495,
-    "Medium": 371,
-    "Low": 500
+    "Critical": 381,
+    "High": 43,
+    "Medium": 105,
+    "Low": 471
   },
-  "countRequiringAnalystReview": 2399,
-  "averageFusionRiskScore": 76.57,
+  "countRequiringAnalystReview": 456,
+  "averageFusionRiskScore": 48.57,
   "maxFusionRiskScore": 100,
   "minFusionRiskScore": 0,
   "countByFusionAttackType": {
-    "Web Attack": 277,
-    "Benign": 890,
-    "Botnet": 484,
-    "DDoS": 484,
-    "DoS": 415,
-    "Brute Force": 553,
-    "Infiltration": 83
+    "DoS": 127,
+    "Botnet": 84,
+    "DDoS": 76,
+    "Web Attack": 155,
+    "Brute Force": 78,
+    "Benign": 480
   },
   "signatureMlAgreementCount": 0,
-  "signatureMlDisagreementCount": 0,
-  "mlOnlyAlertCount": 2186,
-  "signatureOnlyAlertCount": 500,
+  "signatureMlDisagreementCount": 15,
+  "mlOnlyAlertCount": 505,
+  "signatureOnlyAlertCount": 15,
   "notes": [
     "Stage 4 is a prototype fusion evaluation, not final IDS performance.",
     "Ground truth is joined only after fusion for evaluation.",
-    "Current Stage 3 ML artifacts do not include Infiltration; Stage 4 retains Infiltration signature alerts."
+    "Current Stage 3 ML artifacts do not include Infiltration; Stage 4 retains Infiltration signature alerts.",
+    "Fusion scope is defined by Stage 2 signature records (the Stage 1 sample). Stage 3 predictions whose id is outside that scope come from a different Stage 3 test set and are excluded from fusion rather than unioned in."
   ],
   "groundTruthEvaluation": {
     "countByTrueAttackType": {
-      "Infiltration": 83,
+      "Benign": 500,
       "Botnet": 84,
       "DoS": 83,
       "DDoS": 83,
       "Web Attack": 83,
       "Brute Force": 84,
-      "Benign": 500
-    },
-    "countByFusionAttackType": {
-      "Web Attack": 277,
-      "Benign": 890,
-      "Botnet": 484,
-      "DDoS": 484,
-      "DoS": 415,
-      "Brute Force": 553,
       "Infiltration": 83
     },
-    "matchingFusionAttackTypeCount": 1000,
+    "countByFusionAttackType": {
+      "DoS": 127,
+      "Botnet": 84,
+      "DDoS": 76,
+      "Web Attack": 155,
+      "Brute Force": 78,
+      "Benign": 480
+    },
+    "matchingFusionAttackTypeCount": 792,
     "evaluatedAlertCount": 1000,
-    "simpleFusionAccuracy": 1,
-    "falsePositiveStyleCount": 0,
-    "falseNegativeStyleCount": 0
+    "simpleFusionAccuracy": 0.792,
+    "falsePositiveStyleCount": 109,
+    "falseNegativeStyleCount": 89
   }
 }

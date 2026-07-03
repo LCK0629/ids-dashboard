@@ -120,49 +120,8 @@
       }
     },
     "benignFalseMatchCount": 0,
-    "benignNearMissCount": 11,
-    "benignNearMissExamples": [
-      {
-        "id": "AL-0066",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (22)",
-          "flowDuration matched (1160000)"
-        ]
-      },
-      {
-        "id": "AL-0074",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (22)",
-          "flowDuration matched (1280000)"
-        ]
-      },
-      {
-        "id": "AL-0105",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (22)",
-          "flowDuration matched (800000)"
-        ]
-      },
-      {
-        "id": "AL-0111",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (22)",
-          "flowDuration matched (1520000)"
-        ]
-      },
-      {
-        "id": "AL-0131",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (22)",
-          "flowDuration matched (1400000)"
-        ]
-      }
-    ],
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
     "confidenceLevel": "Moderate",
     "interpretation": "SSH Brute Force Flow Pattern matched 8 current sample records using feature-only conditions.",
     "limitation": "Cannot inspect SSH authentication failure details.",
@@ -225,45 +184,8 @@
       }
     },
     "benignFalseMatchCount": 0,
-    "benignNearMissCount": 500,
-    "benignNearMissExamples": [
-      {
-        "id": "AL-0001",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (3 vs 899)",
-          "totalBwdPackets matched (3)"
-        ]
-      },
-      {
-        "id": "AL-0002",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (4 vs 899)",
-          "totalBwdPackets matched (2)"
-        ]
-      },
-      {
-        "id": "AL-0003",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (5 vs 899)",
-          "totalBwdPackets matched (3)"
-        ]
-      },
-      {
-        "id": "AL-0004",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "flowPacketsPerSecond close to max (2 vs 899)",
-          "totalBwdPackets matched (2)"
-        ]
-      },
-      {
-        "id": "AL-0005",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (3 vs 899)",
-          "totalBwdPackets matched (3)"
-        ]
-      }
-    ],
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
     "confidenceLevel": "Moderate",
     "interpretation": "High Rate DoS Flow Pattern matched 83 current sample records using feature-only conditions.",
     "limitation": "High-rate legitimate traffic can also match this pattern.",
@@ -325,40 +247,8 @@
       }
     },
     "benignFalseMatchCount": 0,
-    "benignNearMissCount": 500,
-    "benignNearMissExamples": [
-      {
-        "id": "AL-0001",
-        "matchedOrCloseConditions": [
-          "totalBwdPackets matched (3)"
-        ]
-      },
-      {
-        "id": "AL-0002",
-        "matchedOrCloseConditions": [
-          "totalBwdPackets matched (2)"
-        ]
-      },
-      {
-        "id": "AL-0003",
-        "matchedOrCloseConditions": [
-          "totalBwdPackets matched (3)"
-        ]
-      },
-      {
-        "id": "AL-0004",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "totalBwdPackets matched (2)"
-        ]
-      },
-      {
-        "id": "AL-0005",
-        "matchedOrCloseConditions": [
-          "totalBwdPackets matched (3)"
-        ]
-      }
-    ],
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
     "confidenceLevel": "Moderate",
     "interpretation": "Distributed High Rate Flow Pattern matched 83 current sample records using feature-only conditions.",
     "limitation": "A single flow row cannot prove distributed source behavior.",
@@ -423,44 +313,8 @@
       }
     },
     "benignFalseMatchCount": 0,
-    "benignNearMissCount": 500,
-    "benignNearMissExamples": [
-      {
-        "id": "AL-0001",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (3 vs 120)",
-          "totalBwdPackets matched (3)"
-        ]
-      },
-      {
-        "id": "AL-0002",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (4 vs 120)",
-          "totalBwdPackets matched (2)"
-        ]
-      },
-      {
-        "id": "AL-0003",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (5 vs 120)",
-          "totalBwdPackets matched (3)"
-        ]
-      },
-      {
-        "id": "AL-0004",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (2 vs 120)",
-          "totalBwdPackets matched (2)"
-        ]
-      },
-      {
-        "id": "AL-0005",
-        "matchedOrCloseConditions": [
-          "flowPacketsPerSecond close to max (3 vs 120)",
-          "totalBwdPackets matched (3)"
-        ]
-      }
-    ],
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
     "confidenceLevel": "Experimental",
     "interpretation": "Botnet Beacon-Like Flow Pattern matched 84 current sample records using feature-only conditions.",
     "limitation": "Reliable botnet detection often needs host history, C2 indicators, or destination reputation.",
@@ -528,49 +382,8 @@
       }
     },
     "benignFalseMatchCount": 0,
-    "benignNearMissCount": 125,
-    "benignNearMissExamples": [
-      {
-        "id": "AL-0016",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (80)",
-          "flowDuration matched (1040000)"
-        ]
-      },
-      {
-        "id": "AL-0017",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (80)",
-          "flowDuration matched (1160000)"
-        ]
-      },
-      {
-        "id": "AL-0020",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (80)",
-          "flowDuration matched (1520000)"
-        ]
-      },
-      {
-        "id": "AL-0031",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (443)",
-          "flowDuration matched (1160000)"
-        ]
-      },
-      {
-        "id": "AL-0034",
-        "matchedOrCloseConditions": [
-          "protocol matched (TCP)",
-          "destinationPort matched (80)",
-          "flowDuration matched (1520000)"
-        ]
-      }
-    ],
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
     "confidenceLevel": "Experimental",
     "interpretation": "Suspicious Web Flow Pattern matched 83 current sample records using feature-only conditions.",
     "limitation": "Flow-level rules cannot inspect URLs, SQL strings, XSS payloads, or HTTP parameters.",

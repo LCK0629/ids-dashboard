@@ -43,6 +43,7 @@
 - Hardened Stage 2 signature rules by renaming rule output metadata to `predictedAttackType`, adding prototype heuristic validation status and rationale, and generating formal post-prediction evaluation summaries.
 - Added a formal signature rule rationale document explaining how each Stage 2 rule was derived, why the selected flow features are reasonable, why the current perfect result should be interpreted carefully, and why threshold tuning is deferred until further validation.
 - Added Stage 2B feature distribution audit to analyse rule feature distributions, rule boundary behaviour, benign near-misses, and rule strength without changing thresholds or performing tuning.
+- Refined Stage 2B benign near-miss logic so near-miss records must be close to important numeric rule thresholds instead of merely matching broad conditions.
 
 ## Week 4
 

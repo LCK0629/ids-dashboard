@@ -171,41 +171,119 @@ function isConditionMatched(record, field, expectedValue) {
   return String(actualValue).toLowerCase() === String(expectedValue).toLowerCase();
 }
 
-function closeCondition(record, field, expectedValue) {
+function isNumericCondition(expectedValue) {
+  return expectedValue
+    && typeof expectedValue === 'object'
+    && !Array.isArray(expectedValue)
+    && ('min' in expectedValue || 'max' in expectedValue)
+    && !('oneOf' in expectedValue);
+}
+
+function isStrongCategoricalCondition(field, expectedValue) {
+  if (field === 'protocol') {
+    return false;
+  }
+
+  if (expectedValue && typeof expectedValue === 'object' && !Array.isArray(expectedValue)) {
+    return 'oneOf' in expectedValue;
+  }
+
+  return !isNumericCondition(expectedValue);
+}
+
+function isImportantNumericCondition(field) {
+  return field !== 'totalBwdPackets';
+}
+
+function closeNumericBoundary(record, field, expectedValue) {
   const actualValue = getConditionValue(record, field);
   if (actualValue === undefined) {
     return null;
   }
 
-  if (isConditionMatched(record, field, expectedValue)) {
-    return `${field} matched (${actualValue})`;
+  if (!isNumericCondition(expectedValue)) {
+    return null;
   }
 
-  if (expectedValue && typeof expectedValue === 'object' && !Array.isArray(expectedValue)) {
-    if ('min' in expectedValue && Number(actualValue) >= Number(expectedValue.min) * 0.75) {
+  const actualNumber = Number(actualValue);
+  if (Number.isNaN(actualNumber)) {
+    return null;
+  }
+
+  if ('min' in expectedValue) {
+    const minValue = Number(expectedValue.min);
+    if (actualNumber < minValue && actualNumber >= minValue * 0.8) {
       return `${field} close to min (${actualValue} vs ${expectedValue.min})`;
     }
-    if ('max' in expectedValue && Number(actualValue) <= Number(expectedValue.max) * 1.25) {
+  }
+
+  if ('max' in expectedValue) {
+    const maxValue = Number(expectedValue.max);
+    if (actualNumber > maxValue && actualNumber <= maxValue * 1.2) {
       return `${field} close to max (${actualValue} vs ${expectedValue.max})`;
-    }
-    if ('oneOf' in expectedValue && expectedValue.oneOf.map(String).includes(String(actualValue))) {
-      return `${field} matched allowed value (${actualValue})`;
     }
   }
 
   return null;
 }
 
-function nearMissReasons(record, rule) {
-  const reasons = [];
+function matchedCategoricalContext(record, field, expectedValue) {
+  if (!isConditionMatched(record, field, expectedValue)) {
+    return null;
+  }
+
+  if (expectedValue && typeof expectedValue === 'object' && !Array.isArray(expectedValue) && 'oneOf' in expectedValue) {
+    return `${field} matched allowed value (${getConditionValue(record, field)})`;
+  }
+
+  if (!isNumericCondition(expectedValue)) {
+    return `${field} matched (${getConditionValue(record, field)})`;
+  }
+
+  return null;
+}
+
+function nearMissDetails(record, rule) {
+  const matchedContext = [];
+  const closeThresholds = [];
+  const closeImportantThresholds = [];
+  let hasStrongCategoricalCondition = false;
+  let hasStrongCategoricalMatch = false;
+
   for (const [field, expectedValue] of Object.entries(rule.condition)) {
-    const reason = closeCondition(record, field, expectedValue);
-    if (reason) {
-      reasons.push(reason);
+    const context = matchedCategoricalContext(record, field, expectedValue);
+    if (context) {
+      matchedContext.push(context);
+    }
+
+    if (isStrongCategoricalCondition(field, expectedValue)) {
+      hasStrongCategoricalCondition = true;
+      if (context) {
+        hasStrongCategoricalMatch = true;
+      }
+    }
+
+    const closeReason = closeNumericBoundary(record, field, expectedValue);
+    if (closeReason) {
+      closeThresholds.push(closeReason);
+      if (isImportantNumericCondition(field)) {
+        closeImportantThresholds.push(closeReason);
+      }
     }
   }
 
-  return reasons;
+  return {
+    matchedContext,
+    closeThresholds,
+    closeImportantThresholds,
+    hasStrongCategoricalCondition,
+    hasStrongCategoricalMatch,
+    reasons: [...matchedContext, ...closeThresholds],
+  };
+}
+
+function nearMissReasons(record, rule) {
+  return nearMissDetails(record, rule).reasons;
 }
 
 function isNearMiss(record, rule) {
@@ -213,22 +291,16 @@ function isNearMiss(record, rule) {
     return false;
   }
 
-  const reasons = nearMissReasons(record, rule);
-
-  if (rule.id === 'SIG-FTP-BRUTE-FORCE' || rule.id === 'SIG-SSH-BRUTE-FORCE') {
-    return reasons.some((reason) => reason.startsWith('protocol matched'))
-      && reasons.some((reason) => reason.startsWith('destinationPort matched'));
+  const details = nearMissDetails(record, rule);
+  if (details.closeImportantThresholds.length === 0) {
+    return false;
   }
 
-  if (rule.id === 'SIG-WEB-ATTACK-FLOW') {
-    return reasons.some((reason) => reason.startsWith('destinationPort matched'));
+  if (details.hasStrongCategoricalCondition && !details.hasStrongCategoricalMatch) {
+    return false;
   }
 
-  if (rule.id === 'SIG-INFILTRATION-LONG-FLOW') {
-    return reasons.some((reason) => reason.includes('flowDuration') || reason.includes('flowBytesPerSecond'));
-  }
-
-  return reasons.length >= 1;
+  return true;
 }
 
 function analyseRuleBoundaries(records, rules) {

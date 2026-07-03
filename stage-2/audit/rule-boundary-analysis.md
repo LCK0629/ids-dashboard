@@ -39,7 +39,7 @@ Benign near-miss examples:
 - Malicious records matched: 8
 - Benign records matched: 0
 - Benign false match count: 0
-- Benign near-miss count: 11
+- Benign near-miss count: 0
 - Confidence level: Moderate
 - Interpretation: SSH Brute Force Flow Pattern matched 8 current sample records using feature-only conditions.
 - Limitation: Cannot inspect SSH authentication failure details.
@@ -60,11 +60,7 @@ True attack type coverage:
 
 Benign near-miss examples:
 
-- AL-0066: protocol matched (TCP); destinationPort matched (22); flowDuration matched (1160000)
-- AL-0074: protocol matched (TCP); destinationPort matched (22); flowDuration matched (1280000)
-- AL-0105: protocol matched (TCP); destinationPort matched (22); flowDuration matched (800000)
-- AL-0111: protocol matched (TCP); destinationPort matched (22); flowDuration matched (1520000)
-- AL-0131: protocol matched (TCP); destinationPort matched (22); flowDuration matched (1400000)
+- none
 
 ## SIG-DOS-HIGH-RATE-FLOW
 
@@ -73,7 +69,7 @@ Benign near-miss examples:
 - Malicious records matched: 83
 - Benign records matched: 0
 - Benign false match count: 0
-- Benign near-miss count: 500
+- Benign near-miss count: 0
 - Confidence level: Moderate
 - Interpretation: High Rate DoS Flow Pattern matched 83 current sample records using feature-only conditions.
 - Limitation: High-rate legitimate traffic can also match this pattern.
@@ -93,11 +89,7 @@ True attack type coverage:
 
 Benign near-miss examples:
 
-- AL-0001: flowPacketsPerSecond close to max (3 vs 899); totalBwdPackets matched (3)
-- AL-0002: flowPacketsPerSecond close to max (4 vs 899); totalBwdPackets matched (2)
-- AL-0003: flowPacketsPerSecond close to max (5 vs 899); totalBwdPackets matched (3)
-- AL-0004: protocol matched (TCP); flowPacketsPerSecond close to max (2 vs 899); totalBwdPackets matched (2)
-- AL-0005: flowPacketsPerSecond close to max (3 vs 899); totalBwdPackets matched (3)
+- none
 
 ## SIG-DDOS-HIGH-RATE-FLOW
 
@@ -106,7 +98,7 @@ Benign near-miss examples:
 - Malicious records matched: 83
 - Benign records matched: 0
 - Benign false match count: 0
-- Benign near-miss count: 500
+- Benign near-miss count: 0
 - Confidence level: Moderate
 - Interpretation: Distributed High Rate Flow Pattern matched 83 current sample records using feature-only conditions.
 - Limitation: A single flow row cannot prove distributed source behavior.
@@ -126,11 +118,7 @@ True attack type coverage:
 
 Benign near-miss examples:
 
-- AL-0001: totalBwdPackets matched (3)
-- AL-0002: totalBwdPackets matched (2)
-- AL-0003: totalBwdPackets matched (3)
-- AL-0004: protocol matched (TCP); totalBwdPackets matched (2)
-- AL-0005: totalBwdPackets matched (3)
+- none
 
 ## SIG-BOTNET-BEACON-FLOW
 
@@ -139,7 +127,7 @@ Benign near-miss examples:
 - Malicious records matched: 84
 - Benign records matched: 0
 - Benign false match count: 0
-- Benign near-miss count: 500
+- Benign near-miss count: 0
 - Confidence level: Experimental
 - Interpretation: Botnet Beacon-Like Flow Pattern matched 84 current sample records using feature-only conditions.
 - Limitation: Reliable botnet detection often needs host history, C2 indicators, or destination reputation.
@@ -159,11 +147,7 @@ True attack type coverage:
 
 Benign near-miss examples:
 
-- AL-0001: flowPacketsPerSecond close to max (3 vs 120); totalBwdPackets matched (3)
-- AL-0002: flowPacketsPerSecond close to max (4 vs 120); totalBwdPackets matched (2)
-- AL-0003: flowPacketsPerSecond close to max (5 vs 120); totalBwdPackets matched (3)
-- AL-0004: flowPacketsPerSecond close to max (2 vs 120); totalBwdPackets matched (2)
-- AL-0005: flowPacketsPerSecond close to max (3 vs 120); totalBwdPackets matched (3)
+- none
 
 ## SIG-WEB-ATTACK-FLOW
 
@@ -172,7 +156,7 @@ Benign near-miss examples:
 - Malicious records matched: 83
 - Benign records matched: 0
 - Benign false match count: 0
-- Benign near-miss count: 125
+- Benign near-miss count: 0
 - Confidence level: Experimental
 - Interpretation: Suspicious Web Flow Pattern matched 83 current sample records using feature-only conditions.
 - Limitation: Flow-level rules cannot inspect URLs, SQL strings, XSS payloads, or HTTP parameters.
@@ -193,11 +177,7 @@ True attack type coverage:
 
 Benign near-miss examples:
 
-- AL-0016: protocol matched (TCP); destinationPort matched (80); flowDuration matched (1040000)
-- AL-0017: protocol matched (TCP); destinationPort matched (80); flowDuration matched (1160000)
-- AL-0020: protocol matched (TCP); destinationPort matched (80); flowDuration matched (1520000)
-- AL-0031: protocol matched (TCP); destinationPort matched (443); flowDuration matched (1160000)
-- AL-0034: protocol matched (TCP); destinationPort matched (80); flowDuration matched (1520000)
+- none
 
 ## SIG-INFILTRATION-LONG-FLOW
 

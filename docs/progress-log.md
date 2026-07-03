@@ -52,6 +52,7 @@
 - Added a Stage 2 signature detection notes notebook with a more natural walkthrough for checking feature-only input, signature rules, signature output, evaluation summaries, and Stage 2B audit files.
 - Added Stage 3 checks for missing expected attack classes, including Infiltration, by printing raw label distributions, mapped class distributions, dropped-row diagnostics, and warnings when expected classes are absent from the trained model.
 - Documented the current Stage 3 limitation that the imported XGBoost model is a six-class prototype and does not include the expected Infiltration class, which remains a future retraining requirement.
+- Added Stage 4 Fusion Engine to combine Stage 2 signature evidence and Stage 3 XGBoost predictions into fused alert risk scores, decisions, and explanations, while explicitly handling the current Stage 3 Infiltration limitation.
 
 ## Week 4
 

@@ -1,0 +1,62 @@
+{
+  "totalFusedAlerts": 3186,
+  "countByFusionDecision": {
+    "ML_ONLY_NO_SIGNATURE_RECORD": 2186,
+    "SIGNATURE_ONLY_ML_LIMITATION": 83,
+    "SIGNATURE_ONLY_NO_ML": 417,
+    "LOW_RISK_NO_DETECTION_INPUT": 500
+  },
+  "countByFusionConfidenceLevel": {
+    "Critical": 1820,
+    "High": 495,
+    "Medium": 371,
+    "Low": 500
+  },
+  "countRequiringAnalystReview": 2399,
+  "averageFusionRiskScore": 76.57,
+  "maxFusionRiskScore": 100,
+  "minFusionRiskScore": 0,
+  "countByFusionAttackType": {
+    "Web Attack": 277,
+    "Benign": 890,
+    "Botnet": 484,
+    "DDoS": 484,
+    "DoS": 415,
+    "Brute Force": 553,
+    "Infiltration": 83
+  },
+  "signatureMlAgreementCount": 0,
+  "signatureMlDisagreementCount": 0,
+  "mlOnlyAlertCount": 2186,
+  "signatureOnlyAlertCount": 500,
+  "notes": [
+    "Stage 4 is a prototype fusion evaluation, not final IDS performance.",
+    "Ground truth is joined only after fusion for evaluation.",
+    "Current Stage 3 ML artifacts do not include Infiltration; Stage 4 retains Infiltration signature alerts."
+  ],
+  "groundTruthEvaluation": {
+    "countByTrueAttackType": {
+      "Infiltration": 83,
+      "Botnet": 84,
+      "DoS": 83,
+      "DDoS": 83,
+      "Web Attack": 83,
+      "Brute Force": 84,
+      "Benign": 500
+    },
+    "countByFusionAttackType": {
+      "Web Attack": 277,
+      "Benign": 890,
+      "Botnet": 484,
+      "DDoS": 484,
+      "DoS": 415,
+      "Brute Force": 553,
+      "Infiltration": 83
+    },
+    "matchingFusionAttackTypeCount": 1000,
+    "evaluatedAlertCount": 1000,
+    "simpleFusionAccuracy": 1,
+    "falsePositiveStyleCount": 0,
+    "falseNegativeStyleCount": 0
+  }
+}

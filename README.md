@@ -49,6 +49,12 @@ This project develops a next-generation intrusion detection interface that combi
 |   |-- outputs/
 |   |-- scripts/
 |   `-- README.md
+|-- stage-4/
+|   |-- core/
+|   |-- evaluation/
+|   |-- outputs/
+|   |-- scripts/
+|   `-- README.md
 `-- README.md
 ```
 
@@ -60,7 +66,7 @@ The final system direction is a Hybrid Human-in-the-Loop IDS Dashboard, develope
 Stage 1: CSE-CIC-IDS2018 dataset preprocessing
 Stage 2: Flow-based signature detection
 Stage 3: XGBoost ML Detection Engine
-Stage 4: Fusion engine
+Stage 4: Fusion Engine
 Stage 5: Human feedback and Exception Memory
 Stage 6: Dashboard integration
 Stage 7: Evaluation

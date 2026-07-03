@@ -84,7 +84,9 @@ Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and 
 - Pandas and scikit-learn for ML preprocessing, train/test splitting, and evaluation metrics.
 - Notebook / Google Colab workflow for training experiments on larger CSE-CIC-IDS2018 data.
 - JSON artifacts for model metadata, feature columns, label mappings, preprocessing configuration, and later Fusion Engine integration.
-- Fusion engine to combine signature and ML results into final alert priority.
+- Node.js rule-based Fusion Engine for Stage 4.
+- Fusion logic combines JSON outputs from Stage 2 signature detection and Stage 3 ML prediction.
+- Fusion output is designed for later dashboard integration with fused attack type, risk score, decision, evidence, and analyst review flag.
 - Exception Memory to store repeated analyst feedback patterns.
 - Beta-Bernoulli feedback scoring to model repeated true-positive and false-positive feedback.
 - HTML / CSS / JavaScript dashboard for the current frontend prototype.
@@ -133,7 +135,7 @@ The Stage 2 signature engine should not use `attackType` or `groundTruth` as det
 Stage 1: CSE-CIC-IDS2018 dataset preprocessing
 Stage 2: Flow-based signature detection
 Stage 3: XGBoost ML Detection Engine
-Stage 4: Fusion engine
+Stage 4: Fusion Engine
 Stage 5: Human feedback and Exception Memory
 Stage 6: Dashboard integration
 Stage 7: Evaluation

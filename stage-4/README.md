@@ -104,7 +104,14 @@ The fused alert output is sorted by risk score, analyst review flag, and ID so i
 
 Evaluation joins ground truth only after fusion is completed.
 
-The summary includes decision counts, confidence counts, analyst review count, risk score statistics, attack type counts, signature/ML agreement counts, and simple ground-truth comparison where labels are available.
+The summary includes:
+
+- Classification metrics: accuracy, macro F1, weighted F1, per-class precision / recall / F1, and a confusion matrix.
+- Fusion behaviour metrics: decision counts, confidence counts, attack type counts, signature/ML agreement and disagreement counts, ML-only count, signature-only count, and Infiltration ML limitation count.
+- Risk prioritisation metrics: benign/malicious average risk score, top-k precision, high-risk threshold precision, high-risk benign count, and low-risk malicious count.
+- Analyst review metrics: review count, review rate, reviewed malicious/benign counts, review precision, malicious records not requiring review, and benign records requiring review.
+
+The older simple fusion accuracy is kept as a quick readable indicator, but it is not enough by itself because Stage 4 is also a prioritisation and review-decision layer.
 
 This is a Stage 4 prototype evaluation. It should not be treated as final production IDS accuracy.
 

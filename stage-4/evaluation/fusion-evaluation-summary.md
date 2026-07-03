@@ -12,6 +12,7 @@ Stage 4 combines Stage 2 signature evidence and Stage 3 ML predictions. Ground t
 - Signature / ML disagreement count: 15
 - ML-only alert count: 505
 - Signature-only alert count: 15
+- Infiltration ML limitation count: 0
 
 ## Count By Fusion Decision
 
@@ -51,6 +52,56 @@ Stage 4 combines Stage 2 signature evidence and Stage 3 ML predictions. Ground t
 - Simple fusion accuracy: 0.792
 - False positive style count: 109
 - False negative style count: 89
+
+## Classification Metrics
+
+- Accuracy: 0.792
+- Macro F1: 0.7383
+- Weighted F1: 0.7636
+
+### Per-Class Precision / Recall / F1
+
+- Benign: precision 0.8146, recall 0.782, F1 0.798, support 500
+- Botnet: precision 1, recall 1, F1 1, support 84
+- Brute Force: precision 0.9615, recall 0.8929, F1 0.9259, support 84
+- DDoS: precision 1, recall 0.9157, F1 0.956, support 83
+- DoS: precision 0.6535, recall 1, F1 0.7904, support 83
+- Infiltration: precision 0, recall 0, F1 0, support 83
+- Web Attack: precision 0.5355, recall 1, F1 0.6975, support 83
+
+### Confusion Matrix
+
+| True \ Predicted | Benign | Botnet | Brute Force | DDoS | DoS | Infiltration | Web Attack |
+|---|---|---|---|---|---|---|---|
+| Benign | 391 | 0 | 3 | 0 | 35 | 0 | 71 |
+| Botnet | 0 | 84 | 0 | 0 | 0 | 0 | 0 |
+| Brute Force | 0 | 0 | 75 | 0 | 9 | 0 | 0 |
+| DDoS | 6 | 0 | 0 | 76 | 0 | 0 | 1 |
+| DoS | 0 | 0 | 0 | 0 | 83 | 0 | 0 |
+| Infiltration | 83 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Web Attack | 0 | 0 | 0 | 0 | 0 | 0 | 83 |
+
+## Risk Prioritisation Metrics
+
+- Average fusion risk score for benign records: 19.64
+- Average fusion risk score for malicious records: 77.51
+- Top-50 precision: 0.98
+- Top-100 precision: 0.99
+- Top-200 precision: 0.995
+- High-risk threshold precision, fusionRiskScore >= 70: 0.8467
+- High-risk alert count: 424
+- Benign records with high fusionRiskScore: 65
+- Malicious records with low fusionRiskScore, fusionRiskScore < 40: 89
+
+## Analyst Review Metrics
+
+- Requires analyst review count: 456
+- Review rate: 0.456
+- Reviewed malicious count: 369
+- Reviewed benign count: 87
+- Review precision: 0.8092
+- Malicious records not requiring review: 131
+- Benign records requiring review: 87
 
 ### Count By True Attack Type
 

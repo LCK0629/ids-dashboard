@@ -249,6 +249,135 @@ function incrementCounter(counter, key) {
   counter[safeKey] = (counter[safeKey] || 0) + 1;
 }
 
+function safeDivide(numerator, denominator) {
+  return denominator ? Number((numerator / denominator).toFixed(4)) : 0;
+}
+
+function averageScore(alerts) {
+  if (!alerts.length) {
+    return 0;
+  }
+  const total = alerts.reduce((sum, alert) => sum + Number(alert.fusionRiskScore || 0), 0);
+  return Number((total / alerts.length).toFixed(2));
+}
+
+function calculateClassificationMetrics(evaluatedAlerts) {
+  const labels = [...new Set(
+    evaluatedAlerts.flatMap((record) => [record.trueAttackType, record.predictedAttackType])
+  )].sort();
+
+  const confusionMatrix = {};
+  const perClass = {};
+  let correctCount = 0;
+
+  for (const label of labels) {
+    confusionMatrix[label] = {};
+    for (const predictedLabel of labels) {
+      confusionMatrix[label][predictedLabel] = 0;
+    }
+  }
+
+  for (const record of evaluatedAlerts) {
+    confusionMatrix[record.trueAttackType][record.predictedAttackType] += 1;
+    if (record.trueAttackType === record.predictedAttackType) {
+      correctCount += 1;
+    }
+  }
+
+  let macroF1Total = 0;
+  let weightedF1Total = 0;
+
+  for (const label of labels) {
+    const truePositive = confusionMatrix[label][label] || 0;
+    const falseNegative = labels.reduce((sum, predictedLabel) => {
+      if (predictedLabel === label) {
+        return sum;
+      }
+      return sum + (confusionMatrix[label][predictedLabel] || 0);
+    }, 0);
+    const falsePositive = labels.reduce((sum, trueLabel) => {
+      if (trueLabel === label) {
+        return sum;
+      }
+      return sum + (confusionMatrix[trueLabel][label] || 0);
+    }, 0);
+    const support = truePositive + falseNegative;
+    const precision = safeDivide(truePositive, truePositive + falsePositive);
+    const recall = safeDivide(truePositive, truePositive + falseNegative);
+    const f1 = precision + recall ? Number(((2 * precision * recall) / (precision + recall)).toFixed(4)) : 0;
+
+    perClass[label] = {
+      precision,
+      recall,
+      f1,
+      support,
+    };
+
+    macroF1Total += f1;
+    weightedF1Total += f1 * support;
+  }
+
+  return {
+    accuracy: safeDivide(correctCount, evaluatedAlerts.length),
+    macroF1: labels.length ? Number((macroF1Total / labels.length).toFixed(4)) : 0,
+    weightedF1: safeDivide(weightedF1Total, evaluatedAlerts.length),
+    perClass,
+    confusionMatrix,
+  };
+}
+
+function calculateRiskPrioritisationMetrics(evaluatedAlerts) {
+  const benignAlerts = evaluatedAlerts.filter((record) => record.groundTruthLabel === 'benign');
+  const maliciousAlerts = evaluatedAlerts.filter((record) => record.groundTruthLabel === 'malicious');
+  const sortedByRisk = [...evaluatedAlerts].sort((a, b) => b.fusionRiskScore - a.fusionRiskScore);
+  const highRiskAlerts = evaluatedAlerts.filter((record) => record.fusionRiskScore >= 70);
+  const lowRiskMaliciousAlerts = maliciousAlerts.filter((record) => record.fusionRiskScore < 40);
+  const highRiskBenignAlerts = benignAlerts.filter((record) => record.fusionRiskScore >= 70);
+
+  function topPrecision(limit) {
+    const topAlerts = sortedByRisk.slice(0, limit);
+    const maliciousCount = topAlerts.filter((record) => record.groundTruthLabel === 'malicious').length;
+    return safeDivide(maliciousCount, topAlerts.length);
+  }
+
+  return {
+    averageFusionRiskScoreBenign: averageScore(benignAlerts),
+    averageFusionRiskScoreMalicious: averageScore(maliciousAlerts),
+    top50Precision: topPrecision(50),
+    top100Precision: topPrecision(100),
+    top200Precision: topPrecision(200),
+    highRiskThreshold: 70,
+    highRiskThresholdPrecision: safeDivide(
+      highRiskAlerts.filter((record) => record.groundTruthLabel === 'malicious').length,
+      highRiskAlerts.length
+    ),
+    highRiskAlertCount: highRiskAlerts.length,
+    benignRecordsWithHighFusionRiskScore: highRiskBenignAlerts.length,
+    maliciousRecordsWithLowFusionRiskScore: lowRiskMaliciousAlerts.length,
+    lowRiskThresholdForMalicious: 40,
+  };
+}
+
+function calculateAnalystReviewMetrics(evaluatedAlerts) {
+  const reviewAlerts = evaluatedAlerts.filter((record) => record.requiresAnalystReview);
+  const reviewedMalicious = reviewAlerts.filter((record) => record.groundTruthLabel === 'malicious').length;
+  const reviewedBenign = reviewAlerts.filter((record) => record.groundTruthLabel === 'benign').length;
+  const maliciousNotRequiringReview = evaluatedAlerts.filter(
+    (record) => record.groundTruthLabel === 'malicious' && !record.requiresAnalystReview
+  ).length;
+  const benignRequiringReview = reviewedBenign;
+
+  return {
+    requiresAnalystReviewCount: reviewAlerts.length,
+    reviewRate: safeDivide(reviewAlerts.length, evaluatedAlerts.length),
+    reviewedMaliciousCount: reviewedMalicious,
+    reviewedBenignCount: reviewedBenign,
+    reviewPrecision: safeDivide(reviewedMalicious, reviewAlerts.length),
+    maliciousRecordsNotRequiringReview: maliciousNotRequiringReview,
+    benignRecordsRequiringReview: benignRequiringReview,
+  };
+}
+
 function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPredictionIds = []) {
   const summary = {
     totalFusedAlerts: fusedAlerts.length,
@@ -264,6 +393,7 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
     signatureMlDisagreementCount: 0,
     mlOnlyAlertCount: 0,
     signatureOnlyAlertCount: 0,
+    infiltrationMlLimitationCount: 0,
     notes: [
       'Stage 4 is a prototype fusion evaluation, not final IDS performance.',
       'Ground truth is joined only after fusion for evaluation.',
@@ -304,9 +434,14 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
     if (alert.fusionDecision.startsWith('SIGNATURE_ONLY')) {
       summary.signatureOnlyAlertCount += 1;
     }
+    if (alert.fusionDecision === 'SIGNATURE_ONLY_ML_LIMITATION') {
+      summary.infiltrationMlLimitationCount += 1;
+    }
   }
 
   if (groundTruth) {
+    const evaluatedAlerts = [];
+
     summary.groundTruthEvaluation = {
       countByTrueAttackType: {},
       countByFusionAttackType: { ...summary.countByFusionAttackType },
@@ -324,6 +459,14 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
       }
       const trueAttackType = truth.mappedAttackType || truth.trueAttackType || 'Unknown';
       const groundTruthLabel = truth.groundTruth || (trueAttackType === 'Benign' ? 'benign' : 'malicious');
+      evaluatedAlerts.push({
+        id: alert.id,
+        trueAttackType,
+        predictedAttackType: alert.fusionAttackType || 'Unknown',
+        groundTruthLabel,
+        fusionRiskScore: alert.fusionRiskScore,
+        requiresAnalystReview: alert.requiresAnalystReview,
+      });
       summary.groundTruthEvaluation.evaluatedAlertCount += 1;
       incrementCounter(summary.groundTruthEvaluation.countByTrueAttackType, trueAttackType);
       if (alert.fusionAttackType === trueAttackType) {
@@ -341,6 +484,10 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
     summary.groundTruthEvaluation.simpleFusionAccuracy = evaluated
       ? Number((summary.groundTruthEvaluation.matchingFusionAttackTypeCount / evaluated).toFixed(4))
       : 0;
+
+    summary.groundTruthEvaluation.classificationMetrics = calculateClassificationMetrics(evaluatedAlerts);
+    summary.groundTruthEvaluation.riskPrioritisationMetrics = calculateRiskPrioritisationMetrics(evaluatedAlerts);
+    summary.groundTruthEvaluation.analystReviewMetrics = calculateAnalystReviewMetrics(evaluatedAlerts);
   }
 
   return summary;

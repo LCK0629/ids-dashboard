@@ -62,6 +62,7 @@
 - Updated the Stage 3 training notebook to add a prediction step that runs the already-trained model on `flow-feature-full.csv` and writes `ml-predictions.sample.json` keyed by `AL-XXXX` ids, aligned with Stage 2. Renamed the notebook's previous internal test-split predictions to `held-out-test-predictions.json` since that split is for model evaluation only and should not be consumed by Stage 4.
 - Imported the regenerated Stage 3 artifacts from the latest Colab run. `ml-predictions.sample.json` now uses aligned `AL-XXXX` ids for the Stage 1 / Stage 2 sample, while the notebook's internal model test predictions are kept separately as `held-out-test-predictions.json`.
 - Reran Stage 4 fusion with the aligned Stage 3 predictions. The fused output now contains 1000 alerts, matching the Stage 2 signature scope, instead of incorrectly combining unrelated Stage 3 held-out test rows into the dashboard fusion output.
+- Improved Stage 4 prototype evaluation with classification metrics, fusion behaviour metrics, risk prioritisation metrics, and analyst review metrics so the Fusion Engine is evaluated as more than a simple classifier.
 
 ## Notes
 

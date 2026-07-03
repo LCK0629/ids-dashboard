@@ -36,6 +36,7 @@ export function AlertQueue({ alerts, selectedAlertId, onSelectAlert }: AlertQueu
               <th>Attack type</th>
               <th>Decision</th>
               <th>Review</th>
+              <th>Local feedback</th>
               <th>Feedback status</th>
             </tr>
           </thead>
@@ -52,6 +53,7 @@ export function AlertQueue({ alerts, selectedAlertId, onSelectAlert }: AlertQueu
                 <td className="attack-type">{alert.fusionAttackType || 'Unknown'}</td>
                 <td>{alert.fusionDecision || 'No decision'}</td>
                 <td>{alert.requiresAnalystReview ? 'Review' : 'No review'}</td>
+                <td>{alert.localFeedbackLabel ? <span className="local-badge">{alert.localFeedbackLabel}</span> : 'None'}</td>
                 <td>{alert.analystFeedbackStatus || 'unknown'}</td>
               </tr>
             ))}

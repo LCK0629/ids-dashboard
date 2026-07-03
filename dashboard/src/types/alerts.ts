@@ -39,6 +39,12 @@ export interface FeedbackAdjustedAlert {
   trueAttackType?: string;
   mappedAttackType?: string;
   rawLabel?: string;
+  stage5CurrentRiskScore?: number;
+  localFeedbackAction?: string;
+  localFeedbackLabel?: string;
+  localFeedbackReason?: string;
+  localFeedbackTimestamp?: string;
+  localGuardrailMessage?: string;
 }
 
 export interface FeedbackEvaluationSummary {

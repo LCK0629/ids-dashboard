@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import feedbackAdjustedAlerts from './data/feedback-adjusted-alerts.sample.json';
 import feedbackEvaluationSummary from './data/feedback-evaluation-summary.json';
 import fusionEvaluationSummary from './data/fusion-evaluation-summary.json';
@@ -11,6 +11,7 @@ import { InvestigationsPanel } from './components/InvestigationsPanel';
 import { KpiCards } from './components/KpiCards';
 import { OperationalOverview } from './components/OperationalOverview';
 import { ReportsPanel } from './components/ReportsPanel';
+import { ReplayControls } from './components/ReplayControls';
 import { Sidebar, type DashboardView } from './components/Sidebar';
 import type {
   FeedbackAdjustedAlert,
@@ -18,7 +19,14 @@ import type {
   FilterKey,
   FusionEvaluationSummary,
 } from './types/alerts';
+import type { AnalystFeedbackAction, LocalFeedbackMap, ReplaySpeed } from './types/feedback';
+import {
+  applyLocalFeedbackOverrides,
+  calculateSessionKpis,
+  createLocalFeedbackOverride,
+} from './utils/feedback';
 import { filterAlerts, sortAlerts } from './utils/alertFilters';
+import { replayIntervalMs } from './utils/replay';
 
 const alerts = feedbackAdjustedAlerts as FeedbackAdjustedAlert[];
 const feedbackSummary = feedbackEvaluationSummary as FeedbackEvaluationSummary;
@@ -34,7 +42,21 @@ const viewLabels: Record<DashboardView, string> = {
 export default function App() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [activeView, setActiveView] = useState<DashboardView>('operations');
-  const sortedAlerts = useMemo(() => sortAlerts(alerts), []);
+  const [isReplayMode, setIsReplayMode] = useState(false);
+  const [isReplayRunning, setIsReplayRunning] = useState(false);
+  const [replayIndex, setReplayIndex] = useState(alerts.length);
+  const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
+  const [localFeedbackMap, setLocalFeedbackMap] = useState<LocalFeedbackMap>({});
+
+  const locallyAdjustedAlerts = useMemo(
+    () => applyLocalFeedbackOverrides(alerts, localFeedbackMap),
+    [localFeedbackMap]
+  );
+  const replayVisibleAlerts = useMemo(
+    () => (isReplayMode ? locallyAdjustedAlerts.slice(0, replayIndex) : locallyAdjustedAlerts),
+    [isReplayMode, locallyAdjustedAlerts, replayIndex]
+  );
+  const sortedAlerts = useMemo(() => sortAlerts(replayVisibleAlerts), [replayVisibleAlerts]);
   const filteredAlerts = useMemo(
     () => filterAlerts(sortedAlerts, activeFilter),
     [activeFilter, sortedAlerts]
@@ -43,6 +65,59 @@ export default function App() {
   const selectedAlert = filteredAlerts.find((alert) => alert.id === selectedAlertId)
     || filteredAlerts[0]
     || sortedAlerts[0];
+  const sessionKpis = useMemo(
+    () => calculateSessionKpis(sortedAlerts, localFeedbackMap, isReplayMode ? replayIndex : alerts.length, alerts.length),
+    [isReplayMode, localFeedbackMap, replayIndex, sortedAlerts]
+  );
+
+  useEffect(() => {
+    if (!isReplayMode || !isReplayRunning) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setReplayIndex((currentIndex) => {
+        const nextIndex = Math.min(alerts.length, currentIndex + 1);
+        if (nextIndex >= alerts.length) {
+          setIsReplayRunning(false);
+        }
+        return nextIndex;
+      });
+    }, replayIntervalMs(replaySpeed));
+
+    return () => window.clearInterval(interval);
+  }, [isReplayMode, isReplayRunning, replaySpeed]);
+
+  useEffect(() => {
+    if (!selectedAlertId || !sortedAlerts.some((alert) => alert.id === selectedAlertId)) {
+      setSelectedAlertId(sortedAlerts[0]?.id);
+    }
+  }, [selectedAlertId, sortedAlerts]);
+
+  function applyFeedback(alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) {
+    setLocalFeedbackMap((currentMap) => ({
+      ...currentMap,
+      [alert.id]: createLocalFeedbackOverride(alert, action),
+    }));
+    setSelectedAlertId(alert.id);
+  }
+
+  function resetFeedback(alert: FeedbackAdjustedAlert) {
+    setLocalFeedbackMap((currentMap) => {
+      const nextMap = { ...currentMap };
+      delete nextMap[alert.id];
+      return nextMap;
+    });
+    setSelectedAlertId(alert.id);
+  }
+
+  function resetReplay() {
+    setReplayIndex(0);
+    setIsReplayMode(true);
+    setIsReplayRunning(false);
+    setLocalFeedbackMap({});
+    setSelectedAlertId(undefined);
+  }
 
   return (
     <div className="app-shell">
@@ -55,7 +130,48 @@ export default function App() {
 
       <main className="dashboard">
         <Header activeLabel={viewLabels[activeView]} />
-        <KpiCards feedbackSummary={feedbackSummary} fusionSummary={fusionSummary} />
+        <ReplayControls
+          isReplayMode={isReplayMode}
+          isReplayRunning={isReplayRunning}
+          onPause={() => setIsReplayRunning(false)}
+          onReset={resetReplay}
+          onResume={() => {
+            setIsReplayMode(true);
+            setIsReplayRunning(true);
+          }}
+          onShowAll={() => {
+            setReplayIndex(alerts.length);
+            setIsReplayRunning(false);
+          }}
+          onSpeedChange={setReplaySpeed}
+          onStart={() => {
+            setIsReplayMode(true);
+            setReplayIndex(0);
+            setLocalFeedbackMap({});
+            setIsReplayRunning(true);
+            setSelectedAlertId(undefined);
+          }}
+          onToggleReplayMode={() => {
+            setIsReplayMode((currentValue) => {
+              const nextValue = !currentValue;
+              setIsReplayRunning(false);
+              setReplayIndex(nextValue ? 0 : alerts.length);
+              if (nextValue) {
+                setLocalFeedbackMap({});
+              }
+              return nextValue;
+            });
+          }}
+          replayIndex={replayIndex}
+          replaySpeed={replaySpeed}
+          totalAlerts={alerts.length}
+        />
+
+        <KpiCards
+          feedbackSummary={feedbackSummary}
+          fusionSummary={fusionSummary}
+          sessionKpis={sessionKpis}
+        />
 
         {activeView === 'operations' && (
           <>
@@ -77,7 +193,11 @@ export default function App() {
                   onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
                 />
               </div>
-              <AlertDetailPanel alert={selectedAlert} />
+              <AlertDetailPanel
+                alert={selectedAlert}
+                onApplyFeedback={applyFeedback}
+                onResetFeedback={resetFeedback}
+              />
             </section>
           </>
         )}

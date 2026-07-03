@@ -64,6 +64,32 @@ npm run build
 - Guardrail and feedback reason.
 - Model confidence is displayed as an XGBoost confidence score. It is not a calibrated probability and should not be interpreted as absolute certainty. Values very close to 1.0 are displayed as 99.9%+ to avoid implying guaranteed correctness.
 
+## Stage 6B: Simulated Replay and Interactive Feedback
+
+Stage 6B adds an offline replay mode and UI-only analyst feedback controls. Alerts are replayed from the static Stage 5 JSON output to simulate an operational triage queue. Analyst feedback changes the dashboard's local state and recalculates risk scores for demonstration purposes only.
+
+This does not write back to the Stage 5 JSON files, does not retrain the model, and does not perform live packet capture.
+
+Replay controls:
+
+- Start, pause, resume, and reset replay.
+- Replay speed options: 1x, 2x, and 5x.
+- Show all alerts.
+- Replay mode can be toggled on or off.
+
+Feedback controls:
+
+- Confirm Threat.
+- Mark False Positive.
+- Expected Activity.
+- Needs Investigation.
+- Escalate.
+- Reset Feedback.
+
+Local-only score adjustment uses front-end guardrails. Scores stay between 0 and 100, Critical alerts are not reduced below 70, Infiltration alerts are not reduced below 75, and signature/ML disagreement remains review-required.
+
+Reset Replay clears local feedback overrides for the current browser session. No feedback is persisted.
+
 ## What Is Not Included Yet
 
 - No live backend.
@@ -72,7 +98,8 @@ npm run build
 - No authentication.
 - No live traffic.
 - No model retraining.
-- No simulated replay mode yet. Stage 6B may later add alert replay and interactive feedback controls.
+- No live replay from network traffic.
+- No backend persistence for Stage 6B feedback.
 
 ## Limitations
 

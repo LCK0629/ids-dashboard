@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
+import type { AnalystFeedbackAction } from '../types/feedback';
 import { formatModelConfidenceScore, formatScore } from '../utils/alertFilters';
+import { FeedbackControls } from './FeedbackControls';
 import { ScoreComparison } from './ScoreComparison';
 
 interface AlertDetailPanelProps {
   alert?: FeedbackAdjustedAlert;
+  onApplyFeedback?: (alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) => void;
+  onResetFeedback?: (alert: FeedbackAdjustedAlert) => void;
 }
 
 function value(value: unknown): string {
@@ -35,7 +39,7 @@ function EvidenceBlock({ title, children }: { title: string; children: ReactNode
   );
 }
 
-export function AlertDetailPanel({ alert }: AlertDetailPanelProps) {
+export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: AlertDetailPanelProps) {
   if (!alert) {
     return (
       <aside className="panel detail-panel empty">
@@ -53,6 +57,13 @@ export function AlertDetailPanel({ alert }: AlertDetailPanelProps) {
       </div>
 
       <ScoreComparison alert={alert} />
+
+      <FeedbackControls
+        activeAction={alert.localFeedbackAction}
+        disabled={!onApplyFeedback || !onResetFeedback}
+        onApplyFeedback={(action) => onApplyFeedback?.(alert, action)}
+        onResetFeedback={() => onResetFeedback?.(alert)}
+      />
 
       <EvidenceBlock title="Identity">
         <div className="detail-grid">
@@ -97,8 +108,11 @@ export function AlertDetailPanel({ alert }: AlertDetailPanelProps) {
           <DetailItem label="Matched feedback">{value(alert.matchedFeedbackId)}</DetailItem>
           <DetailItem label="Matched exception">{value(alert.matchedExceptionId)}</DetailItem>
           <DetailItem label="Feedback status">{value(alert.analystFeedbackStatus)}</DetailItem>
+          <DetailItem label="Local feedback">{value(alert.localFeedbackLabel)}</DetailItem>
         </div>
         <p>{alert.feedbackReason || 'No feedback reason recorded.'}</p>
+        {alert.localFeedbackReason && <p>{alert.localFeedbackReason}</p>}
+        {alert.localGuardrailMessage && <p className="guardrail-message">{alert.localGuardrailMessage}</p>}
         <div className="tag-list">
           {(alert.feedbackGuardrailsApplied || []).length
             ? alert.feedbackGuardrailsApplied?.map((guardrail) => <span key={guardrail}>{guardrail}</span>)

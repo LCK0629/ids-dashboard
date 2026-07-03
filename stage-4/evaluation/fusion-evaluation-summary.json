@@ -1,6 +1,24 @@
 {
   "totalFusedAlerts": 1000,
   "outOfScopeMlPredictionCount": 0,
+  "idAlignmentSummary": {
+    "stage2RecordCount": 1000,
+    "stage3PredictionCount": 996,
+    "matchedIdCount": 996,
+    "stage2OnlyCount": 4,
+    "stage3OutOfScopeCount": 0,
+    "overlapRateAgainstStage2": 0.996,
+    "overlapRateAgainstStage3": 1,
+    "alignmentStatus": "OK",
+    "alignmentWarning": null,
+    "stage2OnlyIdsSample": [
+      "AL-0376",
+      "AL-0423",
+      "AL-0447",
+      "AL-0984"
+    ],
+    "outOfScopeMlPredictionIdsSample": []
+  },
   "countByFusionDecision": {
     "ML_ONLY_HIGH_CONFIDENCE": 409,
     "SIGNATURE_ONLY_ML_BENIGN": 15,

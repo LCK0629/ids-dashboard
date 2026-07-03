@@ -150,6 +150,10 @@ function fuseAlert(signatureRecord = null, mlPrediction = null) {
       'Risk is based on signature severity.',
     ]);
   } else if (!signatureRecord && hasMlPrediction) {
+    // This case fires only when no Stage 2 signature record exists at all for this id.
+    // This is distinct from a record existing with signatureHit=false, which is handled below.
+    // It is not normally reachable through the current Stage-2-scoped fuseAlerts() iteration,
+    // but is retained for direct fuseAlert() callers and possible future union-mode fusion.
     fusionAttackType = mlAttackType || 'Unknown';
     fusionDecision = 'ML_ONLY_NO_SIGNATURE_RECORD';
     fusionRiskScore = clampScore(baseAlert.baseRiskScore);
@@ -218,9 +222,60 @@ function indexById(records) {
   return index;
 }
 
+function sortIds(ids) {
+  return [...ids].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+}
+
+function getAlignmentWarning(alignmentStatus) {
+  if (alignmentStatus === 'WARNING_PARTIAL_OVERLAP') {
+    return 'Stage 2 and Stage 3 IDs are only partially aligned. Fusion output remains Stage-2-scoped, but some alerts do not have paired ML evidence.';
+  }
+  if (alignmentStatus === 'ERROR_LOW_OVERLAP') {
+    return 'Stage 2 and Stage 3 IDs have low overlap. This may indicate that ML predictions were generated from a different record source.';
+  }
+  return null;
+}
+
+function getAlignmentStatus(overlapRateAgainstStage2) {
+  if (overlapRateAgainstStage2 >= 0.95) {
+    return 'OK';
+  }
+  if (overlapRateAgainstStage2 >= 0.5) {
+    return 'WARNING_PARTIAL_OVERLAP';
+  }
+  return 'ERROR_LOW_OVERLAP';
+}
+
+function buildIdAlignmentSummary(signatureById, mlById) {
+  const stage2Ids = [...signatureById.keys()];
+  const stage3Ids = [...mlById.keys()];
+  const matchedIds = stage2Ids.filter((id) => mlById.has(id));
+  const stage2OnlyIds = sortIds(stage2Ids.filter((id) => !mlById.has(id)));
+  const outOfScopeMlPredictionIds = sortIds(stage3Ids.filter((id) => !signatureById.has(id)));
+  const overlapRateAgainstStage2 = safeDivide(matchedIds.length, stage2Ids.length);
+  const overlapRateAgainstStage3 = safeDivide(matchedIds.length, stage3Ids.length);
+  const alignmentStatus = getAlignmentStatus(overlapRateAgainstStage2);
+
+  return {
+    stage2RecordCount: stage2Ids.length,
+    stage3PredictionCount: stage3Ids.length,
+    matchedIdCount: matchedIds.length,
+    stage2OnlyCount: stage2OnlyIds.length,
+    stage3OutOfScopeCount: outOfScopeMlPredictionIds.length,
+    overlapRateAgainstStage2,
+    overlapRateAgainstStage3,
+    alignmentStatus,
+    alignmentWarning: getAlignmentWarning(alignmentStatus),
+    stage2OnlyIdsSample: stage2OnlyIds.slice(0, 50),
+    outOfScopeMlPredictionIdsSample: outOfScopeMlPredictionIds.slice(0, 50),
+    outOfScopeMlPredictionIds,
+  };
+}
+
 function fuseAlerts(signatureRecords, mlPredictions) {
   const signatureById = indexById(signatureRecords);
   const mlById = indexById(mlPredictions);
+  const idAlignmentSummary = buildIdAlignmentSummary(signatureById, mlById);
 
   // Stage 2 signature records define the fusion scope: they cover every flow
   // in the Stage 1 sample. Stage 3 predictions are only joined in when their
@@ -239,9 +294,11 @@ function fuseAlerts(signatureRecords, mlPredictions) {
       return String(a.id).localeCompare(String(b.id));
     });
 
-  const outOfScopeMlPredictionIds = [...mlById.keys()].filter((id) => !signatureById.has(id));
-
-  return { fusedAlerts, outOfScopeMlPredictionIds };
+  return {
+    fusedAlerts,
+    outOfScopeMlPredictionIds: idAlignmentSummary.outOfScopeMlPredictionIds,
+    idAlignmentSummary,
+  };
 }
 
 function incrementCounter(counter, key) {
@@ -251,6 +308,10 @@ function incrementCounter(counter, key) {
 
 function safeDivide(numerator, denominator) {
   return denominator ? Number((numerator / denominator).toFixed(4)) : 0;
+}
+
+function calculateF1(precision, recall) {
+  return precision + recall === 0 ? 0 : Number(((2 * precision * recall) / (precision + recall)).toFixed(4));
 }
 
 function averageScore(alerts) {
@@ -304,7 +365,7 @@ function calculateClassificationMetrics(evaluatedAlerts) {
     const support = truePositive + falseNegative;
     const precision = safeDivide(truePositive, truePositive + falsePositive);
     const recall = safeDivide(truePositive, truePositive + falseNegative);
-    const f1 = precision + recall ? Number(((2 * precision * recall) / (precision + recall)).toFixed(4)) : 0;
+    const f1 = calculateF1(precision, recall);
 
     perClass[label] = {
       precision,
@@ -349,7 +410,7 @@ function calculateBinaryDetectionMetrics(evaluatedAlerts) {
 
   const precision = safeDivide(truePositive, truePositive + falsePositive);
   const recall = safeDivide(truePositive, truePositive + falseNegative);
-  const f1 = precision + recall ? Number(((2 * precision * recall) / (precision + recall)).toFixed(4)) : 0;
+  const f1 = calculateF1(precision, recall);
 
   return {
     positiveClass: 'malicious',
@@ -417,10 +478,39 @@ function calculateAnalystReviewMetrics(evaluatedAlerts) {
   };
 }
 
-function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPredictionIds = []) {
+function summariseFusionResults(fusedAlerts, groundTruth = null, idAlignmentSummary = null) {
+  const safeAlignmentSummary = idAlignmentSummary
+    ? {
+      stage2RecordCount: idAlignmentSummary.stage2RecordCount,
+      stage3PredictionCount: idAlignmentSummary.stage3PredictionCount,
+      matchedIdCount: idAlignmentSummary.matchedIdCount,
+      stage2OnlyCount: idAlignmentSummary.stage2OnlyCount,
+      stage3OutOfScopeCount: idAlignmentSummary.stage3OutOfScopeCount,
+      overlapRateAgainstStage2: idAlignmentSummary.overlapRateAgainstStage2,
+      overlapRateAgainstStage3: idAlignmentSummary.overlapRateAgainstStage3,
+      alignmentStatus: idAlignmentSummary.alignmentStatus,
+      alignmentWarning: idAlignmentSummary.alignmentWarning,
+      stage2OnlyIdsSample: idAlignmentSummary.stage2OnlyIdsSample || [],
+      outOfScopeMlPredictionIdsSample: idAlignmentSummary.outOfScopeMlPredictionIdsSample || [],
+    }
+    : {
+      stage2RecordCount: fusedAlerts.length,
+      stage3PredictionCount: 0,
+      matchedIdCount: 0,
+      stage2OnlyCount: 0,
+      stage3OutOfScopeCount: 0,
+      overlapRateAgainstStage2: 0,
+      overlapRateAgainstStage3: 0,
+      alignmentStatus: 'UNKNOWN',
+      alignmentWarning: null,
+      stage2OnlyIdsSample: [],
+      outOfScopeMlPredictionIdsSample: [],
+    };
+
   const summary = {
     totalFusedAlerts: fusedAlerts.length,
-    outOfScopeMlPredictionCount: outOfScopeMlPredictionIds.length,
+    outOfScopeMlPredictionCount: safeAlignmentSummary.stage3OutOfScopeCount,
+    idAlignmentSummary: safeAlignmentSummary,
     countByFusionDecision: {},
     countByFusionConfidenceLevel: {},
     countRequiringAnalystReview: 0,
@@ -441,9 +531,13 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
     ],
   };
 
-  if (outOfScopeMlPredictionIds.length > 0) {
+  if (safeAlignmentSummary.alignmentWarning) {
+    summary.notes.push(safeAlignmentSummary.alignmentWarning);
+  }
+
+  if (safeAlignmentSummary.stage3OutOfScopeCount > 0) {
     summary.notes.push(
-      `${outOfScopeMlPredictionIds.length} Stage 3 ML prediction(s) were excluded as out of scope because their id does not match any Stage 2 signature record.`
+      `${safeAlignmentSummary.stage3OutOfScopeCount} Stage 3 ML prediction(s) were excluded as out of scope because their id does not match any Stage 2 signature record.`
     );
   }
 
@@ -511,12 +605,6 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
       if (alert.fusionAttackType === trueAttackType) {
         summary.groundTruthEvaluation.matchingFusionAttackTypeCount += 1;
       }
-      if (groundTruthLabel === 'benign' && alert.fusionAttackType !== 'Benign') {
-        summary.groundTruthEvaluation.falsePositiveStyleCount += 1;
-      }
-      if (groundTruthLabel === 'malicious' && alert.fusionAttackType === 'Benign') {
-        summary.groundTruthEvaluation.falseNegativeStyleCount += 1;
-      }
     }
 
     const evaluated = summary.groundTruthEvaluation.evaluatedAlertCount;
@@ -526,6 +614,10 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
 
     summary.groundTruthEvaluation.classificationMetrics = calculateClassificationMetrics(evaluatedAlerts);
     summary.groundTruthEvaluation.binaryDetectionMetrics = calculateBinaryDetectionMetrics(evaluatedAlerts);
+    summary.groundTruthEvaluation.falsePositiveStyleCount =
+      summary.groundTruthEvaluation.binaryDetectionMetrics.falsePositive;
+    summary.groundTruthEvaluation.falseNegativeStyleCount =
+      summary.groundTruthEvaluation.binaryDetectionMetrics.falseNegative;
     summary.groundTruthEvaluation.riskPrioritisationMetrics = calculateRiskPrioritisationMetrics(evaluatedAlerts);
     summary.groundTruthEvaluation.analystReviewMetrics = calculateAnalystReviewMetrics(evaluatedAlerts);
   }

@@ -14,6 +14,31 @@ Stage 4 combines Stage 2 signature evidence and Stage 3 ML predictions. Ground t
 - Signature-only alert count: 15
 - Infiltration ML limitation count: 0
 
+## ID Alignment Summary
+
+Fusion is Stage-2-scoped. ML predictions are used only when IDs match Stage 2 records. Out-of-scope ML predictions are reported for debugging but are not inserted into the dashboard fusion queue.
+
+- Stage 2 record count: 1000
+- Stage 3 prediction count: 996
+- Matched ID count: 996
+- Stage 2 only count: 4
+- Stage 3 out-of-scope count: 0
+- Overlap rate against Stage 2: 99.60%
+- Overlap rate against Stage 3: 100.00%
+- Alignment status: OK
+- Alignment warning: none
+
+### Stage 2-Only ID Sample
+
+- AL-0376
+- AL-0423
+- AL-0447
+- AL-0984
+
+### Out-of-Scope Stage 3 ID Sample
+
+- none
+
 ## Count By Fusion Decision
 
 - LOW_RISK_BENIGN: 476

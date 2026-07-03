@@ -33,6 +33,14 @@ stage-1/data/processed/ground-truth.json
 
 Ground truth is not used when calculating fusion decisions or risk scores.
 
+## Stage-2-Scoped Fusion Mode
+
+Stage 4 currently uses Stage-2-scoped fusion mode. The fused dashboard alert queue is based on Stage 2 / Stage 1 alert IDs.
+
+Stage 3 predictions are joined only when their IDs match Stage 2 records. Unmatched Stage 3 predictions are treated as out of scope for dashboard fusion and are reported for debugging instead of being silently inserted into fused alerts.
+
+Held-out ML predictions are still useful for Stage 3 model evaluation, but they should not be mixed into Stage 4 dashboard fusion unless they refer to the same `AL-XXXX` alert IDs.
+
 ## Fusion Logic
 
 The fusion engine handles these cases:
@@ -47,6 +55,8 @@ The fusion engine handles these cases:
 - ML prediction exists but no signature record exists, which is reported as out of scope instead of being added to the fused dashboard output.
 
 The fused dashboard output is scoped to Stage 2 signature records. Stage 3 predictions are joined only when their IDs match those records. This prevents held-out ML evaluation predictions from inflating the Stage 4 dashboard output.
+
+`ML_ONLY_NO_SIGNATURE_RECORD` is retained for direct `fuseAlert()` callers and any future union-mode fusion. In the current Stage-2-scoped dashboard fusion workflow, this case is not normally emitted because fusion iterates over Stage 2 IDs only.
 
 ## Risk Scoring
 
@@ -106,6 +116,7 @@ Evaluation joins ground truth only after fusion is completed.
 
 The summary includes:
 
+- ID alignment metrics: Stage 2 record count, Stage 3 prediction count, matched ID count, Stage 2-only count, Stage 3 out-of-scope count, overlap rates, alignment status, warnings, and capped ID samples.
 - Classification metrics: accuracy, macro F1, weighted F1, binary TP/TN/FP/FN, per-class precision / recall / F1, and a confusion matrix.
 - Fusion behaviour metrics: decision counts, confidence counts, attack type counts, signature/ML agreement and disagreement counts, ML-only count, signature-only count, and Infiltration ML limitation count.
 - Risk prioritisation metrics: benign/malicious average risk score, top-k precision, high-risk threshold precision, high-risk benign count, and low-risk malicious count.

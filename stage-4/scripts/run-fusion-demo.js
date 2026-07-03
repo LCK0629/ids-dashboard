@@ -56,6 +56,17 @@ function renderConfusionMatrix(confusionMatrix) {
   return lines.join('\n');
 }
 
+function renderPercent(rate) {
+  return `${(Number(rate || 0) * 100).toFixed(2)}%`;
+}
+
+function renderIdSample(ids) {
+  if (!ids || ids.length === 0) {
+    return '- none';
+  }
+  return ids.map((id) => `- ${id}`).join('\n');
+}
+
 function renderEvaluationMarkdown(summary) {
   const lines = [
     '# Stage 4 Fusion Evaluation Summary',
@@ -73,6 +84,28 @@ function renderEvaluationMarkdown(summary) {
     `- ML-only alert count: ${summary.mlOnlyAlertCount}`,
     `- Signature-only alert count: ${summary.signatureOnlyAlertCount}`,
     `- Infiltration ML limitation count: ${summary.infiltrationMlLimitationCount}`,
+    '',
+    '## ID Alignment Summary',
+    '',
+    'Fusion is Stage-2-scoped. ML predictions are used only when IDs match Stage 2 records. Out-of-scope ML predictions are reported for debugging but are not inserted into the dashboard fusion queue.',
+    '',
+    `- Stage 2 record count: ${summary.idAlignmentSummary.stage2RecordCount}`,
+    `- Stage 3 prediction count: ${summary.idAlignmentSummary.stage3PredictionCount}`,
+    `- Matched ID count: ${summary.idAlignmentSummary.matchedIdCount}`,
+    `- Stage 2 only count: ${summary.idAlignmentSummary.stage2OnlyCount}`,
+    `- Stage 3 out-of-scope count: ${summary.idAlignmentSummary.stage3OutOfScopeCount}`,
+    `- Overlap rate against Stage 2: ${renderPercent(summary.idAlignmentSummary.overlapRateAgainstStage2)}`,
+    `- Overlap rate against Stage 3: ${renderPercent(summary.idAlignmentSummary.overlapRateAgainstStage3)}`,
+    `- Alignment status: ${summary.idAlignmentSummary.alignmentStatus}`,
+    `- Alignment warning: ${summary.idAlignmentSummary.alignmentWarning || 'none'}`,
+    '',
+    '### Stage 2-Only ID Sample',
+    '',
+    renderIdSample(summary.idAlignmentSummary.stage2OnlyIdsSample),
+    '',
+    '### Out-of-Scope Stage 3 ID Sample',
+    '',
+    renderIdSample(summary.idAlignmentSummary.outOfScopeMlPredictionIdsSample),
     '',
     '## Count By Fusion Decision',
     '',
@@ -165,9 +198,9 @@ function renderEvaluationMarkdown(summary) {
 function main() {
   const signatureOutput = loadJsonFile(signatureOutputPath);
   const mlPredictions = loadJsonFile(mlPredictionsPath);
-  const { fusedAlerts, outOfScopeMlPredictionIds } = fuseAlerts(signatureOutput, mlPredictions);
+  const { fusedAlerts, outOfScopeMlPredictionIds, idAlignmentSummary } = fuseAlerts(signatureOutput, mlPredictions);
   const groundTruth = loadJsonFile(groundTruthPath, null);
-  const evaluationSummary = summariseFusionResults(fusedAlerts, groundTruth, outOfScopeMlPredictionIds);
+  const evaluationSummary = summariseFusionResults(fusedAlerts, groundTruth, idAlignmentSummary);
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
@@ -179,6 +212,17 @@ function main() {
   console.log(`ML predictions loaded: ${mlPredictions.length}`);
   console.log(`Fused alerts written: ${fusedAlerts.length}`);
   console.log(`Stage 3 predictions excluded as out of scope: ${outOfScopeMlPredictionIds.length}`);
+  console.log(`Stage 2 records: ${idAlignmentSummary.stage2RecordCount}`);
+  console.log(`Stage 3 predictions: ${idAlignmentSummary.stage3PredictionCount}`);
+  console.log(`Matched IDs: ${idAlignmentSummary.matchedIdCount}`);
+  console.log(`Stage 2 only IDs: ${idAlignmentSummary.stage2OnlyCount}`);
+  console.log(`Stage 3 out-of-scope IDs: ${idAlignmentSummary.stage3OutOfScopeCount}`);
+  console.log(`Overlap rate against Stage 2: ${renderPercent(idAlignmentSummary.overlapRateAgainstStage2)}`);
+  console.log(`Overlap rate against Stage 3: ${renderPercent(idAlignmentSummary.overlapRateAgainstStage3)}`);
+  console.log(`Alignment status: ${idAlignmentSummary.alignmentStatus}`);
+  if (idAlignmentSummary.alignmentWarning) {
+    console.log(`Alignment warning: ${idAlignmentSummary.alignmentWarning}`);
+  }
   console.log(`Requires analyst review: ${evaluationSummary.countRequiringAnalystReview}`);
   console.log(`Fusion output: ${fusionOutputPath}`);
   console.log(`Evaluation summary: ${evaluationMarkdownPath}`);

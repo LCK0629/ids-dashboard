@@ -17,6 +17,7 @@ This project develops a next-generation intrusion detection interface that combi
 ```txt
 .
 |-- docs/
+|   |-- environment.md
 |   |-- features.md
 |   |-- progress-log.md
 |   |-- proposal.md
@@ -68,6 +69,48 @@ Combines signature and ML results into final alert priority.
 
 Human feedback:
 Administrator feedback adjusts repeated false-positive patterns through Exception Memory.
+
+## Environment Requirements
+
+This project uses two lightweight development environments:
+
+- Node.js: used for Stage 2 signature engine scripts and future dashboard integration.
+- Python: used for Stage 1 preprocessing and future Stage 3 ML experiments.
+
+### Node.js
+
+Recommended version:
+
+```txt
+Node.js 20 or later
+```
+
+Check installation:
+
+```powershell
+node -v
+npm -v
+```
+
+Run the Stage 2 signature demo:
+
+```powershell
+node stage-2/scripts/run-signature-demo.js
+```
+
+If Node.js is not installed, a portable Node.js zip can be used without modifying the system PATH.
+
+### Python
+
+Recommended version:
+
+```txt
+Python 3.10 or later
+```
+
+Python is used for data preprocessing notebooks/scripts. Python dependencies will be formalized later through `requirements.txt`.
+
+More details are documented in [Environment Setup](docs/environment.md).
 
 ## Prototype Demo
 
@@ -125,5 +168,6 @@ Dataset files and processing scripts will be placed under the `stage-1/` folder.
 - [Proposal](docs/proposal.md)
 - [Features](docs/features.md)
 - [Tech Stack](docs/tech-stack.md)
+- [Environment Setup](docs/environment.md)
 - [Progress Log](docs/progress-log.md)
 - [Questions](docs/questions.md)

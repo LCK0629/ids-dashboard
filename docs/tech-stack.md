@@ -87,6 +87,13 @@ Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and 
 - HTML / CSS / JavaScript dashboard for the current frontend prototype.
 - ML + workload + usability evaluation for final project assessment.
 
+## Environment Requirements
+
+- Node.js 20 or later is recommended for Stage 2 signature scripts and future dashboard integration scripts.
+- Python 3.10 or later is recommended for Stage 1 preprocessing and future Stage 3 ML experiments.
+- Stage 2 currently uses Node.js built-in modules only, so no `npm install` is required yet.
+- Detailed setup notes are documented in `docs/environment.md`.
+
 Full Snort or Suricata packet inspection is not implemented in the current prototype because the project uses flow-level CSE-CIC-IDS2018 records, not raw packet payloads.
 
 The Stage 2 signature engine should not use `attackType` or `groundTruth` as detection inputs. These fields come from dataset labels and are kept for evaluation, summary reporting, and dashboard explanation only.

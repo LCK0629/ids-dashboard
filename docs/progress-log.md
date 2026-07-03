@@ -38,6 +38,7 @@
 - Started Stage 2 by adding a standalone flow-based signature detection engine.
 - Corrected the Stage 2 signature engine direction so rules use flow-level features instead of dataset-derived `attackType`, while `attackType` and `groundTruth` remain for evaluation only.
 - Split Stage 1 processed outputs into feature-only detection input, ground-truth evaluation labels, and a dashboard-ready labelled sample to prevent future detection engines from using answer fields.
+- Added environment documentation for Node.js and Python requirements, including a portable Node.js option for running Stage 2 without modifying the system PATH.
 
 ## Week 4
 

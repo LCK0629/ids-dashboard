@@ -59,6 +59,7 @@ npm run build
 - Fusion decision and evidence.
 - Analyst review flag.
 - Guardrail and feedback reason.
+- Model confidence is displayed as an XGBoost confidence score. It is not a calibrated probability and should not be interpreted as absolute certainty. Values very close to 1.0 are displayed as 99.9%+ to avoid implying guaranteed correctness.
 
 ## What Is Not Included Yet
 

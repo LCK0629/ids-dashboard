@@ -86,3 +86,17 @@ export function formatPercent(value?: number | null): string {
   }
   return `${(Number(value) * 100).toFixed(1)}%`;
 }
+
+export function formatModelConfidenceScore(value?: number | null): string {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) {
+    return 'N/A';
+  }
+  const numericValue = Number(value);
+  if (numericValue >= 1) {
+    return '100.0%';
+  }
+  if (numericValue >= 0.999) {
+    return '99.9%+';
+  }
+  return `${(numericValue * 100).toFixed(1)}%`;
+}

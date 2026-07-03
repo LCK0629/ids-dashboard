@@ -302,6 +302,11 @@ button {
   line-height: 1.55;
 }
 
+.evidence-block .helper-text {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
-import { formatPercent, formatScore } from '../utils/alertFilters';
+import { formatModelConfidenceScore, formatScore } from '../utils/alertFilters';
 import { ScoreComparison } from './ScoreComparison';
 
 interface AlertDetailPanelProps {
@@ -77,9 +77,10 @@ export function AlertDetailPanel({ alert }: AlertDetailPanelProps) {
       <EvidenceBlock title="ML Evidence">
         <div className="detail-grid">
           <DetailItem label="ML prediction">{value(alert.mlPredictedAttackType)}</DetailItem>
-          <DetailItem label="Model confidence">{formatPercent(alert.modelConfidence)}</DetailItem>
+          <DetailItem label="XGBoost confidence score">{formatModelConfidenceScore(alert.modelConfidence)}</DetailItem>
           <DetailItem label="Base risk">{formatScore(alert.baseRiskScore)}</DetailItem>
         </div>
+        <p className="helper-text">XGBoost confidence is an uncalibrated model score, not a guarantee of correctness.</p>
       </EvidenceBlock>
 
       <EvidenceBlock title="Fusion Evidence">

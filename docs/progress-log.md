@@ -68,6 +68,7 @@
 - Added Stage 5 Human Feedback and Exception Memory prototype to apply simulated analyst feedback, adjust current alert risk scores, preserve original fusion scores, and evaluate before/after workload and false-positive priority effects.
 - Clarified Stage 5 guardrail evaluation metrics by separating score adjustment guardrails from exception trust-gate rejections for more accurate report interpretation.
 - Added Stage 6 React dashboard integration to visualise Stage 5 feedback-adjusted alerts, including alert queue, KPI cards, filters, score comparison, signature evidence, ML prediction, fusion evidence, and feedback adjustment details.
+- Clarified Stage 6 dashboard model confidence wording and formatting so near-100% XGBoost scores are displayed as confidence scores rather than absolute certainty.
 
 ## Notes
 

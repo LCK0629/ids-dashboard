@@ -326,6 +326,45 @@ function calculateClassificationMetrics(evaluatedAlerts) {
   };
 }
 
+function calculateBinaryDetectionMetrics(evaluatedAlerts) {
+  let truePositive = 0;
+  let trueNegative = 0;
+  let falsePositive = 0;
+  let falseNegative = 0;
+
+  for (const record of evaluatedAlerts) {
+    const actualMalicious = record.groundTruthLabel === 'malicious';
+    const predictedMalicious = record.predictedAttackType !== 'Benign';
+
+    if (actualMalicious && predictedMalicious) {
+      truePositive += 1;
+    } else if (!actualMalicious && !predictedMalicious) {
+      trueNegative += 1;
+    } else if (!actualMalicious && predictedMalicious) {
+      falsePositive += 1;
+    } else if (actualMalicious && !predictedMalicious) {
+      falseNegative += 1;
+    }
+  }
+
+  const precision = safeDivide(truePositive, truePositive + falsePositive);
+  const recall = safeDivide(truePositive, truePositive + falseNegative);
+  const f1 = precision + recall ? Number(((2 * precision * recall) / (precision + recall)).toFixed(4)) : 0;
+
+  return {
+    positiveClass: 'malicious',
+    negativeClass: 'benign',
+    truePositive,
+    trueNegative,
+    falsePositive,
+    falseNegative,
+    precision,
+    recall,
+    specificity: safeDivide(trueNegative, trueNegative + falsePositive),
+    f1,
+  };
+}
+
 function calculateRiskPrioritisationMetrics(evaluatedAlerts) {
   const benignAlerts = evaluatedAlerts.filter((record) => record.groundTruthLabel === 'benign');
   const maliciousAlerts = evaluatedAlerts.filter((record) => record.groundTruthLabel === 'malicious');
@@ -486,6 +525,7 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, outOfScopeMlPre
       : 0;
 
     summary.groundTruthEvaluation.classificationMetrics = calculateClassificationMetrics(evaluatedAlerts);
+    summary.groundTruthEvaluation.binaryDetectionMetrics = calculateBinaryDetectionMetrics(evaluatedAlerts);
     summary.groundTruthEvaluation.riskPrioritisationMetrics = calculateRiskPrioritisationMetrics(evaluatedAlerts);
     summary.groundTruthEvaluation.analystReviewMetrics = calculateAnalystReviewMetrics(evaluatedAlerts);
   }

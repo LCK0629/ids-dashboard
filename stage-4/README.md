@@ -106,7 +106,7 @@ Evaluation joins ground truth only after fusion is completed.
 
 The summary includes:
 
-- Classification metrics: accuracy, macro F1, weighted F1, per-class precision / recall / F1, and a confusion matrix.
+- Classification metrics: accuracy, macro F1, weighted F1, binary TP/TN/FP/FN, per-class precision / recall / F1, and a confusion matrix.
 - Fusion behaviour metrics: decision counts, confidence counts, attack type counts, signature/ML agreement and disagreement counts, ML-only count, signature-only count, and Infiltration ML limitation count.
 - Risk prioritisation metrics: benign/malicious average risk score, top-k precision, high-risk threshold precision, high-risk benign count, and low-risk malicious count.
 - Analyst review metrics: review count, review rate, reviewed malicious/benign counts, review precision, malicious records not requiring review, and benign records requiring review.

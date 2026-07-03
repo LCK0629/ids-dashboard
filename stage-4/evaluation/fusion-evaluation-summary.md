@@ -59,6 +59,19 @@ Stage 4 combines Stage 2 signature evidence and Stage 3 ML predictions. Ground t
 - Macro F1: 0.7383
 - Weighted F1: 0.7636
 
+### Binary Detection Metrics
+
+- Positive class: malicious
+- Negative class: benign
+- True positive: 411
+- True negative: 391
+- False positive: 109
+- False negative: 89
+- Binary precision: 0.7904
+- Binary recall: 0.822
+- Binary specificity: 0.782
+- Binary F1: 0.8059
+
 ### Per-Class Precision / Recall / F1
 
 - Benign: precision 0.8146, recall 0.782, F1 0.798, support 500

@@ -144,6 +144,16 @@ If an expected class such as `Infiltration` is missing, the notebook prints a wa
 
 The current model should not be described as supporting `Infiltration` until it is retrained and verified with that class included.
 
+## Current Model Limitation: Infiltration Class
+
+Stage 1 and Stage 2 include `Infiltration`, but the current Stage 3 XGBoost model artifacts do not include `Infiltration` in `label-mapping.json`. This means the current ML model cannot predict `Infiltration`.
+
+This is recorded in `preprocessing-config.json` under `missingExpectedAttackTypes`. The likely cause is the selected Stage 3 training source or row/file caps not including Infiltration rows during the current Colab training run.
+
+This is a known limitation, not a silent model feature. Future retraining should include Infiltration by adjusting data loading, row caps, CSV selection, or targeted file inclusion.
+
+> The current Stage 3 model should be interpreted as a six-class ML prototype. It supports Benign, Botnet, Brute Force, DDoS, DoS, and Web Attack, but it does not currently support Infiltration prediction. Infiltration remains covered only by the Stage 2 signature layer until the ML model is retrained with that class.
+
 ## What Is Not Included Yet
 
 - No final model is trained in this scaffold task.

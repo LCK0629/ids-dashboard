@@ -94,6 +94,8 @@ Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and 
 
 Stage 3 will use XGBoost as the supervised ML detection layer. Training may use observable flow features with ground-truth labels, but prediction must use feature-only input from `stage-1/data/processed/flow-feature-sample.csv`.
 
+Current XGBoost model artifacts are six-class prototype artifacts. `Infiltration` is excluded from the current ML class mapping and should be restored in a future retraining run.
+
 The planned Stage 3 output is:
 
 ```txt

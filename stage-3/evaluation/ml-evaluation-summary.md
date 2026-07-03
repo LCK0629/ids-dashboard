@@ -40,3 +40,11 @@ weighted avg       0.93      0.93      0.93      2186
 ## Current Limitation
 
 The imported Stage 3 model artifacts do not include `Infiltration` in `stage-3/models/label-mapping.json`. A follow-up training run should verify whether `Infilteration` / `Infiltration` appears in the selected raw training source and retrain with that class included where available.
+
+## Known Limitation
+
+The current evaluation does not include `Infiltration`. Metrics are reported only for the six classes present in the trained model. This should be considered when comparing Stage 2 and Stage 3.
+
+Stage 2 includes an Infiltration signature rule, but Stage 3 currently does not include an Infiltration ML class.
+
+> The reported Stage 3 ML metrics exclude Infiltration because the current trained model artifacts do not include that class. The model should not be described as a full seven-class classifier until retrained with Infiltration included.

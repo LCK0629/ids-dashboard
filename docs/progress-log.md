@@ -51,6 +51,7 @@
 - Imported Stage 3 Colab-generated XGBoost artifacts, sample ML predictions, and evaluation summaries into the correct `stage-3/models/`, `stage-3/outputs/`, and `stage-3/evaluation/` folders.
 - Added a Stage 2 signature detection notes notebook with a more natural walkthrough for checking feature-only input, signature rules, signature output, evaluation summaries, and Stage 2B audit files.
 - Added Stage 3 checks for missing expected attack classes, including Infiltration, by printing raw label distributions, mapped class distributions, dropped-row diagnostics, and warnings when expected classes are absent from the trained model.
+- Documented the current Stage 3 limitation that the imported XGBoost model is a six-class prototype and does not include the expected Infiltration class, which remains a future retraining requirement.
 
 ## Week 4
 

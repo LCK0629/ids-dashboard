@@ -145,6 +145,15 @@ stage-3/notebooks/xgboost_ids_training.ipynb
 
 The notebook supports `DATASET_SOURCE = 'kagglehub'`, `'upload_zip'`, `'drive_zip'`, or `'extracted_folder'`.
 
+For free Colab RAM, start with the notebook's memory-safe defaults:
+
+```python
+ROW_CAP_PER_CSV = 20_000
+MAX_ROWS_PER_CLASS = 2_000
+```
+
+If RAM still crashes, reduce `ROW_CAP_PER_CSV` to `5_000` or `10_000`, or set `MAX_CSV_FILES = 3` for a first test run.
+
 The Python scripts remain scaffold commands for later local implementation:
 
 ```powershell

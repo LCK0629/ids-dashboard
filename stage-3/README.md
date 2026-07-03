@@ -6,6 +6,8 @@ Stage 3 prepares an XGBoost-based machine-learning IDS classifier for the Hybrid
 
 The future model will classify CSE-CIC-IDS2018 flow records into dashboard attack types using observable flow-level features.
 
+Stage 3A scaffold exists in this folder. Stage 3B training should be performed in Google Colab using `stage-3/notebooks/xgboost_ids_training.ipynb`.
+
 ## Stage 3 Role in the Hybrid IDS
 
 Stage 3 provides the machine-learning detection signal.
@@ -19,6 +21,13 @@ Later Stage 4 will combine:
 ## Input Data
 
 Training will use CSE-CIC-IDS2018 flow features and supervised labels.
+
+For Colab training, use either:
+
+- An uploaded `/content/archive.zip`.
+- A Google Drive archive such as `/content/drive/MyDrive/cse-cic-ids2018/archive.zip`.
+
+Raw CSE-CIC-IDS2018 CSV files and dataset archives should not be committed to GitHub.
 
 For local demo prediction, the intended feature-only input is:
 
@@ -55,6 +64,8 @@ Training should use only observable numeric or encoded categorical flow features
 Prediction must use feature-only records.
 
 The prediction step must not read ground truth, raw labels, mapped attack types, severity, or similarity keys. Ground truth should be joined only after prediction for evaluation.
+
+After Colab training, only model artifacts and small output/evaluation files should be copied back into the repository.
 
 ## Expected Model Artifacts
 
@@ -125,10 +136,23 @@ stage-3/evaluation/
 
 ## How to Run Later
 
-These commands are scaffold commands for later implementation:
+For Stage 3B training, open this notebook in Google Colab:
+
+```txt
+stage-3/notebooks/xgboost_ids_training.ipynb
+```
+
+The Python scripts remain scaffold commands for later local implementation:
 
 ```powershell
 python stage-3/scripts/train_xgboost_ids.py
 python stage-3/scripts/run_ml_prediction_demo.py
 ```
 
+The Colab notebook exports artifacts that can later be copied into:
+
+```txt
+stage-3/models/
+stage-3/outputs/
+stage-3/evaluation/
+```

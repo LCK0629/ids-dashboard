@@ -45,6 +45,7 @@
 - Added Stage 2B feature distribution audit to analyse rule feature distributions, rule boundary behaviour, benign near-misses, and rule strength without changing thresholds or performing tuning.
 - Refined Stage 2B benign near-miss logic so near-miss records must be close to important numeric rule thresholds instead of merely matching broad conditions.
 - Started Stage 3 by adding an XGBoost ML detection scaffold, including training notebook template, script structure, model artifact plan, prediction output plan, and documentation for feature-label separation.
+- Upgraded the Stage 3 XGBoost notebook into a Colab-ready training workflow covering dataset loading, cleaning, label mapping, feature selection, XGBoost training, evaluation, artifact export, and sample ML prediction generation.
 
 ## Week 4
 

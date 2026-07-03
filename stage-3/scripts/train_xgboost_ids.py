@@ -4,9 +4,9 @@ This module prepares the future supervised ML training pipeline for the
 Human-in-the-Loop IDS Dashboard. It should train on observable flow features and
 labels, but it must not use dashboard-derived answer fields as model features.
 
-The full training implementation depends on the local or Colab location of the
-larger CSE-CIC-IDS2018 CSV files, so this file currently provides a safe
-scaffold rather than a final model training pipeline.
+The Colab-ready training workflow is documented in
+stage-3/notebooks/xgboost_ids_training.ipynb. This file remains a safe local
+script scaffold rather than the final model training pipeline.
 """
 
 from __future__ import annotations
@@ -154,6 +154,7 @@ def save_artifacts(model, feature_columns: list[str], label_mapping: dict[str, s
 def main() -> None:
     print("Stage 3 XGBoost IDS training scaffold.")
     print("No final model is trained by this scaffold yet.")
+    print("Use stage-3/notebooks/xgboost_ids_training.ipynb in Google Colab for the current training workflow.")
     print(f"Expected feature input: {FEATURE_SAMPLE_PATH}")
     print(f"Expected ground truth labels for supervised training/evaluation: {GROUND_TRUTH_PATH}")
     print("Prediction code must not use ground truth or dashboard-derived answer fields.")
@@ -161,4 +162,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

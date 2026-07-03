@@ -8,3 +8,5 @@ archive.zip
 *.csv
 stage-3/notebooks/*Colab*.pdf
 stage-3/notebooks/*.pdf
+dashboard/node_modules/
+dashboard/dist/

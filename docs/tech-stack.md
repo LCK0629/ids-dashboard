@@ -90,6 +90,10 @@ Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and 
 - Node.js JSON-based feedback adaptation logic for Stage 5.
 - Stage 5 feedback memory uses prototype JSON storage for simulated analyst feedback and exception patterns.
 - Future dashboard integration can replace JSON samples with interactive analyst feedback.
+- React, Vite, and TypeScript for the Stage 6 dashboard integration.
+- Stage 6 reads static JSON outputs from Stage 4 and Stage 5.
+- No backend API is required for the current dashboard prototype.
+- Later work may replace static JSON imports with API and database integration.
 - Exception Memory to store repeated analyst feedback patterns.
 - Beta-Bernoulli feedback scoring to model repeated true-positive and false-positive feedback.
 - HTML / CSS / JavaScript dashboard for the current frontend prototype.
@@ -123,9 +127,9 @@ Ground truth should be joined only after prediction for evaluation under `stage-
 
 ## Environment Requirements
 
-- Node.js 20 or later is recommended for Stage 2 signature scripts and future dashboard integration scripts.
+- Node.js 20 or later is recommended for Stage 2 signature scripts, Stage 4/5 JSON processing scripts, and the Stage 6 React dashboard.
 - Python 3.10 or later is recommended for Stage 1 preprocessing and future Stage 3 ML experiments.
-- Stage 2 currently uses Node.js built-in modules only, so no `npm install` is required yet.
+- Stage 2, Stage 4, and Stage 5 currently use Node.js built-in modules only. Stage 6 requires `npm install` inside `dashboard/` for React, Vite, and TypeScript.
 - Detailed setup notes are documented in `docs/environment.md`.
 
 Full Snort or Suricata packet inspection is not implemented in the current prototype because the project uses flow-level CSE-CIC-IDS2018 records, not raw packet payloads.
@@ -140,7 +144,7 @@ Stage 2: Flow-based signature detection
 Stage 3: XGBoost ML Detection Engine
 Stage 4: Fusion Engine
 Stage 5: Human feedback and Exception Memory
-Stage 6: Dashboard integration
+Stage 6: React Dashboard Integration
 Stage 7: Evaluation
 ```
 

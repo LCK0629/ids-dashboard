@@ -62,6 +62,10 @@ This project develops a next-generation intrusion detection interface that combi
 |   |-- outputs/
 |   |-- scripts/
 |   `-- README.md
+|-- dashboard/
+|   |-- src/
+|   |-- package.json
+|   `-- README.md
 `-- README.md
 ```
 
@@ -75,7 +79,7 @@ Stage 2: Flow-based signature detection
 Stage 3: XGBoost ML Detection Engine
 Stage 4: Fusion Engine
 Stage 5: Human feedback and Exception Memory
-Stage 6: Dashboard integration
+Stage 6: React Dashboard Integration
 Stage 7: Evaluation
 ```
 
@@ -95,7 +99,7 @@ Administrator feedback adjusts repeated false-positive patterns through Exceptio
 
 This project uses two lightweight development environments:
 
-- Node.js: used for Stage 2 signature engine scripts and future dashboard integration.
+- Node.js: used for Stage 2 signature scripts, Stage 4/5 JSON processing scripts, and the Stage 6 React dashboard.
 - Python: used for Stage 1 preprocessing and future Stage 3 ML experiments.
 
 ### Node.js
@@ -117,6 +121,14 @@ Run the Stage 2 signature demo:
 
 ```powershell
 node stage-2/scripts/run-signature-demo.js
+```
+
+Run the Stage 6 dashboard:
+
+```powershell
+cd dashboard
+npm install
+npm run dev
 ```
 
 If Node.js is not installed, a portable Node.js zip can be used without modifying the system PATH.
@@ -150,6 +162,18 @@ http://127.0.0.1:4173/prototype-demo/index.html
 ```
 
 Future formal development can be added separately without mixing it with the demo, for example in an `app/`, `frontend/`, or `src/` folder.
+
+## Stage 6 Dashboard
+
+The `dashboard` folder contains the formal React + Vite + TypeScript dashboard integration. It reads copied static JSON outputs from Stage 4 and Stage 5.
+
+To run it:
+
+```powershell
+cd dashboard
+npm install
+npm run dev
+```
 
 ## Stage 1 Dataset Plan
 

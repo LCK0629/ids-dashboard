@@ -67,6 +67,7 @@
 - Hardened Stage 4 fusion alignment reporting by adding ID overlap metrics, out-of-scope ML prediction ID samples, low-overlap warnings, and clearer documentation for Stage-2-scoped fusion mode.
 - Added Stage 5 Human Feedback and Exception Memory prototype to apply simulated analyst feedback, adjust current alert risk scores, preserve original fusion scores, and evaluate before/after workload and false-positive priority effects.
 - Clarified Stage 5 guardrail evaluation metrics by separating score adjustment guardrails from exception trust-gate rejections for more accurate report interpretation.
+- Added Stage 6 React dashboard integration to visualise Stage 5 feedback-adjusted alerts, including alert queue, KPI cards, filters, score comparison, signature evidence, ML prediction, fusion evidence, and feedback adjustment details.
 
 ## Notes
 

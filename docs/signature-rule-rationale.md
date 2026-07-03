@@ -205,6 +205,14 @@ The next improvement path is:
 
 This keeps the current prototype useful while making the route toward stronger evaluation explicit.
 
-## 8. Suggested Report Wording
+## 8. Stage 2B Audit Support
+
+Stage 2B adds an audit script that reviews the current Stage 1 feature sample against the existing Stage 2 signature rules.
+
+The audit produces feature distribution summaries by true attack type, rule boundary analysis, benign near-miss reporting, and a rule review matrix. These outputs support report writing and help explain why each rule appears reasonable on the current sample.
+
+The audit does not replace the manual rule rationale in this document. It also does not prove that the rules are globally optimal, and it does not perform threshold tuning or rule optimisation.
+
+## 9. Suggested Report Wording
 
 The Stage 2 signature rules were manually designed as flow-level heuristic rules. Their structure is based on signature-based IDS principles, common network attack behavior, and observable CSE-CIC-IDS2018 flow features such as destination port, packet rate, flow duration, and packet counts. The rules do not use ground-truth labels as detection input. Although the current rules achieved full coverage on the selected Stage 1 sample, this result is treated as prototype evidence only. The thresholds are not claimed to be globally optimal and require further validation using feature distribution analysis and held-out samples.

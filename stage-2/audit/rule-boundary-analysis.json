@@ -1,0 +1,641 @@
+[
+  {
+    "ruleId": "SIG-FTP-BRUTE-FORCE",
+    "predictedAttackType": "Brute Force",
+    "currentConditions": {
+      "protocol": "TCP",
+      "destinationPort": 21,
+      "flowPacketsPerSecond": {
+        "min": 10
+      },
+      "totalFwdPackets": {
+        "min": 10
+      },
+      "flowDuration": {
+        "max": 5000000
+      }
+    },
+    "totalRecordsMatched": 76,
+    "maliciousRecordsMatched": 76,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 76,
+        "coverage": 0.9047619047619048
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
+    "confidenceLevel": "Moderate",
+    "interpretation": "FTP Brute Force Flow Pattern matched 76 current sample records using feature-only conditions.",
+    "limitation": "Cannot inspect FTP login payloads or failed login responses.",
+    "actionRecommendation": "Keep as prototype heuristic"
+  },
+  {
+    "ruleId": "SIG-SSH-BRUTE-FORCE",
+    "predictedAttackType": "Brute Force",
+    "currentConditions": {
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flowPacketsPerSecond": {
+        "min": 10
+      },
+      "totalFwdPackets": {
+        "min": 10
+      },
+      "flowDuration": {
+        "max": 5000000
+      }
+    },
+    "totalRecordsMatched": 8,
+    "maliciousRecordsMatched": 8,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 8,
+        "coverage": 0.09523809523809523
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 11,
+    "benignNearMissExamples": [
+      {
+        "id": "AL-0066",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (22)",
+          "flowDuration matched (1160000)"
+        ]
+      },
+      {
+        "id": "AL-0074",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (22)",
+          "flowDuration matched (1280000)"
+        ]
+      },
+      {
+        "id": "AL-0105",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (22)",
+          "flowDuration matched (800000)"
+        ]
+      },
+      {
+        "id": "AL-0111",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (22)",
+          "flowDuration matched (1520000)"
+        ]
+      },
+      {
+        "id": "AL-0131",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (22)",
+          "flowDuration matched (1400000)"
+        ]
+      }
+    ],
+    "confidenceLevel": "Moderate",
+    "interpretation": "SSH Brute Force Flow Pattern matched 8 current sample records using feature-only conditions.",
+    "limitation": "Cannot inspect SSH authentication failure details.",
+    "actionRecommendation": "Keep as prototype heuristic"
+  },
+  {
+    "ruleId": "SIG-DOS-HIGH-RATE-FLOW",
+    "predictedAttackType": "DoS",
+    "currentConditions": {
+      "protocol": "TCP",
+      "flowPacketsPerSecond": {
+        "min": 650,
+        "max": 899
+      },
+      "totalFwdPackets": {
+        "min": 80
+      },
+      "totalBwdPackets": {
+        "max": 10
+      }
+    },
+    "totalRecordsMatched": 83,
+    "maliciousRecordsMatched": 83,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 83,
+        "coverage": 1
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 500,
+    "benignNearMissExamples": [
+      {
+        "id": "AL-0001",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (3 vs 899)",
+          "totalBwdPackets matched (3)"
+        ]
+      },
+      {
+        "id": "AL-0002",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (4 vs 899)",
+          "totalBwdPackets matched (2)"
+        ]
+      },
+      {
+        "id": "AL-0003",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (5 vs 899)",
+          "totalBwdPackets matched (3)"
+        ]
+      },
+      {
+        "id": "AL-0004",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "flowPacketsPerSecond close to max (2 vs 899)",
+          "totalBwdPackets matched (2)"
+        ]
+      },
+      {
+        "id": "AL-0005",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (3 vs 899)",
+          "totalBwdPackets matched (3)"
+        ]
+      }
+    ],
+    "confidenceLevel": "Moderate",
+    "interpretation": "High Rate DoS Flow Pattern matched 83 current sample records using feature-only conditions.",
+    "limitation": "High-rate legitimate traffic can also match this pattern.",
+    "actionRecommendation": "Keep but validate on held-out sample"
+  },
+  {
+    "ruleId": "SIG-DDOS-HIGH-RATE-FLOW",
+    "predictedAttackType": "DDoS",
+    "currentConditions": {
+      "protocol": "TCP",
+      "flowPacketsPerSecond": {
+        "min": 900
+      },
+      "totalFwdPackets": {
+        "min": 120
+      },
+      "totalBwdPackets": {
+        "max": 8
+      }
+    },
+    "totalRecordsMatched": 83,
+    "maliciousRecordsMatched": 83,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 83,
+        "coverage": 1
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 500,
+    "benignNearMissExamples": [
+      {
+        "id": "AL-0001",
+        "matchedOrCloseConditions": [
+          "totalBwdPackets matched (3)"
+        ]
+      },
+      {
+        "id": "AL-0002",
+        "matchedOrCloseConditions": [
+          "totalBwdPackets matched (2)"
+        ]
+      },
+      {
+        "id": "AL-0003",
+        "matchedOrCloseConditions": [
+          "totalBwdPackets matched (3)"
+        ]
+      },
+      {
+        "id": "AL-0004",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "totalBwdPackets matched (2)"
+        ]
+      },
+      {
+        "id": "AL-0005",
+        "matchedOrCloseConditions": [
+          "totalBwdPackets matched (3)"
+        ]
+      }
+    ],
+    "confidenceLevel": "Moderate",
+    "interpretation": "Distributed High Rate Flow Pattern matched 83 current sample records using feature-only conditions.",
+    "limitation": "A single flow row cannot prove distributed source behavior.",
+    "actionRecommendation": "Keep but validate on held-out sample"
+  },
+  {
+    "ruleId": "SIG-BOTNET-BEACON-FLOW",
+    "predictedAttackType": "Botnet",
+    "currentConditions": {
+      "flowDuration": {
+        "min": 10000000
+      },
+      "flowPacketsPerSecond": {
+        "min": 20,
+        "max": 120
+      },
+      "totalFwdPackets": {
+        "min": 20
+      },
+      "totalBwdPackets": {
+        "max": 15
+      }
+    },
+    "totalRecordsMatched": 84,
+    "maliciousRecordsMatched": 84,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 84,
+        "coverage": 1
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 500,
+    "benignNearMissExamples": [
+      {
+        "id": "AL-0001",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (3 vs 120)",
+          "totalBwdPackets matched (3)"
+        ]
+      },
+      {
+        "id": "AL-0002",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (4 vs 120)",
+          "totalBwdPackets matched (2)"
+        ]
+      },
+      {
+        "id": "AL-0003",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (5 vs 120)",
+          "totalBwdPackets matched (3)"
+        ]
+      },
+      {
+        "id": "AL-0004",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (2 vs 120)",
+          "totalBwdPackets matched (2)"
+        ]
+      },
+      {
+        "id": "AL-0005",
+        "matchedOrCloseConditions": [
+          "flowPacketsPerSecond close to max (3 vs 120)",
+          "totalBwdPackets matched (3)"
+        ]
+      }
+    ],
+    "confidenceLevel": "Experimental",
+    "interpretation": "Botnet Beacon-Like Flow Pattern matched 84 current sample records using feature-only conditions.",
+    "limitation": "Reliable botnet detection often needs host history, C2 indicators, or destination reputation.",
+    "actionRecommendation": "Keep but validate on held-out sample"
+  },
+  {
+    "ruleId": "SIG-WEB-ATTACK-FLOW",
+    "predictedAttackType": "Web Attack",
+    "currentConditions": {
+      "protocol": "TCP",
+      "destinationPort": {
+        "oneOf": [
+          80,
+          443
+        ]
+      },
+      "packetLengthMean": {
+        "min": 300
+      },
+      "fwdPacketLengthMean": {
+        "min": 250
+      },
+      "flowDuration": {
+        "max": 5000000
+      }
+    },
+    "totalRecordsMatched": 83,
+    "maliciousRecordsMatched": 83,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 83,
+        "coverage": 1
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 125,
+    "benignNearMissExamples": [
+      {
+        "id": "AL-0016",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (80)",
+          "flowDuration matched (1040000)"
+        ]
+      },
+      {
+        "id": "AL-0017",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (80)",
+          "flowDuration matched (1160000)"
+        ]
+      },
+      {
+        "id": "AL-0020",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (80)",
+          "flowDuration matched (1520000)"
+        ]
+      },
+      {
+        "id": "AL-0031",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (443)",
+          "flowDuration matched (1160000)"
+        ]
+      },
+      {
+        "id": "AL-0034",
+        "matchedOrCloseConditions": [
+          "protocol matched (TCP)",
+          "destinationPort matched (80)",
+          "flowDuration matched (1520000)"
+        ]
+      }
+    ],
+    "confidenceLevel": "Experimental",
+    "interpretation": "Suspicious Web Flow Pattern matched 83 current sample records using feature-only conditions.",
+    "limitation": "Flow-level rules cannot inspect URLs, SQL strings, XSS payloads, or HTTP parameters.",
+    "actionRecommendation": "Keep but validate on held-out sample"
+  },
+  {
+    "ruleId": "SIG-INFILTRATION-LONG-FLOW",
+    "predictedAttackType": "Infiltration",
+    "currentConditions": {
+      "flowDuration": {
+        "min": 20000000
+      },
+      "totalBwdPackets": {
+        "min": 20
+      },
+      "flowBytesPerSecond": {
+        "min": 10000
+      }
+    },
+    "totalRecordsMatched": 83,
+    "maliciousRecordsMatched": 83,
+    "benignRecordsMatched": 0,
+    "trueAttackTypeCoverage": {
+      "Benign": {
+        "total": 500,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Brute Force": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Botnet": {
+        "total": 84,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "DDoS": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Web Attack": {
+        "total": 83,
+        "matched": 0,
+        "coverage": 0
+      },
+      "Infiltration": {
+        "total": 83,
+        "matched": 83,
+        "coverage": 1
+      }
+    },
+    "benignFalseMatchCount": 0,
+    "benignNearMissCount": 0,
+    "benignNearMissExamples": [],
+    "confidenceLevel": "Weak",
+    "interpretation": "Long Duration Infiltration-Like Flow Pattern matched 83 current sample records using feature-only conditions.",
+    "limitation": "Infiltration is context-dependent and difficult to detect with flow features alone.",
+    "actionRecommendation": "Needs richer features"
+  }
+]

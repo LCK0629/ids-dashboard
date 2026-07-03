@@ -96,6 +96,30 @@ These files record post-prediction evaluation metrics. They are generated only a
 
 The evaluation summary includes precision, recall, F1 score, benign signature hits, hits by signature, hits by predicted attack type, and coverage by true attack type.
 
+## Stage 2B Feature Distribution Audit
+
+Stage 2B adds an audit-only feature distribution check for the current Stage 1 sample and Stage 2 signature rules.
+
+Run it from the repository root:
+
+```powershell
+node stage-2/scripts/audit-flow-features.js
+```
+
+The audit writes:
+
+```txt
+stage-2/audit/feature-distribution-summary.json
+stage-2/audit/feature-distribution-summary.md
+stage-2/audit/rule-boundary-analysis.json
+stage-2/audit/rule-boundary-analysis.md
+stage-2/audit/rule-review-matrix.md
+```
+
+These files summarise feature distributions by true attack type, rule boundary behaviour, benign near-misses, and rule strength notes for report writing.
+
+Stage 2B does not change rule thresholds, tune rules, train a model, or connect anything to the dashboard. It only helps justify and review the existing prototype signature rules.
+
 ## Role In The Later Fusion Engine
 
 Stage 2 prepares one detection signal for the later fusion engine. Future stages will combine:

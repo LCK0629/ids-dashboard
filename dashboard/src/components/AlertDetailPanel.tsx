@@ -80,7 +80,7 @@ export function AlertDetailPanel({ alert }: AlertDetailPanelProps) {
           <DetailItem label="XGBoost confidence score">{formatModelConfidenceScore(alert.modelConfidence)}</DetailItem>
           <DetailItem label="Base risk">{formatScore(alert.baseRiskScore)}</DetailItem>
         </div>
-        <p className="helper-text">XGBoost confidence is an uncalibrated model score, not a guarantee of correctness.</p>
+        <p className="helper-text">Uncalibrated model score, not certainty.</p>
       </EvidenceBlock>
 
       <EvidenceBlock title="Fusion Evidence">

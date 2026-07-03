@@ -44,10 +44,16 @@ export interface FeedbackAdjustedAlert {
 export interface FeedbackEvaluationSummary {
   totalAlerts?: number;
   alertsAdjusted?: number;
+  alertsUnchanged?: number;
+  directFeedbackAppliedCount?: number;
+  unmatchedDirectFeedbackCount?: number;
+  exceptionMemoryAppliedCount?: number;
+  ignoredExceptionCount?: number;
   reviewQueueBefore?: number;
   reviewQueueAfter?: number;
   averageRiskBeforeFeedback?: number;
   averageRiskAfterFeedback?: number;
+  averageRiskChange?: number;
   scoreAdjustmentGuardrailCount?: number;
   exceptionRejectedByTrustGateCount?: number;
   guardrailAppliedCount?: number;
@@ -57,6 +63,12 @@ export interface FeedbackEvaluationSummary {
   benignHighRiskAfter?: number;
   maliciousHighRiskBefore?: number;
   maliciousHighRiskAfter?: number;
+  reviewedBenignBefore?: number;
+  reviewedBenignAfter?: number;
+  reviewedMaliciousBefore?: number;
+  reviewedMaliciousAfter?: number;
+  truePositiveSuppressionCount?: number;
+  evaluatedWithGroundTruthCount?: number;
   countByAnalystFeedbackStatus?: Record<string, number>;
 }
 
@@ -65,6 +77,33 @@ export interface FusionEvaluationSummary {
   countRequiringAnalystReview?: number;
   averageFusionRiskScore?: number;
   countByFusionDecision?: Record<string, number>;
+  signatureMlAgreementCount?: number;
+  signatureMlDisagreementCount?: number;
+  mlOnlyAlertCount?: number;
+  signatureOnlyAlertCount?: number;
+  groundTruthEvaluation?: {
+    simpleFusionAccuracy?: number;
+    classificationMetrics?: {
+      accuracy?: number;
+      macroF1?: number;
+      weightedF1?: number;
+    };
+    binaryDetectionMetrics?: {
+      precision?: number;
+      recall?: number;
+      f1?: number;
+    };
+    riskPrioritisationMetrics?: {
+      top50Precision?: number;
+      top100Precision?: number;
+      top200Precision?: number;
+      highRiskThresholdPrecision?: number;
+    };
+    analystReviewMetrics?: {
+      reviewPrecision?: number;
+      reviewRate?: number;
+    };
+  };
   idAlignmentSummary?: {
     stage2RecordCount?: number;
     stage3PredictionCount?: number;

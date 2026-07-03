@@ -18,33 +18,45 @@ function classNameForAlert(alert: FeedbackAdjustedAlert, selected: boolean): str
 
 export function AlertQueue({ alerts, selectedAlertId, onSelectAlert }: AlertQueueProps) {
   return (
-    <section className="panel alert-queue">
+    <section className="panel queue-panel">
       <div className="panel-header">
-        <h2>Alert Queue</h2>
+        <div>
+          <h2>Alert Queue</h2>
+          <p>Click an alert to inspect fusion, ML, signature, and feedback evidence</p>
+        </div>
         <span>{alerts.length} alerts</span>
       </div>
-      <div className="queue-list">
-        {alerts.map((alert) => (
-          <button
-            className={classNameForAlert(alert, selectedAlertId === alert.id)}
-            key={alert.id}
-            onClick={() => onSelectAlert(alert)}
-            type="button"
-          >
-            <div className="row-main">
-              <strong>{alert.id}</strong>
-              <span className="attack-type">{alert.fusionAttackType || 'Unknown'}</span>
-              <span className="risk-badge">{formatScore(alert.currentRiskScore)}</span>
-            </div>
-            <div className="row-meta">
-              <span>Fusion {formatScore(alert.fusionRiskScore)}</span>
-              <span>{alert.fusionDecision || 'No decision'}</span>
-              <span>{alert.requiresAnalystReview ? 'Review' : 'No review'}</span>
-              <span>{alert.feedbackApplied ? 'Adjusted' : 'Unchanged'}</span>
-              <span>{alert.analystFeedbackStatus || 'unknown'}</span>
-            </div>
-          </button>
-        ))}
+      <div className="table-wrap">
+        <table className="alert-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Current risk</th>
+              <th>Fusion risk</th>
+              <th>Attack type</th>
+              <th>Decision</th>
+              <th>Review</th>
+              <th>Feedback status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alerts.map((alert) => (
+              <tr
+                className={classNameForAlert(alert, selectedAlertId === alert.id)}
+                key={alert.id}
+                onClick={() => onSelectAlert(alert)}
+              >
+                <td><strong>{alert.id}</strong></td>
+                <td><span className="risk-badge">{formatScore(alert.currentRiskScore)}</span></td>
+                <td>{formatScore(alert.fusionRiskScore)}</td>
+                <td className="attack-type">{alert.fusionAttackType || 'Unknown'}</td>
+                <td>{alert.fusionDecision || 'No decision'}</td>
+                <td>{alert.requiresAnalystReview ? 'Review' : 'No review'}</td>
+                <td>{alert.analystFeedbackStatus || 'unknown'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );

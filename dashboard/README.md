@@ -6,6 +6,8 @@ This dashboard visualises Stage 5 feedback-adjusted IDS alerts.
 
 It is the formal React dashboard integration layer for the staged Human-in-the-Loop IDS project.
 
+The Stage 6 layout was upgraded using the uploaded SOC-style HTML prototype as a visual reference. The implementation remains React + Vite + TypeScript; the uploaded HTML was used as layout inspiration, not as runtime code.
+
 ## Data Source
 
 The dashboard reads static JSON copies from:
@@ -48,6 +50,7 @@ npm run build
 - Alert queue sorted by feedback-adjusted `currentRiskScore`.
 - Alert detail panel showing signature evidence, ML prediction, fusion evidence, and feedback adjustment.
 - Score comparison between Stage 4 `fusionRiskScore` and Stage 5 `currentRiskScore`.
+- Sidebar navigation for Operations, Investigations, Feedback Model, and Reports views.
 
 ## What This Dashboard Shows
 
@@ -69,10 +72,12 @@ npm run build
 - No authentication.
 - No live traffic.
 - No model retraining.
+- No simulated replay mode yet. Stage 6B may later add alert replay and interactive feedback controls.
 
 ## Limitations
 
 - Static JSON dashboard.
 - Simulated feedback.
 - Prototype evaluation.
+- Layout inspired by a static SOC HTML prototype, but data still comes from Stage 4 and Stage 5 JSON outputs.
 - Not production IDS.

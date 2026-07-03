@@ -4,8 +4,14 @@ import feedbackEvaluationSummary from './data/feedback-evaluation-summary.json';
 import fusionEvaluationSummary from './data/fusion-evaluation-summary.json';
 import { AlertDetailPanel } from './components/AlertDetailPanel';
 import { AlertQueue } from './components/AlertQueue';
+import { FeedbackSummaryPanel } from './components/FeedbackSummaryPanel';
 import { FilterBar } from './components/FilterBar';
+import { Header } from './components/Header';
+import { InvestigationsPanel } from './components/InvestigationsPanel';
 import { KpiCards } from './components/KpiCards';
+import { OperationalOverview } from './components/OperationalOverview';
+import { ReportsPanel } from './components/ReportsPanel';
+import { Sidebar, type DashboardView } from './components/Sidebar';
 import type {
   FeedbackAdjustedAlert,
   FeedbackEvaluationSummary,
@@ -18,8 +24,16 @@ const alerts = feedbackAdjustedAlerts as FeedbackAdjustedAlert[];
 const feedbackSummary = feedbackEvaluationSummary as FeedbackEvaluationSummary;
 const fusionSummary = fusionEvaluationSummary as FusionEvaluationSummary;
 
+const viewLabels: Record<DashboardView, string> = {
+  operations: 'Operations',
+  investigations: 'Investigations',
+  feedback: 'Feedback Model',
+  reports: 'Reports',
+};
+
 export default function App() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [activeView, setActiveView] = useState<DashboardView>('operations');
   const sortedAlerts = useMemo(() => sortAlerts(alerts), []);
   const filteredAlerts = useMemo(
     () => filterAlerts(sortedAlerts, activeFilter),
@@ -31,39 +45,49 @@ export default function App() {
     || sortedAlerts[0];
 
   return (
-    <main className="dashboard-shell">
-      <header className="hero">
-        <div>
-          <span className="stage-pill">Stage 6 Dashboard Integration</span>
-          <h1>Human-in-the-Loop IDS Dashboard</h1>
-          <p>Hybrid signature, ML, fusion, and analyst-feedback alert prioritisation</p>
-        </div>
-        <div className="header-meta">
-          <span>Static JSON integration</span>
-          <strong>{fusionSummary.idAlignmentSummary?.alignmentStatus || 'N/A'}</strong>
-        </div>
-      </header>
-
-      <KpiCards feedbackSummary={feedbackSummary} fusionSummary={fusionSummary} />
-
-      <FilterBar
-        activeFilter={activeFilter}
-        onFilterChange={(filter) => {
-          setActiveFilter(filter);
-          setSelectedAlertId(undefined);
-        }}
-        totalCount={sortedAlerts.length}
-        visibleCount={filteredAlerts.length}
+    <div className="app-shell">
+      <Sidebar
+        activeView={activeView}
+        feedbackSummary={feedbackSummary}
+        fusionSummary={fusionSummary}
+        onViewChange={setActiveView}
       />
 
-      <section className="workspace">
-        <AlertQueue
-          alerts={filteredAlerts}
-          selectedAlertId={selectedAlert?.id}
-          onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
-        />
-        <AlertDetailPanel alert={selectedAlert} />
-      </section>
-    </main>
+      <main className="dashboard">
+        <Header activeLabel={viewLabels[activeView]} />
+        <KpiCards feedbackSummary={feedbackSummary} fusionSummary={fusionSummary} />
+
+        {activeView === 'operations' && (
+          <>
+            <OperationalOverview alerts={sortedAlerts} feedbackSummary={feedbackSummary} />
+            <FilterBar
+              activeFilter={activeFilter}
+              onFilterChange={(filter) => {
+                setActiveFilter(filter);
+                setSelectedAlertId(undefined);
+              }}
+              totalCount={sortedAlerts.length}
+              visibleCount={filteredAlerts.length}
+            />
+            <section className="workspace">
+              <div className="main-column">
+                <AlertQueue
+                  alerts={filteredAlerts}
+                  selectedAlertId={selectedAlert?.id}
+                  onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
+                />
+              </div>
+              <AlertDetailPanel alert={selectedAlert} />
+            </section>
+          </>
+        )}
+
+        {activeView === 'investigations' && <InvestigationsPanel alert={selectedAlert} />}
+        {activeView === 'feedback' && <FeedbackSummaryPanel summary={feedbackSummary} />}
+        {activeView === 'reports' && (
+          <ReportsPanel feedbackSummary={feedbackSummary} fusionSummary={fusionSummary} />
+        )}
+      </main>
+    </div>
   );
 }

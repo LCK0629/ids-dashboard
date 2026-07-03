@@ -126,6 +126,24 @@ Evaluation outputs should be stored under:
 stage-3/evaluation/
 ```
 
+## Infiltration Class Check
+
+Stage 1 and Stage 2 contain `Infiltration` records, but the currently imported Stage 3 model artifacts do not include `Infiltration` in `stage-3/models/label-mapping.json`.
+
+The Stage 3 notebook now checks this directly during training. It prints:
+
+- Raw label distribution before and after cleaning.
+- Unknown or unmapped labels.
+- Mapped attack type distribution before sampling.
+- Rows dropped during numeric cleanup, grouped by raw label where possible.
+- Mapped attack type distribution after sampling.
+- Final train/test class distribution.
+- Final encoded label mapping before artifact export.
+
+If an expected class such as `Infiltration` is missing, the notebook prints a warning. Common causes are restrictive `ROW_CAP_PER_CSV`, restrictive `MAX_CSV_FILES`, a selected source that does not include the relevant raw labels, or a spelling variant that needs to be mapped.
+
+The current model should not be described as supporting `Infiltration` until it is retrained and verified with that class included.
+
 ## What Is Not Included Yet
 
 - No final model is trained in this scaffold task.

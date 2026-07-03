@@ -36,3 +36,7 @@ weighted avg       0.93      0.93      0.93      2186
 - DDoS: 0
 - DoS: 101
 - Web Attack: 4
+
+## Current Limitation
+
+The imported Stage 3 model artifacts do not include `Infiltration` in `stage-3/models/label-mapping.json`. A follow-up training run should verify whether `Infilteration` / `Infiltration` appears in the selected raw training source and retrain with that class included where available.

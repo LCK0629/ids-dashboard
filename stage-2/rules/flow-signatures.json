@@ -2,8 +2,14 @@
   {
     "id": "SIG-FTP-BRUTE-FORCE",
     "name": "FTP Brute Force Flow Pattern",
-    "attackType": "Brute Force",
+    "predictedAttackType": "Brute Force",
     "severity": "Medium",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "FTP control traffic commonly uses TCP port 21.",
+      "Brute-force-like flows may show repeated short TCP connections with elevated packet rate.",
+      "This is a flow-level heuristic and does not inspect FTP login payloads."
+    ],
     "condition": {
       "protocol": "TCP",
       "destinationPort": 21,
@@ -21,8 +27,14 @@
   {
     "id": "SIG-SSH-BRUTE-FORCE",
     "name": "SSH Brute Force Flow Pattern",
-    "attackType": "Brute Force",
+    "predictedAttackType": "Brute Force",
     "severity": "Medium",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "SSH control traffic commonly uses TCP port 22.",
+      "SSH brute-force attempts often create repeated short TCP flows against SSH port 22.",
+      "This is a flow-level heuristic and cannot inspect SSH authentication results."
+    ],
     "condition": {
       "protocol": "TCP",
       "destinationPort": 22,
@@ -40,8 +52,14 @@
   {
     "id": "SIG-DOS-HIGH-RATE-FLOW",
     "name": "High Rate DoS Flow Pattern",
-    "attackType": "DoS",
+    "predictedAttackType": "DoS",
     "severity": "High",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "DoS-like flows may show high packet rate from one direction.",
+      "Limited backward packet count can indicate poor response balance during a high-rate flow.",
+      "This threshold is a prototype heuristic and should be calibrated with feature distribution analysis."
+    ],
     "condition": {
       "protocol": "TCP",
       "flowPacketsPerSecond": {
@@ -59,8 +77,14 @@
   {
     "id": "SIG-DDOS-HIGH-RATE-FLOW",
     "name": "Distributed High Rate Flow Pattern",
-    "attackType": "DDoS",
+    "predictedAttackType": "DDoS",
     "severity": "High",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "DDoS-like flows may show very high packet rate and strong forward traffic volume.",
+      "Low backward packet count can indicate response imbalance under high-rate traffic.",
+      "This is a single-flow heuristic and does not prove distributed source behavior by itself."
+    ],
     "condition": {
       "protocol": "TCP",
       "flowPacketsPerSecond": {
@@ -77,8 +101,14 @@
   {
     "id": "SIG-BOTNET-BEACON-FLOW",
     "name": "Botnet Beacon-Like Flow Pattern",
-    "attackType": "Botnet",
+    "predictedAttackType": "Botnet",
     "severity": "High",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "Botnet communication can appear as longer-lived beacon-like flows.",
+      "Moderate packet rate and forward packet count can indicate repeated command-and-control style communication.",
+      "This heuristic does not use destination reputation or host history."
+    ],
     "condition": {
       "flowDuration": {
         "min": 10000000
@@ -98,8 +128,14 @@
   {
     "id": "SIG-WEB-ATTACK-FLOW",
     "name": "Suspicious Web Flow Pattern",
-    "attackType": "Web Attack",
+    "predictedAttackType": "Web Attack",
     "severity": "High",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "Web attack traffic commonly uses HTTP or HTTPS destination ports.",
+      "Larger packet length means can indicate request-heavy or payload-heavy web flows.",
+      "This flow-level heuristic cannot inspect URLs, request parameters, SQL strings, or XSS payloads."
+    ],
     "condition": {
       "protocol": "TCP",
       "destinationPort": {
@@ -119,8 +155,14 @@
   {
     "id": "SIG-INFILTRATION-LONG-FLOW",
     "name": "Long Duration Infiltration-Like Flow Pattern",
-    "attackType": "Infiltration",
+    "predictedAttackType": "Infiltration",
     "severity": "Critical",
+    "validationStatus": "prototype-heuristic",
+    "rationale": [
+      "Infiltration-like flows may involve longer duration network activity.",
+      "Sustained bytes per second and backward packets can indicate interactive or data-transfer behavior.",
+      "This heuristic is weak without host context, payload inspection, or post-compromise behavior analysis."
+    ],
     "condition": {
       "flowDuration": {
         "min": 20000000

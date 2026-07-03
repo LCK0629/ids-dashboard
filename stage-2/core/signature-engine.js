@@ -117,8 +117,12 @@ function buildEvidence(signature) {
       return `${field}=${value}`;
     })
     .join(', ');
+  const rationale = Array.isArray(signature.rationale) && signature.rationale.length > 0
+    ? ` Rationale: ${signature.rationale[0]}`
+    : '';
+  const validationStatus = signature.validationStatus || 'unvalidated';
 
-  return `Matched ${signature.name} using ${conditionText}.`;
+  return `Matched ${signature.name} as predicted ${signature.predictedAttackType} using observable flow conditions: ${conditionText}. Rule status: ${validationStatus}.${rationale}`;
 }
 
 function matchSignature(alert, signatureRules) {
@@ -146,7 +150,7 @@ function applySignatures(alerts, signatureRules) {
       signatureHit: true,
       signatureId: signature.id,
       signatureName: signature.name,
-      signatureAttackType: signature.attackType,
+      signatureAttackType: signature.predictedAttackType,
       signatureSeverity: signature.severity,
       signatureEvidence: buildEvidence(signature),
     };

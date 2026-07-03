@@ -40,6 +40,7 @@
 - Split Stage 1 processed outputs into feature-only detection input, ground-truth evaluation labels, and a dashboard-ready labelled sample to prevent future detection engines from using answer fields.
 - Added environment documentation for Node.js and Python requirements, including a portable Node.js option for running Stage 2 without modifying the system PATH.
 - Added formal signature-based detection design documentation explaining Stage 2 flow-level rules, allowed input fields, forbidden label-derived fields, heuristic limitations, and the role of signature evidence in the later Fusion Engine.
+- Hardened Stage 2 signature rules by renaming rule output metadata to `predictedAttackType`, adding prototype heuristic validation status and rationale, and generating formal post-prediction evaluation summaries.
 
 ## Week 4
 

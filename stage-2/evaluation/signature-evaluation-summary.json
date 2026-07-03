@@ -1,0 +1,72 @@
+{
+  "totalRecords": 1000,
+  "signatureHits": 500,
+  "noSignatureHits": 500,
+  "truePositives": 500,
+  "falsePositives": 0,
+  "falseNegatives": 0,
+  "trueNegatives": 500,
+  "precision": 1,
+  "recall": 1,
+  "f1Score": 1,
+  "benignRecordsWithSignatureHit": 0,
+  "hitsBySignature": {
+    "SIG-FTP-BRUTE-FORCE": 76,
+    "SIG-SSH-BRUTE-FORCE": 8,
+    "SIG-BOTNET-BEACON-FLOW": 84,
+    "SIG-DOS-HIGH-RATE-FLOW": 83,
+    "SIG-DDOS-HIGH-RATE-FLOW": 83,
+    "SIG-WEB-ATTACK-FLOW": 83,
+    "SIG-INFILTRATION-LONG-FLOW": 83
+  },
+  "hitsByPredictedAttackType": {
+    "Brute Force": 84,
+    "Botnet": 84,
+    "DoS": 83,
+    "DDoS": 83,
+    "Web Attack": 83,
+    "Infiltration": 83
+  },
+  "coverageByTrueAttackType": {
+    "Benign": {
+      "total": 500,
+      "signatureHits": 0,
+      "coverage": 0
+    },
+    "Brute Force": {
+      "total": 84,
+      "signatureHits": 84,
+      "coverage": 1
+    },
+    "Botnet": {
+      "total": 84,
+      "signatureHits": 84,
+      "coverage": 1
+    },
+    "DoS": {
+      "total": 83,
+      "signatureHits": 83,
+      "coverage": 1
+    },
+    "DDoS": {
+      "total": 83,
+      "signatureHits": 83,
+      "coverage": 1
+    },
+    "Web Attack": {
+      "total": 83,
+      "signatureHits": 83,
+      "coverage": 1
+    },
+    "Infiltration": {
+      "total": 83,
+      "signatureHits": 83,
+      "coverage": 1
+    }
+  },
+  "notes": [
+    "Prediction uses flow-feature-sample.csv only.",
+    "ground-truth.json is joined only after prediction for evaluation.",
+    "Rules are prototype flow-level heuristics, not full packet-payload Snort rules."
+  ]
+}

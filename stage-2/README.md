@@ -50,7 +50,8 @@ The script will:
 3. Apply the flow-based signature rules.
 4. Load `stage-1/data/processed/ground-truth.json` for evaluation only.
 5. Write signed alerts to `stage-2/data/signature-output.sample.json`.
-6. Print a summary of signature hits.
+6. Write post-prediction evaluation summaries to `stage-2/evaluation/`.
+7. Print a summary of signature hits.
 
 ## Output
 
@@ -67,6 +68,8 @@ Each signed alert preserves the original Stage 1 alert fields and adds:
 }
 ```
 
+Rule metadata uses `predictedAttackType` to describe the attack type predicted by the rule. This metadata is copied into signed output as `signatureAttackType`. It is not used as a matching condition.
+
 If no rule matches, the alert receives:
 
 ```json
@@ -79,6 +82,19 @@ If no rule matches, the alert receives:
   "signatureEvidence": "No flow-based signature matched."
 }
 ```
+
+## Evaluation Outputs
+
+The demo also writes:
+
+```txt
+stage-2/evaluation/signature-evaluation-summary.json
+stage-2/evaluation/signature-evaluation-summary.md
+```
+
+These files record post-prediction evaluation metrics. They are generated only after the feature-only prediction step and after ground truth is joined for evaluation.
+
+The evaluation summary includes precision, recall, F1 score, benign signature hits, hits by signature, hits by predicted attack type, and coverage by true attack type.
 
 ## Role In The Later Fusion Engine
 

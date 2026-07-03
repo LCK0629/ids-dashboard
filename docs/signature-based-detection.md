@@ -84,6 +84,11 @@ Detection engines must use feature-only input. Ground truth labels are joined on
 
 ## 6. Current Implemented Rules
 
+Each rule uses `predictedAttackType` as output metadata. It is not a matching condition. Each rule also includes:
+
+- `validationStatus`: currently `prototype-heuristic`
+- `rationale`: short reasons explaining why the observable flow conditions may indicate the predicted attack type
+
 ### `SIG-FTP-BRUTE-FORCE`
 
 - Predicted attack type: `Brute Force`
@@ -190,6 +195,15 @@ The correct Stage 2 evaluation flow is:
 5. Calculate hits, false positives, false negatives, and benign hits
 
 `ground-truth.json` is not used during rule matching.
+
+The demo script writes formal evaluation summaries to:
+
+```txt
+stage-2/evaluation/signature-evaluation-summary.json
+stage-2/evaluation/signature-evaluation-summary.md
+```
+
+These files are generated after prediction and after ground truth is joined for evaluation.
 
 ## 9. Limitations
 

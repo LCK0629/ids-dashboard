@@ -22,6 +22,7 @@ This project develops a next-generation intrusion detection interface that combi
 |   |-- progress-log.md
 |   |-- proposal.md
 |   |-- questions.md
+|   |-- signature-based-detection.md
 |   `-- tech-stack.md
 |-- prototype-demo/
 |   |-- app.js
@@ -169,5 +170,6 @@ Dataset files and processing scripts will be placed under the `stage-1/` folder.
 - [Features](docs/features.md)
 - [Tech Stack](docs/tech-stack.md)
 - [Environment Setup](docs/environment.md)
+- [Signature-Based Detection Design](docs/signature-based-detection.md)
 - [Progress Log](docs/progress-log.md)
 - [Questions](docs/questions.md)

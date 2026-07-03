@@ -41,6 +41,7 @@
 - Added environment documentation for Node.js and Python requirements, including a portable Node.js option for running Stage 2 without modifying the system PATH.
 - Added formal signature-based detection design documentation explaining Stage 2 flow-level rules, allowed input fields, forbidden label-derived fields, heuristic limitations, and the role of signature evidence in the later Fusion Engine.
 - Hardened Stage 2 signature rules by renaming rule output metadata to `predictedAttackType`, adding prototype heuristic validation status and rationale, and generating formal post-prediction evaluation summaries.
+- Added a formal signature rule rationale document explaining how each Stage 2 rule was derived, why the selected flow features are reasonable, why the current perfect result should be interpreted carefully, and why threshold tuning is deferred until further validation.
 
 ## Week 4
 

@@ -12,6 +12,8 @@ This layer is one detection signal. It will later be combined with:
 
 The goal is to provide interpretable rule-based evidence before later stages combine signature results, ML scores, and analyst feedback into final alert priority.
 
+For detailed rule derivation and rationale, see `docs/signature-rule-rationale.md`.
+
 ## 2. What Signature-Based Detection Means
 
 Signature-based detection identifies known attack patterns using predefined rules.

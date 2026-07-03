@@ -5,3 +5,5 @@ __pycache__/
 archive.zip
 *.zip
 *.csv
+stage-3/notebooks/*Colab*.pdf
+stage-3/notebooks/*.pdf

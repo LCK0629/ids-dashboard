@@ -26,6 +26,7 @@ For Colab training, use either:
 
 - An uploaded `/content/archive.zip`.
 - A Google Drive archive such as `/content/drive/MyDrive/cse-cic-ids2018/archive.zip`.
+- KaggleHub download using `solarmainframe/ids-intrusion-csv`.
 
 Raw CSE-CIC-IDS2018 CSV files and dataset archives should not be committed to GitHub.
 
@@ -141,6 +142,8 @@ For Stage 3B training, open this notebook in Google Colab:
 ```txt
 stage-3/notebooks/xgboost_ids_training.ipynb
 ```
+
+The notebook supports `DATASET_SOURCE = 'kagglehub'`, `'upload_zip'`, `'drive_zip'`, or `'extracted_folder'`.
 
 The Python scripts remain scaffold commands for later local implementation:
 

@@ -55,6 +55,13 @@ This project develops a next-generation intrusion detection interface that combi
 |   |-- outputs/
 |   |-- scripts/
 |   `-- README.md
+|-- stage-5/
+|   |-- core/
+|   |-- data/
+|   |-- evaluation/
+|   |-- outputs/
+|   |-- scripts/
+|   `-- README.md
 `-- README.md
 ```
 

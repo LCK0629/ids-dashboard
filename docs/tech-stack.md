@@ -87,6 +87,9 @@ Detection engines must use `stage-1/data/processed/flow-feature-sample.csv` and 
 - Node.js rule-based Fusion Engine for Stage 4.
 - Fusion logic combines JSON outputs from Stage 2 signature detection and Stage 3 ML prediction.
 - Fusion output is designed for later dashboard integration with fused attack type, risk score, decision, evidence, and analyst review flag.
+- Node.js JSON-based feedback adaptation logic for Stage 5.
+- Stage 5 feedback memory uses prototype JSON storage for simulated analyst feedback and exception patterns.
+- Future dashboard integration can replace JSON samples with interactive analyst feedback.
 - Exception Memory to store repeated analyst feedback patterns.
 - Beta-Bernoulli feedback scoring to model repeated true-positive and false-positive feedback.
 - HTML / CSS / JavaScript dashboard for the current frontend prototype.

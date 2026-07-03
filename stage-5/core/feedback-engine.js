@@ -287,6 +287,18 @@ function averageScore(alerts, field) {
 }
 
 function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], groundTruth = null) {
+  const scoreAdjustmentGuardrailCount = adjustedAlerts.filter(
+    (alert) => alert.analystFeedbackStatus === 'guardrail_limited_adjustment'
+  ).length;
+  const lowConfidenceExceptionIgnoredCount = adjustedAlerts.filter(
+    (alert) => alert.analystFeedbackStatus === 'ignored_low_confidence_exception'
+  ).length;
+  const insufficientFeedbackExceptionIgnoredCount = adjustedAlerts.filter(
+    (alert) => alert.analystFeedbackStatus === 'ignored_insufficient_feedback'
+  ).length;
+  const exceptionRejectedByTrustGateCount =
+    lowConfidenceExceptionIgnoredCount + insufficientFeedbackExceptionIgnoredCount;
+
   const summary = {
     totalAlerts: adjustedAlerts.length,
     alertsAdjusted: adjustedAlerts.filter((alert) => alert.feedbackAdjustment !== 0).length,
@@ -306,7 +318,11 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
       alert.analystFeedbackStatus === 'ignored_low_confidence_exception'
       || alert.analystFeedbackStatus === 'ignored_insufficient_feedback'
     )).length,
-    guardrailAppliedCount: adjustedAlerts.filter((alert) => alert.feedbackGuardrailsApplied.length > 0).length,
+    guardrailAppliedCount: scoreAdjustmentGuardrailCount + exceptionRejectedByTrustGateCount,
+    scoreAdjustmentGuardrailCount,
+    exceptionRejectedByTrustGateCount,
+    lowConfidenceExceptionIgnoredCount,
+    insufficientFeedbackExceptionIgnoredCount,
     averageRiskBeforeFeedback: averageScore(adjustedAlerts, 'fusionRiskScore'),
     averageRiskAfterFeedback: averageScore(adjustedAlerts, 'currentRiskScore'),
     averageRiskChange: 0,

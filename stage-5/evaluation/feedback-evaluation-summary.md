@@ -14,6 +14,20 @@ Ground truth is joined only after feedback adjustment for evaluation. This is a 
 - Exception memory applied count: 359
 - Ignored exception count: 119
 - Guardrail applied count: 219
+- Score adjustment guardrail count: 100
+- Exception rejected by trust gate count: 119
+- Low confidence exception ignored count: 24
+- Insufficient feedback exception ignored count: 95
+
+## Guardrail Metric Clarification
+
+`guardrailAppliedCount` is a broad combined count. It includes both score-limiting guardrails and exception trust-gate rejections.
+
+`scoreAdjustmentGuardrailCount` counts cases where a risk score adjustment was actually limited by a safety rule, such as maximum reduction, Critical alert floor, or Infiltration floor.
+
+`exceptionRejectedByTrustGateCount` counts exception memory matches that were ignored because they did not meet trust requirements. This includes low confidence exceptions and exceptions with insufficient feedback evidence.
+
+Trust-gate rejections do not change the risk score. For report writing, use the split metrics when describing whether feedback changed priority or whether an exception was rejected before adjustment.
 
 ## Risk Before And After Feedback
 

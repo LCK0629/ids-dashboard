@@ -66,6 +66,7 @@
 - Added binary TP/TN/FP/FN detection metrics to the Stage 4 evaluation using malicious as the positive class and benign as the negative class.
 - Hardened Stage 4 fusion alignment reporting by adding ID overlap metrics, out-of-scope ML prediction ID samples, low-overlap warnings, and clearer documentation for Stage-2-scoped fusion mode.
 - Added Stage 5 Human Feedback and Exception Memory prototype to apply simulated analyst feedback, adjust current alert risk scores, preserve original fusion scores, and evaluate before/after workload and false-positive priority effects.
+- Clarified Stage 5 guardrail evaluation metrics by separating score adjustment guardrails from exception trust-gate rejections for more accurate report interpretation.
 
 ## Notes
 

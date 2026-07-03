@@ -99,6 +99,8 @@ The evaluation summary compares before and after feedback:
 - true positive suppression count,
 - guardrail and exception memory counts.
 
+The broad `guardrailAppliedCount` includes both score-limiting guardrails and exception trust-gate rejections. For report writing, use `scoreAdjustmentGuardrailCount` when referring only to cases where a score adjustment was capped or floored, and use `exceptionRejectedByTrustGateCount` for exceptions ignored due to low confidence or insufficient feedback.
+
 Ground truth is joined only after feedback adjustment for evaluation.
 
 ## How to Run

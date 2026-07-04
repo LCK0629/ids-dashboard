@@ -19,7 +19,7 @@ export function InvestigationsPanel({ alert }: InvestigationsPanelProps) {
       <section className="panel full-panel">
         <div className="panel-header">
           <h2>Investigations</h2>
-          <span>No alert selected</span>
+          <span>No detection record selected</span>
         </div>
       </section>
     );

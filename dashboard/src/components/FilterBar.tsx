@@ -6,15 +6,19 @@ interface FilterOption {
 }
 
 const filters: FilterOption[] = [
-  { key: 'all', label: 'All' },
+  { key: 'active-alerts', label: 'Active Alert Queue' },
+  { key: 'all-records', label: 'All Detection Records' },
   { key: 'requires-review', label: 'Requires Review' },
-  { key: 'feedback-applied', label: 'Feedback Applied' },
   { key: 'high-risk', label: 'High Risk' },
-  { key: 'infiltration', label: 'Infiltration' },
-  { key: 'signature-ml-disagree', label: 'Signature/ML Disagree' },
-  { key: 'guardrail-applied', label: 'Guardrail Applied' },
+  { key: 'medium-risk', label: 'Medium Risk' },
+  { key: 'low-risk', label: 'Low Risk' },
+  { key: 'suppressed-resolved', label: 'Suppressed / Resolved' },
   { key: 'benign', label: 'Benign' },
   { key: 'malicious', label: 'Malicious' },
+  { key: 'feedback-applied', label: 'Feedback Applied' },
+  { key: 'guardrail-applied', label: 'Guardrail Applied' },
+  { key: 'signature-hit', label: 'Signature Hit' },
+  { key: 'signature-ml-disagree', label: 'Signature / ML Disagree' },
 ];
 
 interface FilterBarProps {
@@ -40,7 +44,7 @@ export function FilterBar({
     <section className="filter-bar" aria-label="Alert filters">
       <div>
         <strong>{visibleCount}</strong>
-        <span> of {totalCount} alerts shown</span>
+        <span> of {totalCount} detection records shown</span>
       </div>
       <label className="attack-type-filter">
         <span>Attack Type</span>

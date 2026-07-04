@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 const navItems: Array<{ view: DashboardView; title: string; subtitle: string }> = [
-  { view: 'operations', title: 'Operations', subtitle: 'Alert triage' },
+  { view: 'operations', title: 'Operations', subtitle: 'Active alert triage' },
   { view: 'investigations', title: 'Investigations', subtitle: 'Case timeline' },
   { view: 'feedback', title: 'Feedback Model', subtitle: 'Adaptive scoring' },
   { view: 'reports', title: 'Reports', subtitle: 'Evaluation summary' },
@@ -51,7 +51,7 @@ export function Sidebar({ activeView, onViewChange, feedbackSummary, fusionSumma
       <div className="model-card">
         <span className="label">Feedback Impact</span>
         <strong>{feedbackSummary.alertsAdjusted ?? 'N/A'}</strong>
-        <p>Adjusted alerts from simulated analyst feedback and exception memory</p>
+        <p>Adjusted detection records from simulated analyst feedback and exception memory</p>
       </div>
     </aside>
   );

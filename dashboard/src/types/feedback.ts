@@ -20,11 +20,14 @@ export type LocalFeedbackMap = Record<string, LocalFeedbackOverride>;
 export type ReplaySpeed = 1 | 2 | 5;
 
 export interface SessionKpis {
-  visibleAlerts: number;
+  visibleRecords: number;
+  allDetectionRecords: number;
+  activeAlerts: number;
+  suppressedResolved: number;
   reviewedInSession: number;
   localFeedbackApplied: number;
   averageCurrentRisk: number;
-  highRiskAlerts: number;
+  highRiskRecords: number;
   requiresReview: number;
   falsePositivesMarked: number;
   escalatedAlerts: number;

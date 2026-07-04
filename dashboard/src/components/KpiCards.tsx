@@ -17,19 +17,20 @@ function metric(value: number | string | undefined | null): string {
 
 export function KpiCards({ feedbackSummary, fusionSummary, sessionKpis }: KpiCardsProps) {
   const sessionCards = [
-    ['Visible alerts', metric(sessionKpis.visibleAlerts)],
+    ['Visible Records', metric(sessionKpis.visibleRecords)],
+    ['All Detection Records', metric(sessionKpis.allDetectionRecords)],
+    ['Active Alerts', metric(sessionKpis.activeAlerts)],
+    ['Suppressed / Resolved', metric(sessionKpis.suppressedResolved)],
     ['Reviewed in session', metric(sessionKpis.reviewedInSession)],
     ['Local feedback applied', metric(sessionKpis.localFeedbackApplied)],
     ['Avg current risk', formatScore(sessionKpis.averageCurrentRisk)],
-    ['High risk alerts', metric(sessionKpis.highRiskAlerts)],
+    ['High Risk Records', metric(sessionKpis.highRiskRecords)],
     ['Requires review', metric(sessionKpis.requiresReview)],
-    ['False positives marked', metric(sessionKpis.falsePositivesMarked)],
-    ['Escalated alerts', metric(sessionKpis.escalatedAlerts)],
     ['Replay progress', sessionKpis.replayProgress],
   ];
   const pipelineCards = [
-    ['Total alerts', metric(feedbackSummary.totalAlerts)],
-    ['Alerts adjusted', metric(feedbackSummary.alertsAdjusted)],
+    ['Total Processed Flows', metric(feedbackSummary.totalAlerts)],
+    ['Feedback Adjusted', metric(feedbackSummary.alertsAdjusted)],
     ['Review before', metric(feedbackSummary.reviewQueueBefore)],
     ['Review after', metric(feedbackSummary.reviewQueueAfter)],
     ['Avg risk before', formatScore(feedbackSummary.averageRiskBeforeFeedback)],
@@ -42,8 +43,8 @@ export function KpiCards({ feedbackSummary, fusionSummary, sessionKpis }: KpiCar
   return (
     <section className="kpi-section" aria-label="Dashboard KPIs">
       <div className="kpi-title">
-        <strong>Current dashboard session metrics</strong>
-        <span>Recalculated from replay-visible alerts and local feedback</span>
+        <strong>Current View Metrics</strong>
+        <span>Recalculated from visible detection records, active alert criteria, and local feedback</span>
       </div>
       <div className="kpi-grid">
         {sessionCards.map(([label, value]) => (
@@ -54,8 +55,8 @@ export function KpiCards({ feedbackSummary, fusionSummary, sessionKpis }: KpiCar
         ))}
       </div>
       <div className="kpi-title secondary">
-        <strong>Stage 5 pipeline metrics</strong>
-        <span>Static JSON summary from generated Stage 5 output</span>
+        <strong>Stage 5 Pipeline Metrics</strong>
+        <span>Static JSON summary for processed flow records retained for audit and evaluation</span>
       </div>
       <div className="kpi-grid pipeline">
         {pipelineCards.map(([label, value]) => (

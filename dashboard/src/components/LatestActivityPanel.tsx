@@ -35,14 +35,14 @@ export function LatestActivityPanel({
       <div className="panel-header">
         <div>
           <h2>Latest Activity</h2>
-          <p>Newest replayed alerts in arrival order, separate from risk priority</p>
+          <p>Newest replayed detection records in arrival order, separate from risk priority</p>
         </div>
         <span className="status-pill muted">{replayText}</span>
       </div>
       <div className="latest-activity-list">
         {latestAlerts.length === 0 && (
           <div className="latest-empty">
-            Start replay to see incoming alert activity.
+            Start replay to see incoming detection activity.
           </div>
         )}
         {latestAlerts.map(({ alert, sequence }) => (

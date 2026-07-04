@@ -46,8 +46,24 @@ const viewLabels: Record<DashboardView, string> = {
   reports: 'Reports',
 };
 
+const filterTitles: Record<FilterKey, string> = {
+  'active-alerts': 'Active Alert Queue',
+  'all-records': 'All Detection Records',
+  'requires-review': 'Review-Required Alerts',
+  'feedback-applied': 'Feedback-Adjusted Records',
+  'high-risk': 'High Risk Records',
+  'medium-risk': 'Medium Risk Records',
+  'low-risk': 'Low Risk Records',
+  'suppressed-resolved': 'Suppressed / Resolved Records',
+  'signature-hit': 'Signature Hit Records',
+  'signature-ml-disagree': 'Signature / ML Disagreement Records',
+  'guardrail-applied': 'Guardrail-Affected Records',
+  benign: 'Benign Detection Records',
+  malicious: 'Malicious Detection Records',
+};
+
 export default function App() {
-  const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('active-alerts');
   const [activeAttackType, setActiveAttackType] = useState<AttackTypeFilter>('all');
   const [activeView, setActiveView] = useState<DashboardView>('operations');
   const [isReplayMode, setIsReplayMode] = useState(false);
@@ -75,8 +91,8 @@ export default function App() {
     || filteredAlerts[0]
     || sortedAlerts[0];
   const sessionKpis = useMemo(
-    () => calculateSessionKpis(sortedAlerts, localFeedbackMap, isReplayMode ? replayIndex : alerts.length, alerts.length),
-    [isReplayMode, localFeedbackMap, replayIndex, sortedAlerts]
+    () => calculateSessionKpis(filteredAlerts, sortedAlerts, localFeedbackMap, isReplayMode ? replayIndex : alerts.length, alerts.length),
+    [filteredAlerts, isReplayMode, localFeedbackMap, replayIndex, sortedAlerts]
   );
 
   useEffect(() => {
@@ -99,9 +115,9 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedAlertId || !sortedAlerts.some((alert) => alert.id === selectedAlertId)) {
-      setSelectedAlertId(sortedAlerts[0]?.id);
+      setSelectedAlertId(filteredAlerts[0]?.id || sortedAlerts[0]?.id);
     }
-  }, [selectedAlertId, sortedAlerts]);
+  }, [filteredAlerts, selectedAlertId, sortedAlerts]);
 
   useEffect(() => {
     if (activeAttackType !== 'all' && !attackTypes.includes(activeAttackType)) {
@@ -218,11 +234,13 @@ export default function App() {
             />
             <section className="workspace">
               <div className="main-column">
-                <AlertQueue
-                  alerts={filteredAlerts}
-                  selectedAlertId={selectedAlert?.id}
-                  onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
-                />
+              <AlertQueue
+                alerts={filteredAlerts}
+                title={filterTitles[activeFilter]}
+                totalDetectionRecords={sortedAlerts.length}
+                selectedAlertId={selectedAlert?.id}
+                onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
+              />
               </div>
               <AlertDetailPanel
                 alert={selectedAlert}

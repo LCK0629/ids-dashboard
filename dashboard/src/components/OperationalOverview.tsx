@@ -1,5 +1,5 @@
 import type { FeedbackAdjustedAlert, FeedbackEvaluationSummary } from '../types/alerts';
-import { formatScore } from '../utils/alertFilters';
+import { formatScore, isActionableAlert, isSuppressedOrResolved } from '../utils/alertFilters';
 
 interface OperationalOverviewProps {
   alerts: FeedbackAdjustedAlert[];
@@ -20,13 +20,15 @@ function barWidth(value: number, max: number): string {
 export function OperationalOverview({ alerts, feedbackSummary }: OperationalOverviewProps) {
   const highRiskCount = alerts.filter((alert) => Number(alert.currentRiskScore ?? 0) >= 70).length;
   const adjustedCount = alerts.filter((alert) => alert.feedbackApplied).length;
+  const activeAlertCount = alerts.filter(isActionableAlert).length;
+  const suppressedCount = alerts.filter(isSuppressedOrResolved).length;
   const reviewReduction = Number(feedbackSummary.reviewQueueBefore ?? 0) - Number(feedbackSummary.reviewQueueAfter ?? 0);
   const maxCount = Math.max(alerts.length, 1);
   const rows = [
-    ['High-risk alerts', highRiskCount, 'Current score >= 70'],
-    ['Adjusted alerts', adjustedCount, 'Feedback or exception memory affected the alert'],
-    ['Review queue reduction', reviewReduction, 'Before minus after feedback'],
-    ['Before avg risk', Number(feedbackSummary.averageRiskBeforeFeedback ?? 0), 'Stage 4 fusion score average'],
+    ['Active alerts', activeAlertCount, 'Promoted for analyst attention'],
+    ['High-risk records', highRiskCount, 'Current score >= 70'],
+    ['Suppressed / resolved', suppressedCount, 'Low-risk or feedback-resolved records'],
+    ['Adjusted records', adjustedCount, 'Feedback or exception memory affected the record'],
     ['After avg risk', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Stage 5 current score average'],
   ] as const;
 
@@ -35,7 +37,7 @@ export function OperationalOverview({ alerts, feedbackSummary }: OperationalOver
       <div className="panel-header">
         <div>
           <h2>Operational Overview</h2>
-          <p>Static Stage 4 / Stage 5 pipeline output with feedback-adjusted prioritisation</p>
+          <p>Processed flow records retained for audit, with active alerts promoted for triage</p>
         </div>
         <span className="impact-pill">Review queue {reviewReduction >= 0 ? '-' : '+'}{Math.abs(reviewReduction)}</span>
       </div>

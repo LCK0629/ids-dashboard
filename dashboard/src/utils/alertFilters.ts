@@ -12,9 +12,59 @@ export function requiresReview(alert: FeedbackAdjustedAlert): boolean {
   return Boolean(alert.requiresAnalystReview);
 }
 
-function isGuardrailApplied(alert: FeedbackAdjustedAlert): boolean {
+export function isGuardrailApplied(alert: FeedbackAdjustedAlert): boolean {
   return Boolean(alert.feedbackGuardrailsApplied?.length)
     || alert.analystFeedbackStatus === 'guardrail_limited_adjustment';
+}
+
+export function isSignatureMlDisagree(alert: FeedbackAdjustedAlert): boolean {
+  const decision = String(alert.fusionDecision || '').toLowerCase();
+  return decision.includes('disagree') || decision.includes('conflict');
+}
+
+export function isActionableAlert(alert: FeedbackAdjustedAlert): boolean {
+  const riskScore = Number(alert.currentRiskScore ?? 0);
+  const decision = String(alert.fusionDecision || '');
+  return Boolean(alert.requiresAnalystReview)
+    || riskScore >= 40
+    || alert.signatureHit === true
+    || (decision !== '' && decision !== 'LOW_RISK_BENIGN');
+}
+
+export function isSuppressedOrResolved(alert: FeedbackAdjustedAlert): boolean {
+  const riskScore = Number(alert.currentRiskScore ?? 0);
+  const status = String(alert.analystFeedbackStatus || alert.localFeedbackAction || '').toLowerCase();
+  const resolvedStatus = status.includes('false_positive')
+    || status.includes('false positive')
+    || status.includes('expected_activity')
+    || status.includes('expected activity')
+    || status.includes('low_risk_benign')
+    || status.includes('low risk benign')
+    || status.includes('benign');
+  return riskScore === 0
+    || resolvedStatus
+    || (!alert.requiresAnalystReview && riskScore < 40);
+}
+
+export function recordTypeLabel(alert: FeedbackAdjustedAlert): string {
+  if (isActionableAlert(alert)) {
+    return 'Actionable Alert';
+  }
+  if (isSuppressedOrResolved(alert)) {
+    return 'Suppressed / Resolved Record';
+  }
+  return 'Detection Record';
+}
+
+export function recordStatusBadges(alert: FeedbackAdjustedAlert): string[] {
+  const badges: string[] = [];
+  const status = String(alert.analystFeedbackStatus || alert.localFeedbackAction || '').toLowerCase();
+  if (isSuppressedOrResolved(alert)) badges.push('Suppressed / Resolved');
+  if (Number(alert.currentRiskScore ?? 0) === 0) badges.push('Suppressed');
+  if (status.includes('false_positive') || status.includes('false positive')) badges.push('False Positive');
+  if (status.includes('expected_activity') || status.includes('expected activity')) badges.push('Expected Activity');
+  if (Number(alert.currentRiskScore ?? 0) > 0 && Number(alert.currentRiskScore ?? 0) < 40) badges.push('Low Risk');
+  return [...new Set(badges)];
 }
 
 function isBenign(alert: FeedbackAdjustedAlert): boolean {
@@ -49,26 +99,36 @@ export function sortAlerts(alerts: FeedbackAdjustedAlert[]): FeedbackAdjustedAle
 
 export function filterAlerts(alerts: FeedbackAdjustedAlert[], filter: FilterKey): FeedbackAdjustedAlert[] {
   return alerts.filter((alert) => {
+    const riskScore = Number(alert.currentRiskScore ?? 0);
     switch (filter) {
+      case 'active-alerts':
+        return isActionableAlert(alert);
+      case 'all-records':
+        return true;
       case 'requires-review':
         return requiresReview(alert);
       case 'feedback-applied':
         return isAdjusted(alert);
       case 'high-risk':
-        return isHighRisk(alert);
-      case 'infiltration':
-        return alert.fusionAttackType === 'Infiltration' || alert.signatureAttackType === 'Infiltration';
+        return riskScore >= 70;
+      case 'medium-risk':
+        return riskScore >= 40 && riskScore < 70;
+      case 'low-risk':
+        return riskScore > 0 && riskScore < 40;
+      case 'suppressed-resolved':
+        return isSuppressedOrResolved(alert);
+      case 'signature-hit':
+        return alert.signatureHit === true;
       case 'signature-ml-disagree':
-        return alert.fusionDecision === 'SIGNATURE_ML_DISAGREE';
+        return isSignatureMlDisagree(alert);
       case 'guardrail-applied':
         return isGuardrailApplied(alert);
       case 'benign':
         return isBenign(alert);
       case 'malicious':
         return isMalicious(alert);
-      case 'all':
       default:
-        return true;
+        return isActionableAlert(alert);
     }
   });
 }

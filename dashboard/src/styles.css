@@ -838,6 +838,22 @@ button {
   font-size: 12px;
 }
 
+.status-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.record-badge {
+  display: inline-block;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #cbd5e1;
+  background: rgba(30, 41, 59, 0.72);
+  font-size: 12px;
+}
+
 .feedback-controls {
   padding: 16px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.14);

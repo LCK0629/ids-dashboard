@@ -11,7 +11,7 @@ function value(input: number | undefined): string {
 
 export function FeedbackSummaryPanel({ summary }: FeedbackSummaryPanelProps) {
   const metrics = [
-    ['Alerts adjusted', value(summary.alertsAdjusted)],
+    ['Records adjusted', value(summary.alertsAdjusted)],
     ['Direct feedback count', value(summary.directFeedbackAppliedCount)],
     ['Exception memory applied', value(summary.exceptionMemoryAppliedCount)],
     ['Score adjustment guardrails', value(summary.scoreAdjustmentGuardrailCount)],
@@ -46,7 +46,7 @@ export function FeedbackSummaryPanel({ summary }: FeedbackSummaryPanelProps) {
           write analyst decisions back to the JSON files.
         </p>
         <p>
-          Stage 6B may later add interactive controls for simulated feedback input and alert replay.
+          Stage 6B adds interactive controls for simulated feedback input and detection record replay.
         </p>
       </div>
     </section>

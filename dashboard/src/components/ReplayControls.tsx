@@ -31,7 +31,7 @@ export function ReplayControls({
 }: ReplayControlsProps) {
   const complete = isReplayMode && replayIndex >= totalAlerts;
   const status = !isReplayMode
-    ? 'All alerts visible'
+    ? 'All detection records visible'
     : complete
       ? 'Replay complete'
       : isReplayRunning
@@ -55,7 +55,7 @@ export function ReplayControls({
         <button type="button" onClick={onPause} disabled={!isReplayRunning}>Pause Replay</button>
         <button type="button" onClick={onResume} disabled={!isReplayMode || isReplayRunning || complete}>Resume Replay</button>
         <button type="button" onClick={onReset}>Reset Replay</button>
-        <button type="button" onClick={onShowAll}>Show All Alerts</button>
+        <button type="button" onClick={onShowAll}>Show All Records</button>
         <div className="speed-group" aria-label="Replay speed">
           {[1, 2, 5].map((speed) => (
             <button

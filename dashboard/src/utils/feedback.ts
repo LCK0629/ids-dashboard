@@ -1,5 +1,6 @@
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import type { AnalystFeedbackAction, LocalFeedbackMap, LocalFeedbackOverride, SessionKpis } from '../types/feedback';
+import { isActionableAlert, isSuppressedOrResolved } from './alertFilters';
 
 const actionConfig: Record<AnalystFeedbackAction, { delta: number; review: boolean; reason: string }> = {
   CONFIRMED_THREAT: {
@@ -116,22 +117,26 @@ export function applyLocalFeedbackOverrides(
 }
 
 export function calculateSessionKpis(
-  visibleAlerts: FeedbackAdjustedAlert[],
+  visibleRecords: FeedbackAdjustedAlert[],
+  allDetectionRecords: FeedbackAdjustedAlert[],
   feedbackMap: LocalFeedbackMap,
   replayIndex: number,
-  totalAlerts: number
+  totalRecords: number
 ): SessionKpis {
-  const totalRisk = visibleAlerts.reduce((sum, alert) => sum + Number(alert.currentRiskScore ?? 0), 0);
+  const totalRisk = visibleRecords.reduce((sum, alert) => sum + Number(alert.currentRiskScore ?? 0), 0);
   const feedbackValues = Object.values(feedbackMap);
   return {
-    visibleAlerts: visibleAlerts.length,
+    visibleRecords: visibleRecords.length,
+    allDetectionRecords: allDetectionRecords.length,
+    activeAlerts: allDetectionRecords.filter(isActionableAlert).length,
+    suppressedResolved: allDetectionRecords.filter(isSuppressedOrResolved).length,
     reviewedInSession: feedbackValues.length,
     localFeedbackApplied: feedbackValues.length,
-    averageCurrentRisk: visibleAlerts.length ? Number((totalRisk / visibleAlerts.length).toFixed(2)) : 0,
-    highRiskAlerts: visibleAlerts.filter((alert) => Number(alert.currentRiskScore ?? 0) >= 70).length,
-    requiresReview: visibleAlerts.filter((alert) => alert.requiresAnalystReview).length,
+    averageCurrentRisk: visibleRecords.length ? Number((totalRisk / visibleRecords.length).toFixed(2)) : 0,
+    highRiskRecords: visibleRecords.filter((alert) => Number(alert.currentRiskScore ?? 0) >= 70).length,
+    requiresReview: visibleRecords.filter((alert) => alert.requiresAnalystReview).length,
     falsePositivesMarked: feedbackValues.filter((feedback) => feedback.action === 'FALSE_POSITIVE').length,
     escalatedAlerts: feedbackValues.filter((feedback) => feedback.action === 'ESCALATED').length,
-    replayProgress: `${Math.min(replayIndex, totalAlerts)} / ${totalAlerts}`,
+    replayProgress: `${Math.min(replayIndex, totalRecords)} / ${totalRecords}`,
   };
 }

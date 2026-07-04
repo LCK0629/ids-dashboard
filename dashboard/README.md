@@ -114,6 +114,8 @@ The dashboard demonstrates human-in-the-loop triage through local analyst feedba
 
 These actions update the dashboard's local current risk score, review status, queue ranking, and session metrics. The original pipeline JSON outputs are not modified. This allows the prototype to demonstrate adaptive triage behaviour without backend persistence.
 
+The Investigation view also supports analyst feedback decisions. This allows an analyst to review feature-level evidence and immediately apply a decision such as Confirm Threat, Mark False Positive, Expected Activity, Needs Investigation, or Escalate. Feedback submitted from Investigations uses the same local state as the Operations view, so risk score, review status, queue ranking, and session metrics update consistently across the dashboard.
+
 Guardrails prevent unsafe suppression of critical, Infiltration, or conflicting-evidence records. When a guardrail applies, the detail panel and queue show the guardrail result so the analyst can see why priority or review status was preserved.
 
 The pipeline provides offline simulated feedback and exception memory. The dashboard provides interactive UI-only analyst feedback for demonstration.

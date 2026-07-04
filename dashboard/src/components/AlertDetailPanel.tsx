@@ -9,6 +9,7 @@ import {
   recordTypeLabel,
 } from '../utils/alertFilters';
 import { FeedbackControls } from './FeedbackControls';
+import { FeedbackImpactPanel } from './FeedbackImpactPanel';
 import { ScoreComparison } from './ScoreComparison';
 
 interface AlertDetailPanelProps {
@@ -68,16 +69,6 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
     : isSuppressedOrResolved(alert)
       ? 'This record is retained for auditability but is not part of the default active alert queue.'
       : 'This record is retained for audit and evaluation. It is not necessarily an active alert unless promoted by risk score, signature evidence, fusion decision, or analyst-review requirement.';
-  const originalPipelineRisk = Number(alert.stage5CurrentRiskScore ?? alert.currentRiskScore ?? 0);
-  const interactiveCurrentRisk = Number(alert.currentRiskScore ?? 0);
-  const interactiveAdjustment = interactiveCurrentRisk - originalPipelineRisk;
-  const reviewBefore = Boolean(alert.stage5RequiresAnalystReview ?? alert.requiresAnalystReview);
-  const reviewAfter = Boolean(alert.requiresAnalystReview);
-  const guardrailResult = alert.localGuardrailMessage
-    || (alert.feedbackGuardrailsApplied?.length
-      ? `Existing pipeline guardrails: ${alert.feedbackGuardrailsApplied.join(', ')}`
-      : 'No guardrail triggered in this session.');
-
   return (
     <aside className="panel detail-panel">
       <div className="panel-header">
@@ -95,24 +86,7 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
       />
 
       <EvidenceBlock title="Feedback Impact">
-        <div className="detail-grid">
-          <DetailItem label="Before feedback">{formatScore(originalPipelineRisk)}</DetailItem>
-          <DetailItem label="After feedback">{formatScore(interactiveCurrentRisk)}</DetailItem>
-          <DetailItem label="Fusion risk score">{formatScore(alert.fusionRiskScore)}</DetailItem>
-          <DetailItem label="Score adjustment">
-            {interactiveAdjustment > 0 ? `+${interactiveAdjustment}` : interactiveAdjustment}
-          </DetailItem>
-          <DetailItem label="Review status before">{value(reviewBefore)}</DetailItem>
-          <DetailItem label="Review status after">{value(reviewAfter)}</DetailItem>
-          <DetailItem label="Local analyst feedback">{value(alert.localFeedbackLabel)}</DetailItem>
-          <DetailItem label="Guardrail result">{guardrailResult}</DetailItem>
-        </div>
-        <p>
-          {alert.localFeedbackReason || 'No local analyst feedback applied in this session.'}
-        </p>
-        <p className="helper-text">
-          Human feedback changes local dashboard priority only. No JSON files are modified and no model retraining is performed.
-        </p>
+        <FeedbackImpactPanel alert={alert} />
       </EvidenceBlock>
 
       <EvidenceBlock title="Identity">

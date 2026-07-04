@@ -1027,6 +1027,27 @@ button {
   padding: 0;
 }
 
+.feedback-impact-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.feedback-impact-panel p {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.feedback-impact-panel .helper-text {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.feedback-decision-section .feedback-controls {
+  padding: 0;
+  border-bottom: 0;
+}
+
 .guardrail-message {
   color: #fed7aa;
 }

@@ -262,7 +262,13 @@ export default function App() {
           </>
         )}
 
-        {activeView === 'investigations' && <InvestigationsPanel alert={selectedAlert} />}
+        {activeView === 'investigations' && (
+          <InvestigationsPanel
+            alert={selectedAlert}
+            onApplyFeedback={applyFeedback}
+            onResetFeedback={resetFeedback}
+          />
+        )}
         {activeView === 'feedback' && (
           <FeedbackSummaryPanel sessionKpis={sessionKpis} summary={feedbackSummary} />
         )}

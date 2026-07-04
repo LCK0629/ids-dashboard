@@ -1,4 +1,5 @@
 import type { FeedbackAdjustedAlert } from '../types/alerts';
+import type { AnalystFeedbackAction } from '../types/feedback';
 import { formatModelConfidenceScore, formatScore } from '../utils/alertFilters';
 import {
   analystRecommendation,
@@ -8,10 +9,14 @@ import {
   signatureGapNote,
 } from '../utils/investigation';
 import { FeatureSummaryPanel } from './FeatureSummaryPanel';
+import { FeedbackControls } from './FeedbackControls';
+import { FeedbackImpactPanel } from './FeedbackImpactPanel';
 import { ScoreComparison } from './ScoreComparison';
 
 interface InvestigationsPanelProps {
   alert?: FeedbackAdjustedAlert;
+  onApplyFeedback?: (alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) => void;
+  onResetFeedback?: (alert: FeedbackAdjustedAlert) => void;
 }
 
 function value(input: unknown): string {
@@ -21,7 +26,7 @@ function value(input: unknown): string {
   return String(input);
 }
 
-export function InvestigationsPanel({ alert }: InvestigationsPanelProps) {
+export function InvestigationsPanel({ alert, onApplyFeedback, onResetFeedback }: InvestigationsPanelProps) {
   if (!alert) {
     return (
       <section className="panel full-panel">
@@ -127,7 +132,7 @@ export function InvestigationsPanel({ alert }: InvestigationsPanelProps) {
           </p>
         </div>
         <div className="explain-panel">
-          <h3>Feedback Impact</h3>
+          <h3>Feedback History</h3>
           <p>{alert.feedbackReason || 'No pipeline feedback reason recorded.'}</p>
           <p>
             Local analyst feedback: {value(alert.localFeedbackLabel)}. Guardrail result: {alert.localGuardrailMessage || value(alert.feedbackGuardrailsApplied?.join(', '))}.
@@ -136,6 +141,19 @@ export function InvestigationsPanel({ alert }: InvestigationsPanelProps) {
             Human feedback can change review priority, but this dashboard does not write feedback back to JSON files or retrain the model.
           </p>
         </div>
+      </div>
+      <div className="investigation-section feedback-decision-section">
+        <h3>Analyst Feedback Decision</h3>
+        <p className="helper-text">
+          Feedback submitted here is session-only and updates dashboard priority. It does not write back to JSON files or retrain the model.
+        </p>
+        <FeedbackControls
+          activeAction={alert.localFeedbackAction}
+          disabled={!onApplyFeedback || !onResetFeedback}
+          onApplyFeedback={(action) => onApplyFeedback?.(alert, action)}
+          onResetFeedback={() => onResetFeedback?.(alert)}
+        />
+        <FeedbackImpactPanel alert={alert} />
       </div>
       <div className="explain-panel">
         <h3>Analyst Recommendation</h3>

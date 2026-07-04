@@ -81,6 +81,7 @@
 - Strengthened the dashboard human-in-the-loop workflow by adding clearer UI-only analyst feedback impact, local risk-score adjustment summaries, guardrail messaging, and current-session feedback metrics.
 - Improved signature evidence explanations by separating user-friendly summaries from technical rule conditions in the dashboard.
 - Added feature-level Investigation context for selected detection records, including grouped flow features, case-style investigation timeline, ML-only signature gap explanation, and analyst recommendation.
+- Added analyst feedback controls to the Investigation view so analysts can review feature-level evidence and apply feedback decisions without returning to Operations.
 
 ## Notes
 

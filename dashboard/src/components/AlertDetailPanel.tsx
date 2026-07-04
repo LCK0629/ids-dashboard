@@ -27,6 +27,13 @@ function value(value: unknown): string {
   return String(value);
 }
 
+function ruleStatusLabel(status?: string): string {
+  if (status === 'prototype-heuristic') {
+    return 'Prototype flow-level heuristic';
+  }
+  return value(status);
+}
+
 function DetailItem({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="detail-item">
@@ -122,12 +129,41 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
 
       <EvidenceBlock title="Signature Evidence">
         <div className="detail-grid">
-          <DetailItem label="Signature hit">{value(alert.signatureHit)}</DetailItem>
-          <DetailItem label="Signature ID">{value(alert.signatureId)}</DetailItem>
-          <DetailItem label="Signature attack">{value(alert.signatureAttackType)}</DetailItem>
+          <DetailItem label="Status">{alert.signatureHit ? 'Signature matched' : 'No signature matched'}</DetailItem>
+          <DetailItem label="Rule">{value(alert.signatureTechnicalDetails?.ruleId || alert.signatureId)}</DetailItem>
+          <DetailItem label="Predicted attack">{value(alert.signatureTechnicalDetails?.predictedAttackType || alert.signatureAttackType)}</DetailItem>
           <DetailItem label="Severity">{value(alert.signatureSeverity)}</DetailItem>
         </div>
-        <p>{alert.signatureEvidence || 'No signature evidence available.'}</p>
+        {alert.signatureHit ? (
+          <>
+            <h4>Explanation</h4>
+            <p>
+              {alert.signaturePlainExplanation
+                || 'This flow matched a prototype signature rule based on observable traffic features. The match suggests suspicious behaviour, but the rule should be treated as a heuristic rather than definitive proof.'}
+            </p>
+            <h4>Matched conditions</h4>
+            <ul className="condition-list">
+              {(alert.matchedConditionsReadable?.length
+                ? alert.matchedConditionsReadable
+                : alert.signatureTechnicalDetails?.matchedConditions || []
+              ).map((condition) => (
+                <li key={condition}>{condition}</li>
+              ))}
+            </ul>
+            <h4>Technical rule details</h4>
+            <div className="detail-grid">
+              <DetailItem label="Rule name">{value(alert.signatureTechnicalDetails?.ruleName || alert.signatureName)}</DetailItem>
+              <DetailItem label="Rule status">{ruleStatusLabel(alert.signatureTechnicalDetails?.validationStatus)}</DetailItem>
+            </div>
+            <p className="helper-text">
+              {alert.signatureTechnicalDetails?.rationale || alert.signatureEvidence || 'Prototype flow-level heuristic.'}
+            </p>
+          </>
+        ) : (
+          <p>
+            No signature rule matched this flow. This does not prove the flow is benign; it only means the current prototype signature rules did not match observable flow conditions.
+          </p>
+        )}
       </EvidenceBlock>
 
       <EvidenceBlock title="ML Evidence">

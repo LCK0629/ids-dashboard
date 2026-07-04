@@ -41,8 +41,21 @@ export interface FeedbackAdjustedAlert {
   fusionConfidenceLevel?: string;
   signatureHit?: boolean;
   signatureId?: string | null;
+  signatureName?: string | null;
   signatureAttackType?: string | null;
   signatureSeverity?: string | null;
+  signatureSummary?: string | null;
+  signaturePlainExplanation?: string | null;
+  matchedConditionsReadable?: string[];
+  signatureTechnicalDetails?: {
+    ruleId?: string;
+    ruleName?: string;
+    predictedAttackType?: string;
+    severity?: string;
+    validationStatus?: string;
+    rationale?: string;
+    matchedConditions?: string[];
+  } | null;
   signatureEvidence?: string;
   mlPredictedAttackType?: string | null;
   modelConfidence?: number | null;

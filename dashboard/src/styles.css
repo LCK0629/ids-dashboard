@@ -319,6 +319,12 @@ button {
   color: #f8fafc;
 }
 
+.evidence-block h4 {
+  margin: 14px 0 8px;
+  color: #bfdbfe;
+  font-size: 13px;
+}
+
 .evidence-block p {
   margin: 12px 0 0;
   color: #cbd5e1;
@@ -328,6 +334,18 @@ button {
 .evidence-block .helper-text {
   color: #94a3b8;
   font-size: 12px;
+}
+
+.condition-list {
+  display: grid;
+  gap: 7px;
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: #cbd5e1;
+}
+
+.condition-list li {
+  line-height: 1.45;
 }
 
 .detail-grid {

@@ -118,6 +118,12 @@ Guardrails prevent unsafe suppression of critical, Infiltration, or conflicting-
 
 The pipeline provides offline simulated feedback and exception memory. The dashboard provides interactive UI-only analyst feedback for demonstration.
 
+## Signature Evidence Explanations
+
+The dashboard separates signature evidence into plain-language explanations and technical rule details. Plain explanations help analysts understand why a rule matched, while technical details preserve auditability by listing the matched flow conditions.
+
+Signature explanations use cautious wording such as "may indicate" and "prototype heuristic" because flow-level signatures suggest suspicious behaviour but do not prove an attack by themselves.
+
 ## What Is Not Included Yet
 
 - No live backend.

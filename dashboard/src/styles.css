@@ -400,7 +400,7 @@ button {
   }
 }
 
-/* Stage 6 SOC layout port */
+/* SOC layout port */
 .app-shell {
   display: grid;
   grid-template-columns: 286px minmax(0, 1fr);
@@ -796,7 +796,7 @@ button {
   }
 }
 
-/* Stage 6B replay and local feedback controls */
+/* Replay and local feedback controls */
 .kpi-section {
   margin-bottom: 14px;
 }
@@ -923,7 +923,7 @@ button {
   color: #fed7aa;
 }
 
-/* Stage 6B latest replay activity */
+/* Latest replay activity */
 .operations-top-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);

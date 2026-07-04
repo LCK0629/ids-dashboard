@@ -30,7 +30,7 @@ export function OperationalOverview({ alerts, feedbackSummary, flowAlertCounts }
     ['Suppressed / resolved', flowAlertCounts.suppressedOrResolvedRecords, 'Suppression / Feedback'],
     ['Feedback adjusted', flowAlertCounts.feedbackAdjustedRecords, 'Suppression / Feedback'],
     ['Guardrail-limited', flowAlertCounts.guardrailLimitedRecords, 'Suppression / Feedback'],
-    ['After avg risk', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Stage 5 current score average'],
+    ['After avg risk', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Current pipeline score average'],
   ] as const;
 
   return (

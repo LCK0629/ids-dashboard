@@ -1,12 +1,12 @@
-# Stage 6 React Dashboard Integration
+# React Dashboard Integration
 
 ## Purpose
 
-This dashboard visualises Stage 5 feedback-adjusted IDS detection records.
+This dashboard visualises feedback-adjusted IDS detection records from the pipeline.
 
-It is the formal React dashboard integration layer for the staged Human-in-the-Loop IDS project.
+It is the formal React dashboard layer for the Human-in-the-Loop IDS project.
 
-The Stage 6 layout was upgraded using the uploaded SOC-style HTML prototype as a visual reference. The implementation remains React + Vite + TypeScript; the uploaded HTML was used as layout inspiration, not as runtime code.
+The layout was upgraded using the uploaded SOC-style HTML prototype as a visual reference. The implementation remains React + Vite + TypeScript; the uploaded HTML was used as layout inspiration, not as runtime code.
 
 ## Data Source
 
@@ -26,7 +26,7 @@ stage-5/evaluation/feedback-evaluation-summary.json
 stage-4/evaluation/fusion-evaluation-summary.json
 ```
 
-The original Stage 4 and Stage 5 outputs are not moved. If the pipeline outputs change later, refresh the dashboard copies from the source files.
+The original pipeline outputs are not moved. If the pipeline outputs change later, refresh the dashboard copies from the source files.
 
 The JSON filenames may contain the word "alerts" for historical reasons, but the dashboard treats these records as detection records unless they satisfy the active alert criteria.
 
@@ -47,19 +47,19 @@ npm run build
 
 ## Dashboard Features
 
-- KPI cards for Stage 5 feedback and review impact.
+- KPI cards for pipeline feedback and review impact.
 - Filter bar for review-required, adjusted, high-risk, guardrail, benign, malicious, and attack type views.
 - Active Alert Queue sorted by feedback-adjusted `currentRiskScore`.
 - All Detection Records and Suppressed / Resolved filters for retained low-risk or resolved records.
 - Latest Activity replay feed showing newly replayed detection records in arrival order, separate from the risk-sorted active alert queue.
 - Alert detail panel showing signature evidence, ML prediction, fusion evidence, and feedback adjustment.
-- Score comparison between Stage 4 `fusionRiskScore` and Stage 5 `currentRiskScore`.
+- Score comparison between `fusionRiskScore` and feedback-adjusted `currentRiskScore`.
 - Sidebar navigation for Operations, Investigations, Feedback Model, and Reports views.
 
 ## What This Dashboard Shows
 
-- Stage 4 fusion score.
-- Stage 5 current score.
+- Fusion score.
+- Current feedback-adjusted score.
 - Feedback adjustment.
 - Signature evidence.
 - ML prediction.
@@ -80,11 +80,11 @@ The sidebar displays separate counts for processed flows, detection records, act
 
 The JSON filenames may contain the word "alerts" for historical reasons, but the dashboard treats them as detection records unless they satisfy active alert criteria.
 
-## Stage 6B: Simulated Replay and Interactive Feedback
+## Simulated Replay and Interactive Feedback
 
-Stage 6B adds an offline replay mode and UI-only analyst feedback controls. Detection records are replayed from the static Stage 5 JSON output to simulate an operational triage queue. Analyst feedback changes the dashboard's local state and recalculates risk scores for demonstration purposes only.
+The dashboard includes an offline replay mode and UI-only analyst feedback controls. Detection records are replayed from the static pipeline JSON output to simulate an operational triage queue. Analyst feedback changes the dashboard's local state and recalculates risk scores for demonstration purposes only.
 
-This does not write back to the Stage 5 JSON files, does not retrain the model, and does not perform live packet capture.
+This does not write back to the pipeline JSON files, does not retrain the model, and does not perform live packet capture.
 
 The Latest Activity panel is driven by replay progress. It starts empty before replay, then grows as detection records are replayed so the demo can show incoming activity separately from the main risk-prioritised queue.
 
@@ -117,12 +117,12 @@ Reset Replay clears local feedback overrides for the current browser session. No
 - No live traffic.
 - No model retraining.
 - No live replay from network traffic.
-- No backend persistence for Stage 6B feedback.
+- No backend persistence for dashboard feedback.
 
 ## Limitations
 
 - Static JSON dashboard.
 - Simulated feedback.
 - Prototype evaluation.
-- Layout inspired by a static SOC HTML prototype, but data still comes from Stage 4 and Stage 5 JSON outputs.
+- Layout inspired by a static SOC HTML prototype, but data still comes from static pipeline JSON outputs.
 - Not production IDS.

@@ -42,7 +42,7 @@ export function ReplayControls({
     <section className="panel replay-panel">
       <div className="panel-header">
         <div>
-          <h2>Stage 6B Simulated Replay</h2>
+          <h2>Simulated Replay</h2>
           <p>Static JSON replay dataset · Not live packet capture · UI-only analyst feedback</p>
         </div>
         <span className="impact-pill">{status}</span>

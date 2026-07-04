@@ -74,7 +74,7 @@ export function Sidebar({
       <div className="model-card">
         <span className="label">Pipeline Status</span>
         <strong>{fusionSummary.idAlignmentSummary?.alignmentStatus || 'N/A'}</strong>
-        <p>{formatPercent(fusionSummary.idAlignmentSummary?.overlapRateAgainstStage2)} Stage 4 ID overlap</p>
+        <p>{formatPercent(fusionSummary.idAlignmentSummary?.overlapRateAgainstStage2)} pipeline ID overlap</p>
       </div>
 
       <div className="model-card">

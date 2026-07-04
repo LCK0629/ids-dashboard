@@ -43,7 +43,7 @@ export function KpiCards({
     ['Avg risk after', formatScore(feedbackSummary.averageRiskAfterFeedback)],
     ['Score guardrails', metric(feedbackSummary.scoreAdjustmentGuardrailCount)],
     ['Exception trust gates', metric(feedbackSummary.exceptionRejectedByTrustGateCount)],
-    ['Stage 4 ID overlap', formatPercent(fusionSummary.idAlignmentSummary?.overlapRateAgainstStage2)],
+    ['Prediction ID overlap', formatPercent(fusionSummary.idAlignmentSummary?.overlapRateAgainstStage2)],
   ];
 
   return (
@@ -61,7 +61,7 @@ export function KpiCards({
         ))}
       </div>
       <div className="kpi-title secondary">
-        <strong>Stage 5 Pipeline Metrics</strong>
+        <strong>Pipeline Metrics</strong>
         <span>Static JSON summary for processed flow records retained for audit and evaluation</span>
       </div>
       <div className="kpi-grid pipeline">

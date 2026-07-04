@@ -26,10 +26,10 @@ export function InvestigationsPanel({ alert }: InvestigationsPanelProps) {
   }
 
   const timeline = [
-    ['Stage 2 Signature', alert.signatureHit ? `Matched ${value(alert.signatureId)}` : 'No signature rule matched'],
-    ['Stage 3 XGBoost', `${value(alert.mlPredictedAttackType)} at ${formatModelConfidenceScore(alert.modelConfidence)}`],
-    ['Stage 4 Fusion', `${value(alert.fusionDecision)} -> ${formatScore(alert.fusionRiskScore)}`],
-    ['Stage 5 Feedback', `${value(alert.analystFeedbackStatus)} -> ${formatScore(alert.currentRiskScore)}`],
+    ['Signature Detection', alert.signatureHit ? `Matched ${value(alert.signatureId)}` : 'No signature rule matched'],
+    ['XGBoost Prediction', `${value(alert.mlPredictedAttackType)} at ${formatModelConfidenceScore(alert.modelConfidence)}`],
+    ['Fusion Decision', `${value(alert.fusionDecision)} -> ${formatScore(alert.fusionRiskScore)}`],
+    ['Feedback Adjustment', `${value(alert.analystFeedbackStatus)} -> ${formatScore(alert.currentRiskScore)}`],
   ];
 
   return (

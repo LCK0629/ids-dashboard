@@ -42,11 +42,11 @@ export function FeedbackSummaryPanel({ summary }: FeedbackSummaryPanelProps) {
       <div className="explain-panel">
         <h3>Interpretation</h3>
         <p>
-          Feedback is simulated in Stage 5. The dashboard displays the resulting priority changes, but it does not
+          Feedback is simulated in the pipeline. The dashboard displays the resulting priority changes, but it does not
           write analyst decisions back to the JSON files.
         </p>
         <p>
-          Stage 6B adds interactive controls for simulated feedback input and detection record replay.
+          The dashboard includes interactive controls for simulated feedback input and detection record replay.
         </p>
       </div>
     </section>

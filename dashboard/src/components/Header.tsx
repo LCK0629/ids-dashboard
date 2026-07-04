@@ -11,7 +11,7 @@ export function Header({ activeLabel }: HeaderProps) {
         <p>Hybrid signature, ML, fusion, and analyst-feedback detection record prioritisation</p>
       </div>
       <div className="topbar-actions">
-        <div className="status-pill">Stage 6 Dashboard Integration</div>
+        <div className="status-pill">Pipeline Dashboard</div>
         <div className="status-pill muted">Static JSON detection records</div>
         <div className="status-pill warning">Not live packet capture</div>
         <div className="view-pill">{activeLabel}</div>

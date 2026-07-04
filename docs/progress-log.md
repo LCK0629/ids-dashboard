@@ -77,6 +77,7 @@
 - Added a dynamic internal structure HTML slide deck to explain the staged IDS pipeline, data separation, detection engines, fusion, feedback, dashboard replay, and current prototype limitations.
 - Clarified Stage 6 dashboard semantics by separating processed flow records, detection records, and actionable alerts. The dashboard now defaults to an Active Alert Queue instead of treating every processed flow as an active alert.
 - Added sidebar and KPI breakdowns that distinguish processed flow records, detection records, active alerts, and suppressed/resolved records so the dashboard no longer implies that every flow is an alert.
+- Updated dashboard-facing wording to describe the system as a unified pipeline instead of exposing internal stage numbers in the user interface.
 
 ## Notes
 

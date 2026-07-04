@@ -23,8 +23,8 @@ export function ScoreComparison({ alert }: ScoreComparisonProps) {
         <span>Feedback adjustment</span>
         <strong className={direction}>{adjustment > 0 ? `+${adjustment}` : adjustment}</strong>
       </div>
-      <p>Fusion score is the machine-generated score from Stage 4.</p>
-      <p>Current score is the feedback-adjusted score from Stage 5.</p>
+      <p>Fusion score is the machine-generated score before analyst feedback.</p>
+      <p>Current score is the feedback-adjusted score used for prioritisation.</p>
     </section>
   );
 }

@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import type { AnalystFeedbackAction } from '../types/feedback';
-import { formatModelConfidenceScore, formatScore, recordTypeLabel } from '../utils/alertFilters';
+import {
+  formatModelConfidenceScore,
+  formatScore,
+  isActionableAlert,
+  isSuppressedOrResolved,
+  recordTypeLabel,
+} from '../utils/alertFilters';
 import { FeedbackControls } from './FeedbackControls';
 import { ScoreComparison } from './ScoreComparison';
 
@@ -49,6 +55,13 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
     );
   }
 
+  const classification = recordTypeLabel(alert);
+  const classificationExplanation = isActionableAlert(alert)
+    ? 'This record is promoted into the Active Alert Queue.'
+    : isSuppressedOrResolved(alert)
+      ? 'This record is retained for auditability but is not part of the default active alert queue.'
+      : 'This record is retained for audit and evaluation. It is not necessarily an active alert unless promoted by risk score, signature evidence, fusion decision, or analyst-review requirement.';
+
   return (
     <aside className="panel detail-panel">
       <div className="panel-header">
@@ -67,16 +80,14 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
 
       <EvidenceBlock title="Identity">
         <div className="detail-grid">
-          <DetailItem label="Record type">{recordTypeLabel(alert)}</DetailItem>
+          <DetailItem label="Record classification">{classification}</DetailItem>
           <DetailItem label="Fusion attack type">{value(alert.fusionAttackType)}</DetailItem>
           <DetailItem label="Current risk">{formatScore(alert.currentRiskScore)}</DetailItem>
           <DetailItem label="Fusion risk">{formatScore(alert.fusionRiskScore)}</DetailItem>
           <DetailItem label="Confidence level">{value(alert.fusionConfidenceLevel)}</DetailItem>
           <DetailItem label="Requires review">{value(alert.requiresAnalystReview)}</DetailItem>
         </div>
-        <p className="helper-text">
-          This record is retained for audit and evaluation. It is not necessarily an active alert unless promoted by risk score, signature evidence, fusion concern, or analyst-review requirement.
-        </p>
+        <p className="helper-text">{classificationExplanation}</p>
       </EvidenceBlock>
 
       <EvidenceBlock title="Signature Evidence">

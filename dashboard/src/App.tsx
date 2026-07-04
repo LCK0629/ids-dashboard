@@ -31,6 +31,7 @@ import {
   attackTypeOptions,
   filterAlerts,
   filterAlertsByAttackType,
+  getFlowAlertCounts,
   sortAlerts,
 } from './utils/alertFilters';
 import { replayIntervalMs } from './utils/replay';
@@ -79,6 +80,10 @@ export default function App() {
   const replayVisibleAlerts = useMemo(
     () => (isReplayMode ? locallyAdjustedAlerts.slice(0, replayIndex) : locallyAdjustedAlerts),
     [isReplayMode, locallyAdjustedAlerts, replayIndex]
+  );
+  const flowAlertCounts = useMemo(
+    () => getFlowAlertCounts(locallyAdjustedAlerts),
+    [locallyAdjustedAlerts]
   );
   const sortedAlerts = useMemo(() => sortAlerts(replayVisibleAlerts), [replayVisibleAlerts]);
   const attackTypes = useMemo(() => attackTypeOptions(replayVisibleAlerts), [replayVisibleAlerts]);
@@ -155,6 +160,7 @@ export default function App() {
       <Sidebar
         activeView={activeView}
         feedbackSummary={feedbackSummary}
+        flowAlertCounts={flowAlertCounts}
         fusionSummary={fusionSummary}
         onViewChange={setActiveView}
       />
@@ -200,6 +206,7 @@ export default function App() {
 
         <KpiCards
           feedbackSummary={feedbackSummary}
+          flowAlertCounts={flowAlertCounts}
           fusionSummary={fusionSummary}
           sessionKpis={sessionKpis}
         />
@@ -207,7 +214,11 @@ export default function App() {
         {activeView === 'operations' && (
           <>
             <div className="operations-top-grid">
-              <OperationalOverview alerts={sortedAlerts} feedbackSummary={feedbackSummary} />
+              <OperationalOverview
+                alerts={sortedAlerts}
+                feedbackSummary={feedbackSummary}
+                flowAlertCounts={flowAlertCounts}
+              />
               <LatestActivityPanel
                 alerts={isReplayMode ? replayVisibleAlerts : []}
                 isReplayMode={isReplayMode}

@@ -1,4 +1,4 @@
-import type { AttackTypeFilter, FeedbackAdjustedAlert, FilterKey } from '../types/alerts';
+import type { AttackTypeFilter, FeedbackAdjustedAlert, FilterKey, FlowAlertCounts } from '../types/alerts';
 
 export function isHighRisk(alert: FeedbackAdjustedAlert): boolean {
   return Number(alert.currentRiskScore ?? 0) >= 70;
@@ -44,6 +44,25 @@ export function isSuppressedOrResolved(alert: FeedbackAdjustedAlert): boolean {
   return riskScore === 0
     || resolvedStatus
     || (!alert.requiresAnalystReview && riskScore < 40);
+}
+
+export const isSuppressedOrResolvedRecord = isSuppressedOrResolved;
+
+export function getFlowAlertCounts(records: FeedbackAdjustedAlert[]): FlowAlertCounts {
+  return {
+    totalProcessedFlows: records.length,
+    allDetectionRecords: records.length,
+    activeAlerts: records.filter(isActionableAlert).length,
+    reviewRequiredAlerts: records.filter((record) => Boolean(record.requiresAnalystReview)).length,
+    suppressedOrResolvedRecords: records.filter(isSuppressedOrResolved).length,
+    lowRiskRecords: records.filter((record) => {
+      const score = Number(record.currentRiskScore ?? 0);
+      return score > 0 && score < 40;
+    }).length,
+    highRiskRecords: records.filter((record) => Number(record.currentRiskScore ?? 0) >= 70).length,
+    feedbackAdjustedRecords: records.filter(isAdjusted).length,
+    guardrailLimitedRecords: records.filter(isGuardrailApplied).length,
+  };
 }
 
 export function recordTypeLabel(alert: FeedbackAdjustedAlert): string {

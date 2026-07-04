@@ -38,7 +38,7 @@ export function AlertQueue({
           <h2>{title}</h2>
           <p>Click a detection record to inspect fusion, ML, signature, and feedback evidence</p>
         </div>
-        <span>{alerts.length} of {totalDetectionRecords} records</span>
+        <span>Showing {alerts.length} of {totalDetectionRecords} detection records</span>
       </div>
       <div className="table-wrap">
         <table className="alert-table">

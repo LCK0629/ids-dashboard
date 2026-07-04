@@ -1,9 +1,10 @@
-import type { FeedbackEvaluationSummary, FusionEvaluationSummary } from '../types/alerts';
+import type { FeedbackEvaluationSummary, FlowAlertCounts, FusionEvaluationSummary } from '../types/alerts';
 import type { SessionKpis } from '../types/feedback';
 import { formatPercent, formatScore } from '../utils/alertFilters';
 
 interface KpiCardsProps {
   feedbackSummary: FeedbackEvaluationSummary;
+  flowAlertCounts: FlowAlertCounts;
   fusionSummary: FusionEvaluationSummary;
   sessionKpis: SessionKpis;
 }
@@ -15,18 +16,23 @@ function metric(value: number | string | undefined | null): string {
   return String(value);
 }
 
-export function KpiCards({ feedbackSummary, fusionSummary, sessionKpis }: KpiCardsProps) {
+export function KpiCards({
+  feedbackSummary,
+  flowAlertCounts,
+  fusionSummary,
+  sessionKpis,
+}: KpiCardsProps) {
   const sessionCards = [
+    ['Total Processed Flows', metric(flowAlertCounts.totalProcessedFlows)],
+    ['All Detection Records', metric(flowAlertCounts.allDetectionRecords)],
+    ['Active Alerts', metric(flowAlertCounts.activeAlerts)],
+    ['Requires Review', metric(flowAlertCounts.reviewRequiredAlerts)],
+    ['Suppressed / Resolved', metric(flowAlertCounts.suppressedOrResolvedRecords)],
+    ['High Risk Records', metric(flowAlertCounts.highRiskRecords)],
+    ['Average Current Risk', formatScore(sessionKpis.averageCurrentRisk)],
+    ['Feedback Adjusted', metric(flowAlertCounts.feedbackAdjustedRecords)],
     ['Visible Records', metric(sessionKpis.visibleRecords)],
-    ['All Detection Records', metric(sessionKpis.allDetectionRecords)],
-    ['Active Alerts', metric(sessionKpis.activeAlerts)],
-    ['Suppressed / Resolved', metric(sessionKpis.suppressedResolved)],
-    ['Reviewed in session', metric(sessionKpis.reviewedInSession)],
-    ['Local feedback applied', metric(sessionKpis.localFeedbackApplied)],
-    ['Avg current risk', formatScore(sessionKpis.averageCurrentRisk)],
-    ['High Risk Records', metric(sessionKpis.highRiskRecords)],
-    ['Requires review', metric(sessionKpis.requiresReview)],
-    ['Replay progress', sessionKpis.replayProgress],
+    ['Replay Progress', sessionKpis.replayProgress],
   ];
   const pipelineCards = [
     ['Total Processed Flows', metric(feedbackSummary.totalAlerts)],
@@ -43,8 +49,8 @@ export function KpiCards({ feedbackSummary, fusionSummary, sessionKpis }: KpiCar
   return (
     <section className="kpi-section" aria-label="Dashboard KPIs">
       <div className="kpi-title">
-        <strong>Current View Metrics</strong>
-        <span>Recalculated from visible detection records, active alert criteria, and local feedback</span>
+        <strong>Flow vs Alert Metrics</strong>
+        <span>Dataset-level counts plus the current visible detection records</span>
       </div>
       <div className="kpi-grid">
         {sessionCards.map(([label, value]) => (

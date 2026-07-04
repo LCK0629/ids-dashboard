@@ -496,6 +496,40 @@ button {
   font-size: 24px;
 }
 
+.flow-alert-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-alert-summary > p {
+  margin: 0;
+}
+
+.sidebar-count-group {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  padding-top: 10px;
+}
+
+.sidebar-count-group strong {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.sidebar-count-group span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.sidebar-count-group b {
+  color: #7dd3fc;
+}
+
 .dashboard {
   width: min(100%, 1640px);
   padding: 22px;
@@ -570,6 +604,10 @@ button {
   grid-template-columns: repeat(5, minmax(130px, 1fr));
   gap: 10px;
   padding: 14px;
+}
+
+.overview-grid.breakdown {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
 }
 
 .overview-row,
@@ -725,6 +763,10 @@ button {
   .overview-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .overview-grid.breakdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -743,6 +785,7 @@ button {
 
   .nav-list,
   .overview-grid,
+  .overview-grid.breakdown,
   .metric-grid,
   .timeline-item {
     grid-template-columns: 1fr;

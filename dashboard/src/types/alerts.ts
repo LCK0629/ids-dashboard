@@ -15,6 +15,18 @@ export type FilterKey =
 
 export type AttackTypeFilter = 'all' | string;
 
+export interface FlowAlertCounts {
+  totalProcessedFlows: number;
+  allDetectionRecords: number;
+  activeAlerts: number;
+  reviewRequiredAlerts: number;
+  suppressedOrResolvedRecords: number;
+  lowRiskRecords: number;
+  highRiskRecords: number;
+  feedbackAdjustedRecords: number;
+  guardrailLimitedRecords: number;
+}
+
 export interface FeedbackAdjustedAlert {
   id: string;
   fusionRiskScore?: number;

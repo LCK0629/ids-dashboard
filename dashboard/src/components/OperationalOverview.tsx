@@ -1,9 +1,10 @@
-import type { FeedbackAdjustedAlert, FeedbackEvaluationSummary } from '../types/alerts';
-import { formatScore, isActionableAlert, isSuppressedOrResolved } from '../utils/alertFilters';
+import type { FeedbackAdjustedAlert, FeedbackEvaluationSummary, FlowAlertCounts } from '../types/alerts';
+import { formatScore } from '../utils/alertFilters';
 
 interface OperationalOverviewProps {
   alerts: FeedbackAdjustedAlert[];
   feedbackSummary: FeedbackEvaluationSummary;
+  flowAlertCounts: FlowAlertCounts;
 }
 
 function metric(value: number | undefined): string {
@@ -17,18 +18,18 @@ function barWidth(value: number, max: number): string {
   return `${Math.min(100, Math.round((value / max) * 100))}%`;
 }
 
-export function OperationalOverview({ alerts, feedbackSummary }: OperationalOverviewProps) {
-  const highRiskCount = alerts.filter((alert) => Number(alert.currentRiskScore ?? 0) >= 70).length;
-  const adjustedCount = alerts.filter((alert) => alert.feedbackApplied).length;
-  const activeAlertCount = alerts.filter(isActionableAlert).length;
-  const suppressedCount = alerts.filter(isSuppressedOrResolved).length;
+export function OperationalOverview({ alerts, feedbackSummary, flowAlertCounts }: OperationalOverviewProps) {
   const reviewReduction = Number(feedbackSummary.reviewQueueBefore ?? 0) - Number(feedbackSummary.reviewQueueAfter ?? 0);
-  const maxCount = Math.max(alerts.length, 1);
+  const maxCount = Math.max(flowAlertCounts.totalProcessedFlows, alerts.length, 1);
   const rows = [
-    ['Active alerts', activeAlertCount, 'Promoted for analyst attention'],
-    ['High-risk records', highRiskCount, 'Current score >= 70'],
-    ['Suppressed / resolved', suppressedCount, 'Low-risk or feedback-resolved records'],
-    ['Adjusted records', adjustedCount, 'Feedback or exception memory affected the record'],
+    ['Processed flows', flowAlertCounts.totalProcessedFlows, 'Flow Processing'],
+    ['Detection records', flowAlertCounts.allDetectionRecords, 'Flow Processing'],
+    ['Active alerts', flowAlertCounts.activeAlerts, 'Alert Promotion'],
+    ['Requires review', flowAlertCounts.reviewRequiredAlerts, 'Alert Promotion'],
+    ['High-risk records', flowAlertCounts.highRiskRecords, 'Alert Promotion'],
+    ['Suppressed / resolved', flowAlertCounts.suppressedOrResolvedRecords, 'Suppression / Feedback'],
+    ['Feedback adjusted', flowAlertCounts.feedbackAdjustedRecords, 'Suppression / Feedback'],
+    ['Guardrail-limited', flowAlertCounts.guardrailLimitedRecords, 'Suppression / Feedback'],
     ['After avg risk', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Stage 5 current score average'],
   ] as const;
 
@@ -41,16 +42,16 @@ export function OperationalOverview({ alerts, feedbackSummary }: OperationalOver
         </div>
         <span className="impact-pill">Review queue {reviewReduction >= 0 ? '-' : '+'}{Math.abs(reviewReduction)}</span>
       </div>
-      <div className="overview-grid">
+      <div className="overview-grid breakdown">
         {rows.map(([label, value, note]) => (
           <div className="overview-row" key={label}>
             <div>
               <strong>{label}</strong>
               <span>{note}</span>
             </div>
-            <b>{label.includes('risk') ? formatScore(value) : metric(value)}</b>
+            <b>{label === 'After avg risk' ? formatScore(value) : metric(value)}</b>
             <div className="bar-track">
-              <span style={{ width: barWidth(value, label.includes('risk') ? 100 : maxCount) }} />
+              <span style={{ width: barWidth(value, label === 'After avg risk' ? 100 : maxCount) }} />
             </div>
           </div>
         ))}

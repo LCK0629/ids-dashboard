@@ -68,13 +68,15 @@ npm run build
 - Guardrail and feedback reason.
 - Model confidence is displayed as an XGBoost confidence score. It is not a calibrated probability and should not be interpreted as absolute certainty. Values very close to 1.0 are displayed as 99.9%+ to avoid implying guaranteed correctness.
 
-## Flow Records vs Actionable Alerts
+## Flow Records, Detection Records, and Actionable Alerts
 
-The dashboard distinguishes between processed flow records, detection records, and actionable alerts.
+The dashboard separates the full processed dataset from the active alert queue.
 
-Each dataset flow is processed by the signature, ML, fusion, and feedback stages. The resulting Stage 4 and Stage 5 JSON files retain all processed records for auditability and evaluation. However, not every processed record is an active security alert.
+A flow record is a network traffic record from the dataset. Each flow is processed by the signature, ML, fusion, and feedback stages to produce a detection record. However, not every detection record is an active alert.
 
 The Active Alert Queue only shows records promoted for analyst attention based on risk score, signature evidence, fusion decision, or review requirement. Low-risk, benign, suppressed, and resolved records remain available through the All Detection Records and Suppressed / Resolved filters.
+
+The sidebar displays separate counts for processed flows, detection records, active alerts, review-required alerts, high-risk records, and suppressed/resolved records.
 
 The JSON filenames may contain the word "alerts" for historical reasons, but the dashboard treats them as detection records unless they satisfy active alert criteria.
 

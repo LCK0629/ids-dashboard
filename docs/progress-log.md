@@ -76,6 +76,7 @@
 - Added attack type filtering to the Stage 6 dashboard so analysts can filter the queue by Benign, Botnet, Brute Force, DDoS, DoS, Web Attack, or any future attack type present in the replayed data.
 - Added a dynamic internal structure HTML slide deck to explain the staged IDS pipeline, data separation, detection engines, fusion, feedback, dashboard replay, and current prototype limitations.
 - Clarified Stage 6 dashboard semantics by separating processed flow records, detection records, and actionable alerts. The dashboard now defaults to an Active Alert Queue instead of treating every processed flow as an active alert.
+- Added sidebar and KPI breakdowns that distinguish processed flow records, detection records, active alerts, and suppressed/resolved records so the dashboard no longer implies that every flow is an alert.
 
 ## Notes
 

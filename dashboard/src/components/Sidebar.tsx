@@ -1,4 +1,4 @@
-import type { FeedbackEvaluationSummary, FusionEvaluationSummary } from '../types/alerts';
+import type { FeedbackEvaluationSummary, FlowAlertCounts, FusionEvaluationSummary } from '../types/alerts';
 import { formatPercent } from '../utils/alertFilters';
 
 export type DashboardView = 'operations' | 'investigations' | 'feedback' | 'reports';
@@ -7,6 +7,7 @@ interface SidebarProps {
   activeView: DashboardView;
   onViewChange: (view: DashboardView) => void;
   feedbackSummary: FeedbackEvaluationSummary;
+  flowAlertCounts: FlowAlertCounts;
   fusionSummary: FusionEvaluationSummary;
 }
 
@@ -17,7 +18,13 @@ const navItems: Array<{ view: DashboardView; title: string; subtitle: string }> 
   { view: 'reports', title: 'Reports', subtitle: 'Evaluation summary' },
 ];
 
-export function Sidebar({ activeView, onViewChange, feedbackSummary, fusionSummary }: SidebarProps) {
+export function Sidebar({
+  activeView,
+  onViewChange,
+  feedbackSummary,
+  flowAlertCounts,
+  fusionSummary,
+}: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="Security workspace navigation">
       <div className="brand">
@@ -41,6 +48,28 @@ export function Sidebar({ activeView, onViewChange, feedbackSummary, fusionSumma
           </button>
         ))}
       </nav>
+
+      <div className="model-card flow-alert-summary">
+        <span className="label">Flow vs Alert Summary</span>
+        <p>Not every flow is an alert.</p>
+        <div className="sidebar-count-group">
+          <strong>Flow Records</strong>
+          <span><b>{flowAlertCounts.totalProcessedFlows}</b> Processed Flows</span>
+          <span><b>{flowAlertCounts.allDetectionRecords}</b> Detection Records</span>
+        </div>
+        <div className="sidebar-count-group">
+          <strong>Alert Queue</strong>
+          <span><b>{flowAlertCounts.activeAlerts}</b> Active Alerts</span>
+          <span><b>{flowAlertCounts.reviewRequiredAlerts}</b> Requires Review</span>
+          <span><b>{flowAlertCounts.highRiskRecords}</b> High Risk</span>
+        </div>
+        <div className="sidebar-count-group">
+          <strong>Suppressed / Audit</strong>
+          <span><b>{flowAlertCounts.suppressedOrResolvedRecords}</b> Suppressed / Resolved</span>
+          <span><b>{flowAlertCounts.lowRiskRecords}</b> Low Risk Records</span>
+        </div>
+        <p>Flows are scored first. Only review-worthy records become active alerts.</p>
+      </div>
 
       <div className="model-card">
         <span className="label">Pipeline Status</span>

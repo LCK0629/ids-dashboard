@@ -273,6 +273,30 @@ function adjustAlertsWithFeedback(alerts, analystFeedback = [], exceptionMemory 
   };
 }
 
+function attachGroundTruthFields(adjustedAlerts, groundTruth = null) {
+  if (!groundTruth) {
+    return adjustedAlerts;
+  }
+
+  return adjustedAlerts.map((alert) => {
+    const truth = groundTruth[String(alert.id)];
+    if (!truth) {
+      return alert;
+    }
+
+    // Ground truth is joined only after detection, fusion, and feedback for evaluation
+    // and dashboard explanation. It is not used by signature matching, ML prediction,
+    // fusion scoring, or feedback adjustment.
+    return {
+      ...alert,
+      groundTruth: truth.groundTruth,
+      trueAttackType: truth.mappedAttackType,
+      mappedAttackType: truth.mappedAttackType,
+      rawLabel: truth.rawLabel,
+    };
+  });
+}
+
 function incrementCounter(counter, key) {
   const safeKey = key || 'Unknown';
   counter[safeKey] = (counter[safeKey] || 0) + 1;
@@ -348,7 +372,7 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
     ).length,
     countByAnalystFeedbackStatus: {},
     notes: [
-      'Ground truth is joined only after feedback adjustment for evaluation.',
+      'Ground truth is joined only after detection, fusion, and feedback for evaluation and dashboard explanation. It is not used as input to signature matching, ML prediction, fusion scoring, or feedback adjustment.',
       'This is a prototype feedback evaluation, not production IDS performance.',
       'The goal is to show workload and priority changes after simulated analyst feedback.',
     ],
@@ -408,5 +432,6 @@ module.exports = {
   applyExceptionMemory,
   adjustAlertWithFeedback,
   adjustAlertsWithFeedback,
+  attachGroundTruthFields,
   summariseFeedbackResults,
 };

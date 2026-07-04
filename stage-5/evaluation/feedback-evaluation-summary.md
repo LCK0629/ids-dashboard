@@ -2,7 +2,9 @@
 
 Stage 5 applies simulated analyst feedback and JSON-based exception memory to Stage 4 fused alerts.
 
-Ground truth is joined only after feedback adjustment for evaluation. This is a prototype workload and priority evaluation, not production IDS performance.
+Ground truth is joined only after detection, fusion, and feedback for evaluation and dashboard explanation. It is not used as input to signature matching, ML prediction, fusion scoring, or feedback adjustment.
+
+This is a prototype workload and priority evaluation, not production IDS performance.
 
 ## Overall Counts
 
@@ -71,6 +73,6 @@ Trust-gate rejections do not change the risk score. For report writing, use the 
 
 ## Notes
 
-- Ground truth is joined only after feedback adjustment for evaluation.
+- Ground truth is joined only after detection, fusion, and feedback for evaluation and dashboard explanation. It is not used as input to signature matching, ML prediction, fusion scoring, or feedback adjustment.
 - This is a prototype feedback evaluation, not production IDS performance.
 - The goal is to show workload and priority changes after simulated analyst feedback.

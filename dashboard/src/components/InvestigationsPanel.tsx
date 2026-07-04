@@ -135,7 +135,7 @@ export function InvestigationsPanel({ alert, onApplyFeedback, onResetFeedback }:
           <h3>Feedback History</h3>
           <p>{alert.feedbackReason || 'No pipeline feedback reason recorded.'}</p>
           <p>
-            Local analyst feedback: {value(alert.localFeedbackLabel)}. Guardrail result: {alert.localGuardrailMessage || value(alert.feedbackGuardrailsApplied?.join(', '))}.
+            Local analyst feedback: {value(alert.localFeedbackLabel)}. Score guardrail or trust-gate evidence: {alert.localGuardrailMessage || value(alert.feedbackGuardrailsApplied?.join(', '))}.
           </p>
           <p className="helper-text">
             Human feedback can change review priority, but this dashboard does not write feedback back to JSON files or retrain the model.

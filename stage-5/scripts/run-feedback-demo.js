@@ -4,6 +4,7 @@ const path = require('path');
 const {
   loadJsonFile,
   adjustAlertsWithFeedback,
+  attachGroundTruthFields,
   summariseFeedbackResults,
 } = require('../core/feedback-engine');
 
@@ -32,7 +33,9 @@ function renderSummaryMarkdown(summary) {
     '',
     'Stage 5 applies simulated analyst feedback and JSON-based exception memory to Stage 4 fused alerts.',
     '',
-    'Ground truth is joined only after feedback adjustment for evaluation. This is a prototype workload and priority evaluation, not production IDS performance.',
+    'Ground truth is joined only after detection, fusion, and feedback for evaluation and dashboard explanation. It is not used as input to signature matching, ML prediction, fusion scoring, or feedback adjustment.',
+    '',
+    'This is a prototype workload and priority evaluation, not production IDS performance.',
     '',
     '## Overall Counts',
     '',
@@ -114,18 +117,19 @@ function main() {
     analystFeedback,
     exceptionMemory
   );
-  const evaluationSummary = summariseFeedbackResults(adjustedAlerts, unmatchedFeedback, groundTruth);
+  const adjustedAlertsWithGroundTruth = attachGroundTruthFields(adjustedAlerts, groundTruth);
+  const evaluationSummary = summariseFeedbackResults(adjustedAlertsWithGroundTruth, unmatchedFeedback, groundTruth);
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
-  fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(adjustedAlerts, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(adjustedAlertsWithGroundTruth, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationMarkdownPath, renderSummaryMarkdown(evaluationSummary), 'utf8');
 
   console.log(`Fused alerts loaded: ${fusedAlerts.length}`);
   console.log(`Analyst feedback records loaded: ${analystFeedback.length}`);
   console.log(`Exception memory records loaded: ${exceptionMemory.length}`);
-  console.log(`Feedback-adjusted alerts written: ${adjustedAlerts.length}`);
+  console.log(`Feedback-adjusted alerts written: ${adjustedAlertsWithGroundTruth.length}`);
   console.log(`Alerts adjusted: ${evaluationSummary.alertsAdjusted}`);
   console.log(`Direct feedback applied: ${evaluationSummary.directFeedbackAppliedCount}`);
   console.log(`Unmatched direct feedback: ${evaluationSummary.unmatchedDirectFeedbackCount}`);

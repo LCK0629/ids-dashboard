@@ -10,6 +10,7 @@ export type FilterKey =
   | 'signature-hit'
   | 'signature-ml-disagree'
   | 'guardrail-applied'
+  | 'exception-trust-gate'
   | 'benign'
   | 'malicious';
 
@@ -25,6 +26,7 @@ export interface FlowAlertCounts {
   highRiskRecords: number;
   feedbackAdjustedRecords: number;
   guardrailLimitedRecords: number;
+  exceptionTrustGateRejectedRecords: number;
 }
 
 export interface FeedbackAdjustedAlert {

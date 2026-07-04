@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
-import { formatScore } from '../utils/alertFilters';
+import { formatScore, isExceptionTrustGateRejected, isScoreGuardrailApplied } from '../utils/alertFilters';
 
 interface FeedbackImpactPanelProps {
   alert: FeedbackAdjustedAlert;
@@ -31,10 +31,13 @@ export function FeedbackImpactPanel({ alert }: FeedbackImpactPanelProps) {
   const interactiveAdjustment = interactiveCurrentRisk - originalPipelineRisk;
   const reviewBefore = Boolean(alert.stage5RequiresAnalystReview ?? alert.requiresAnalystReview);
   const reviewAfter = Boolean(alert.requiresAnalystReview);
-  const guardrailResult = alert.localGuardrailMessage
-    || (alert.feedbackGuardrailsApplied?.length
-      ? `Existing pipeline guardrails: ${alert.feedbackGuardrailsApplied.join(', ')}`
-      : 'No guardrail triggered in this session.');
+  const scoreGuardrailResult = alert.localGuardrailMessage
+    || (isScoreGuardrailApplied(alert)
+      ? `Score guardrail applied: ${(alert.feedbackGuardrailsApplied || []).join(', ') || 'local feedback guardrail'}`
+      : 'No score guardrail triggered in this session.');
+  const trustGateResult = isExceptionTrustGateRejected(alert)
+    ? `Exception trust gate rejected: ${(alert.feedbackGuardrailsApplied || []).join(', ')}`
+    : 'No exception trust-gate rejection recorded.';
 
   return (
     <div className="feedback-impact-panel">
@@ -48,7 +51,8 @@ export function FeedbackImpactPanel({ alert }: FeedbackImpactPanelProps) {
         <DetailItem label="Review status before">{value(reviewBefore)}</DetailItem>
         <DetailItem label="Review status after">{value(reviewAfter)}</DetailItem>
         <DetailItem label="Local analyst feedback">{value(alert.localFeedbackLabel)}</DetailItem>
-        <DetailItem label="Guardrail result">{guardrailResult}</DetailItem>
+        <DetailItem label="Score guardrail result">{scoreGuardrailResult}</DetailItem>
+        <DetailItem label="Exception trust gate">{trustGateResult}</DetailItem>
       </div>
       <p>
         {alert.localFeedbackReason || 'No local analyst feedback applied in this session.'}

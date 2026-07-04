@@ -48,7 +48,7 @@ npm run build
 ## Dashboard Features
 
 - KPI cards for pipeline feedback and review impact.
-- Filter bar for review-required, adjusted, high-risk, guardrail, benign, malicious, and attack type views.
+- Filter bar for review-required, adjusted, high-risk, score guardrail, exception trust-gate, benign, malicious, and attack type views.
 - Active Alert Queue sorted by feedback-adjusted `currentRiskScore`.
 - All Detection Records and Suppressed / Resolved filters for retained low-risk or resolved records.
 - Latest Activity replay feed showing newly replayed detection records in arrival order, separate from the risk-sorted active alert queue.
@@ -83,6 +83,14 @@ The Active Alert Queue only shows records promoted for analyst attention based o
 The sidebar displays separate counts for processed flows, detection records, active alerts, review-required alerts, high-risk records, and suppressed/resolved records.
 
 The JSON filenames may contain the word "alerts" for historical reasons, but the dashboard treats them as detection records unless they satisfy active alert criteria.
+
+## Ground Truth and Evaluation Fields
+
+Ground truth is joined only after detection, fusion, and feedback. It is used for evaluation, reporting, and dashboard explanation, not for prediction or scoring. Benign and Malicious filters use only ground-truth fields and do not fall back to model or fusion predictions.
+
+## Guardrail and Trust-Gate Semantics
+
+The dashboard separates score guardrails from exception trust-gate rejections. Score guardrails limit unsafe risk-score reduction, while trust-gate rejections indicate that exception memory was ignored because it was not reliable enough.
 
 ## Simulated Replay and Interactive Feedback
 

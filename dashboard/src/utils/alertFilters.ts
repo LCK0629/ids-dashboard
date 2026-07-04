@@ -12,9 +12,29 @@ export function requiresReview(alert: FeedbackAdjustedAlert): boolean {
   return Boolean(alert.requiresAnalystReview);
 }
 
-export function isGuardrailApplied(alert: FeedbackAdjustedAlert): boolean {
-  return Boolean(alert.feedbackGuardrailsApplied?.length)
-    || alert.analystFeedbackStatus === 'guardrail_limited_adjustment';
+const scoreGuardrailCodes = [
+  'maximum_reduction_capped_at_30',
+  'critical_alert_floor_70',
+  'infiltration_floor_75',
+];
+
+const exceptionTrustGateCodes = [
+  'low_confidence_exception_ignored',
+  'insufficient_feedback_exception_ignored',
+];
+
+export function isScoreGuardrailApplied(alert: FeedbackAdjustedAlert): boolean {
+  const guardrails = alert.feedbackGuardrailsApplied || [];
+  return alert.analystFeedbackStatus === 'guardrail_limited_adjustment'
+    || scoreGuardrailCodes.some((code) => guardrails.includes(code))
+    || Boolean(alert.localGuardrailMessage);
+}
+
+export function isExceptionTrustGateRejected(alert: FeedbackAdjustedAlert): boolean {
+  const guardrails = alert.feedbackGuardrailsApplied || [];
+  return alert.analystFeedbackStatus === 'ignored_low_confidence_exception'
+    || alert.analystFeedbackStatus === 'ignored_insufficient_feedback'
+    || exceptionTrustGateCodes.some((code) => guardrails.includes(code));
 }
 
 export function isSignatureMlDisagree(alert: FeedbackAdjustedAlert): boolean {
@@ -61,7 +81,8 @@ export function getFlowAlertCounts(records: FeedbackAdjustedAlert[]): FlowAlertC
     }).length,
     highRiskRecords: records.filter((record) => Number(record.currentRiskScore ?? 0) >= 70).length,
     feedbackAdjustedRecords: records.filter(isAdjusted).length,
-    guardrailLimitedRecords: records.filter(isGuardrailApplied).length,
+    guardrailLimitedRecords: records.filter(isScoreGuardrailApplied).length,
+    exceptionTrustGateRejectedRecords: records.filter(isExceptionTrustGateRejected).length,
   };
 }
 
@@ -83,25 +104,36 @@ export function recordStatusBadges(alert: FeedbackAdjustedAlert): string[] {
   if (status.includes('false_positive') || status.includes('false positive')) badges.push('False Positive');
   if (status.includes('expected_activity') || status.includes('expected activity')) badges.push('Expected Activity');
   if (Number(alert.currentRiskScore ?? 0) > 0 && Number(alert.currentRiskScore ?? 0) < 40) badges.push('Low Risk');
-  if (alert.localGuardrailMessage || Boolean(alert.feedbackGuardrailsApplied?.length)) badges.push('Guardrail Applied');
+  if (isScoreGuardrailApplied(alert)) badges.push('Score Guardrail Applied');
+  if (isExceptionTrustGateRejected(alert)) badges.push('Exception Trust Gate Rejected');
   return [...new Set(badges)];
 }
 
+export function getGroundTruthLabel(alert: FeedbackAdjustedAlert): 'benign' | 'malicious' | null {
+  const groundTruth = String(alert.groundTruth || '').toLowerCase();
+  if (groundTruth === 'benign') {
+    return 'benign';
+  }
+  if (groundTruth === 'malicious') {
+    return 'malicious';
+  }
+
+  const mapped = String(alert.trueAttackType || alert.mappedAttackType || alert.rawLabel || '').toLowerCase();
+  if (!mapped) {
+    return null;
+  }
+  if (mapped === 'benign') {
+    return 'benign';
+  }
+  return 'malicious';
+}
+
 function isBenign(alert: FeedbackAdjustedAlert): boolean {
-  const label = alert.groundTruth || alert.trueAttackType || alert.mappedAttackType || alert.fusionAttackType;
-  return String(label || '').toLowerCase() === 'benign';
+  return getGroundTruthLabel(alert) === 'benign';
 }
 
 function isMalicious(alert: FeedbackAdjustedAlert): boolean {
-  const groundTruth = String(alert.groundTruth || '').toLowerCase();
-  if (groundTruth === 'malicious') {
-    return true;
-  }
-  if (groundTruth === 'benign') {
-    return false;
-  }
-  const label = alert.trueAttackType || alert.mappedAttackType || alert.fusionAttackType;
-  return Boolean(label && label !== 'Benign');
+  return getGroundTruthLabel(alert) === 'malicious';
 }
 
 export function sortAlerts(alerts: FeedbackAdjustedAlert[]): FeedbackAdjustedAlert[] {
@@ -142,7 +174,9 @@ export function filterAlerts(alerts: FeedbackAdjustedAlert[], filter: FilterKey)
       case 'signature-ml-disagree':
         return isSignatureMlDisagree(alert);
       case 'guardrail-applied':
-        return isGuardrailApplied(alert);
+        return isScoreGuardrailApplied(alert);
+      case 'exception-trust-gate':
+        return isExceptionTrustGateRejected(alert);
       case 'benign':
         return isBenign(alert);
       case 'malicious':

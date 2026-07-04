@@ -58,7 +58,8 @@ const filterTitles: Record<FilterKey, string> = {
   'suppressed-resolved': 'Suppressed / Resolved Records',
   'signature-hit': 'Signature Hit Records',
   'signature-ml-disagree': 'Signature / ML Disagreement Records',
-  'guardrail-applied': 'Guardrail-Affected Records',
+  'guardrail-applied': 'Score Guardrail Applied Records',
+  'exception-trust-gate': 'Exception Trust Gate Rejected Records',
   benign: 'Benign Detection Records',
   malicious: 'Malicious Detection Records',
 };

@@ -29,7 +29,8 @@ export function OperationalOverview({ alerts, feedbackSummary, flowAlertCounts }
     ['High-risk records', flowAlertCounts.highRiskRecords, 'Alert Promotion'],
     ['Suppressed / resolved', flowAlertCounts.suppressedOrResolvedRecords, 'Suppression / Feedback'],
     ['Feedback adjusted', flowAlertCounts.feedbackAdjustedRecords, 'Suppression / Feedback'],
-    ['Guardrail-limited', flowAlertCounts.guardrailLimitedRecords, 'Suppression / Feedback'],
+    ['Score guardrail-limited', flowAlertCounts.guardrailLimitedRecords, 'Suppression / Feedback'],
+    ['Exception trust gate', flowAlertCounts.exceptionTrustGateRejectedRecords, 'Exception Memory'],
     ['After avg risk', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Current pipeline score average'],
   ] as const;
 

@@ -168,6 +168,9 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
         <p>{alert.feedbackReason || 'No feedback reason recorded.'}</p>
         {alert.localFeedbackReason && <p>{alert.localFeedbackReason}</p>}
         {alert.localGuardrailMessage && <p className="guardrail-message">{alert.localGuardrailMessage}</p>}
+        <p className="helper-text">
+          Score guardrails limit unsafe risk-score reduction. Exception trust-gate rejections mean exception memory was ignored because it was not reliable enough.
+        </p>
         <div className="tag-list">
           {(alert.feedbackGuardrailsApplied || []).length
             ? alert.feedbackGuardrailsApplied?.map((guardrail) => <span key={guardrail}>{guardrail}</span>)

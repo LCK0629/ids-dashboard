@@ -16,7 +16,8 @@ const filters: FilterOption[] = [
   { key: 'benign', label: 'Benign' },
   { key: 'malicious', label: 'Malicious' },
   { key: 'feedback-applied', label: 'Feedback Applied' },
-  { key: 'guardrail-applied', label: 'Guardrail Applied' },
+  { key: 'guardrail-applied', label: 'Score Guardrail Applied' },
+  { key: 'exception-trust-gate', label: 'Exception Trust Gate' },
   { key: 'signature-hit', label: 'Signature Hit' },
   { key: 'signature-ml-disagree', label: 'Signature / ML Disagree' },
 ];

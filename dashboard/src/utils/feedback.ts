@@ -14,7 +14,7 @@ const actionConfig: Record<AnalystFeedbackAction, { delta: number; review: boole
     reason: 'Analyst marked this alert as a false positive.',
   },
   EXPECTED_ACTIVITY: {
-    delta: -25,
+    delta: -30,
     review: false,
     reason: 'Analyst marked the behaviour as expected activity.',
   },

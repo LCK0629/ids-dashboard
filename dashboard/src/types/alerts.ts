@@ -29,6 +29,26 @@ export interface FlowAlertCounts {
 
 export interface FeedbackAdjustedAlert {
   id: string;
+  flowFeatureSummary?: {
+    protocol?: string | number;
+    sourcePort?: number;
+    destinationPort?: number;
+    flowDuration?: number;
+    totalFwdPackets?: number;
+    totalBackwardPackets?: number;
+    totalLengthFwdPackets?: number;
+    totalLengthBwdPackets?: number;
+    flowPacketsPerSecond?: number;
+    flowBytesPerSecond?: number;
+    packetLengthMean?: number;
+    packetLengthMax?: number;
+    fwdPacketLengthMean?: number;
+    flowIatMean?: number;
+    flowIatStd?: number;
+    synFlagCount?: number;
+    ackFlagCount?: number;
+    pshFlagCount?: number;
+  };
   fusionRiskScore?: number;
   currentRiskScore?: number;
   feedbackApplied?: boolean;

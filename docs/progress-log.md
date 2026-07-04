@@ -80,6 +80,7 @@
 - Updated dashboard-facing wording to describe the system as a unified pipeline instead of exposing internal stage numbers in the user interface.
 - Strengthened the dashboard human-in-the-loop workflow by adding clearer UI-only analyst feedback impact, local risk-score adjustment summaries, guardrail messaging, and current-session feedback metrics.
 - Improved signature evidence explanations by separating user-friendly summaries from technical rule conditions in the dashboard.
+- Added feature-level Investigation context for selected detection records, including grouped flow features, case-style investigation timeline, ML-only signature gap explanation, and analyst recommendation.
 
 ## Notes
 

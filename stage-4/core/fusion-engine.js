@@ -64,9 +64,37 @@ function calculateBaseRiskScore(mlPrediction) {
   return clampScore(confidenceScore);
 }
 
+function buildFlowFeatureSummary(signatureRecord) {
+  if (!signatureRecord) {
+    return {};
+  }
+
+  return {
+    protocol: signatureRecord.protocol,
+    sourcePort: signatureRecord.sourcePort,
+    destinationPort: signatureRecord.destinationPort,
+    flowDuration: signatureRecord.flowDuration,
+    totalFwdPackets: signatureRecord.totalFwdPackets,
+    totalBackwardPackets: signatureRecord.totalBwdPackets,
+    totalLengthFwdPackets: signatureRecord.totalLengthFwdPackets,
+    totalLengthBwdPackets: signatureRecord.totalLengthBwdPackets,
+    flowPacketsPerSecond: signatureRecord.flowPacketsPerSecond,
+    flowBytesPerSecond: signatureRecord.flowBytesPerSecond,
+    packetLengthMean: signatureRecord.packetLengthMean,
+    packetLengthMax: signatureRecord.packetLengthMax,
+    fwdPacketLengthMean: signatureRecord.fwdPacketLengthMean,
+    flowIatMean: signatureRecord.flowIatMean,
+    flowIatStd: signatureRecord.flowIatStd,
+    synFlagCount: signatureRecord.synFlagCount,
+    ackFlagCount: signatureRecord.ackFlagCount,
+    pshFlagCount: signatureRecord.pshFlagCount,
+  };
+}
+
 function buildBaseAlert(id, signatureRecord, mlPrediction) {
   return {
     id,
+    flowFeatureSummary: buildFlowFeatureSummary(signatureRecord),
     signatureHit: Boolean(signatureRecord && signatureRecord.signatureHit),
     signatureId: signatureRecord ? signatureRecord.signatureId || null : null,
     signatureAttackType: signatureRecord ? signatureRecord.signatureAttackType || null : null,

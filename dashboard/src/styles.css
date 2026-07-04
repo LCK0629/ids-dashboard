@@ -721,6 +721,11 @@ button {
   padding: 16px;
 }
 
+.metric-grid.compact {
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  padding: 0;
+}
+
 .metric-card {
   display: grid;
   gap: 8px;
@@ -737,6 +742,85 @@ button {
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 8px;
   background: rgba(2, 6, 23, 0.28);
+}
+
+.investigation-section {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.investigation-section h3,
+.investigation-section p {
+  margin: 0;
+}
+
+.investigation-section .helper-text,
+.explain-panel .helper-text {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.feature-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.feature-card {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  padding: 13px;
+  background: rgba(2, 6, 23, 0.3);
+}
+
+.feature-card h3 {
+  margin: 0 0 10px;
+  color: #bfdbfe;
+  font-size: 14px;
+}
+
+.feature-list {
+  display: grid;
+  gap: 8px;
+}
+
+.feature-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.feature-item strong {
+  color: #f8fafc;
+  text-align: right;
+}
+
+.insight-list {
+  display: grid;
+  gap: 8px;
+}
+
+.insight-list p {
+  border-left: 3px solid rgba(56, 189, 248, 0.58);
+  padding-left: 10px;
+  color: #cbd5e1;
+}
+
+.warning-panel {
+  border-color: rgba(251, 146, 60, 0.28);
+  background: rgba(124, 45, 18, 0.18);
+}
+
+.investigation-grid {
+  padding: 16px;
+}
+
+.investigation-grid .explain-panel {
+  margin: 0;
 }
 
 .explain-panel h3,
@@ -809,6 +893,8 @@ button {
   .overview-grid,
   .overview-grid.breakdown,
   .metric-grid,
+  .metric-grid.compact,
+  .feature-summary-grid,
   .timeline-item {
     grid-template-columns: 1fr;
   }

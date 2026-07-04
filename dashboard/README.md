@@ -124,6 +124,12 @@ The dashboard separates signature evidence into plain-language explanations and 
 
 Signature explanations use cautious wording such as "may indicate" and "prototype heuristic" because flow-level signatures suggest suspicious behaviour but do not prove an attack by themselves.
 
+## Investigation View
+
+The Investigation view provides feature-level context for the selected detection record. It groups key flow features into traffic identity, volume, rate, timing, packet-size, and TCP-flag categories. It also explains the signature result, ML prediction, fusion decision, feedback impact, and analyst recommendation.
+
+The view uses flow-level statistical features only. It does not inspect packet payloads and does not provide SHAP-level model attribution.
+
 ## What Is Not Included Yet
 
 - No live backend.

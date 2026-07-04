@@ -84,6 +84,7 @@
 - Added analyst feedback controls to the Investigation view so analysts can review feature-level evidence and apply feedback decisions without returning to Operations.
 - Refined Stage 6 dashboard view structure so global operational metrics appear only in the Operations view, while Investigations, Feedback Model, and Reports focus on their specific workflows.
 - Fixed Stage 6 dashboard correctness issues by propagating per-record ground truth after feedback evaluation, preventing Benign/Malicious filters from using predictions as truth, separating score guardrails from exception trust-gate rejections, and aligning local Expected Activity feedback with Stage 5.
+- Updated the system architecture slide deck to reflect the current pipeline wording, ground-truth joining boundary, score guardrail versus trust-gate semantics, Operations-only global metrics, and Investigation feedback workflow.
 
 ## Notes
 

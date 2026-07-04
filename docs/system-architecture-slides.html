@@ -546,20 +546,20 @@
           <div class="slide-header">
             <div class="slide-title">
               <span class="slide-kicker">System overview</span>
-              <h2>Hybrid Human-in-the-Loop IDS Dashboard</h2>
-              <p>The project is built as a staged pipeline. Each stage keeps a clear job: prepare flow features, detect suspicious behaviour, combine evidence, apply feedback, then present the result in a SOC dashboard.</p>
+              <h2>Hybrid Human-in-the-Loop IDS Pipeline</h2>
+              <p>The project is built as an offline detection and review pipeline. Each component keeps a clear job: prepare observable flow features, detect suspicious behaviour, combine evidence, apply feedback safeguards, then present the result in a SOC dashboard.</p>
             </div>
-            <span class="pill">Stage 1 to Stage 6B</span>
+            <span class="pill">Dataset to dashboard</span>
           </div>
           <div class="pipeline" id="stagePipeline"></div>
           <div class="stage-detail">
             <div class="evidence-box">
-              <h3 id="selectedStageTitle">Stage 1: Dataset preparation</h3>
+              <h3 id="selectedStageTitle">Dataset preparation</h3>
               <p id="selectedStageText">CSE-CIC-IDS2018 records are sampled and separated into observable flow features, ground truth labels, and a dashboard-ready labelled sample.</p>
             </div>
             <div class="evidence-box">
               <h3>Why this structure matters</h3>
-              <p>The detection engines should not read answer fields such as ground truth or attack type. Those labels are kept for evaluation, while the engines work from observable network-flow features.</p>
+              <p>The detection engines do not read answer fields such as ground truth or mapped attack type. Those labels are joined only after detection, fusion, and feedback for evaluation and dashboard explanation.</p>
               <div class="tag-row" id="selectedStageTags"></div>
             </div>
           </div>
@@ -567,16 +567,16 @@
 
         <article class="slide" data-title="Data Separation">
           <div class="slide-title">
-            <span class="slide-kicker">Stage 1</span>
+            <span class="slide-kicker">Data preparation</span>
             <h2>Separate features from answers</h2>
-            <p>Stage 1 produces aligned files with the same alert IDs, but each file has a different role. This prevents the detector from accidentally using labels as input.</p>
+            <p>The data preparation step produces aligned files with the same alert IDs, but each file has a different role. This prevents the detector from accidentally using labels as input.</p>
           </div>
           <div class="flow-diagram" data-flow>
             <div class="flow-node"><strong>Raw CSV</strong><span>CSE-CIC-IDS2018 flow records from KaggleHub or local CSV files.</span></div>
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow">&rarr;</div>
             <div class="flow-node"><strong>flow-feature-sample.csv</strong><span>Observable detection input only. No Label, attackType, or groundTruth.</span></div>
-            <div class="flow-arrow">→</div>
-            <div class="flow-node"><strong>Detection stages</strong><span>Stage 2 rules and Stage 3 ML use feature-only input.</span></div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-node"><strong>Detection engines</strong><span>Signature rules and XGBoost ML use feature-only input.</span></div>
           </div>
           <div class="grid three">
             <div class="card">
@@ -585,7 +585,7 @@
             </div>
             <div class="card">
               <h3>Ground truth</h3>
-              <p>Used only after prediction for evaluation. It maps alert IDs to raw label, mapped attack type, and benign or malicious truth.</p>
+              <p>Used only after detection, fusion, and feedback for evaluation and dashboard explanation. It maps alert IDs to raw label, mapped attack type, and benign or malicious truth.</p>
             </div>
             <div class="card">
               <h3>Dashboard sample</h3>
@@ -596,7 +596,7 @@
 
         <article class="slide" data-title="Detection Engines">
           <div class="slide-title">
-            <span class="slide-kicker">Stage 2 and Stage 3</span>
+            <span class="slide-kicker">Detection engines</span>
             <h2>Two detection views of the same flow</h2>
             <p>The signature layer is explainable and rule-based. The XGBoost layer learns statistical patterns from flow features. Their outputs are compared instead of blindly trusting one source.</p>
           </div>
@@ -607,7 +607,7 @@
               <div class="tag-row">
                 <span class="tag">Rule evidence</span>
                 <span class="tag">Readable rationale</span>
-                <span class="tag">Stage 2</span>
+                <span class="tag">Signature layer</span>
               </div>
             </div>
             <div class="card">
@@ -616,12 +616,12 @@
               <div class="tag-row">
                 <span class="tag">Model score</span>
                 <span class="tag">Feature vector</span>
-                <span class="tag">Stage 3</span>
+                <span class="tag">ML layer</span>
               </div>
             </div>
             <div class="card">
               <h3>Important boundary</h3>
-              <p>Detection engines must not use `attackType`, `groundTruth`, or other answer fields during prediction. Those fields are joined only after predictions are produced.</p>
+              <p>Detection engines must not use `attackType`, `groundTruth`, or other answer fields during prediction. Those fields are joined only after detection, fusion, and feedback are complete.</p>
               <div class="tag-row">
                 <span class="tag">No label leakage</span>
                 <span class="tag">Evaluation after prediction</span>
@@ -637,15 +637,15 @@
 
         <article class="slide" data-title="Fusion">
           <div class="slide-title">
-            <span class="slide-kicker">Stage 4</span>
+            <span class="slide-kicker">Fusion layer</span>
             <h2>Fusion turns signals into alert priority</h2>
-            <p>Stage 4 joins aligned Stage 2 and Stage 3 outputs by alert ID. It decides the attack type, risk score, confidence level, and analyst review flag.</p>
+            <p>The Fusion Engine joins aligned signature and ML outputs by alert ID. It decides the predicted attack type, risk score, confidence level, and analyst review flag.</p>
           </div>
           <div class="flow-diagram" data-flow>
             <div class="flow-node"><strong>Signature output</strong><span>Rule hit, predicted attack type, severity, evidence.</span></div>
             <div class="flow-arrow">+</div>
             <div class="flow-node"><strong>ML output</strong><span>Predicted class, confidence score, model evidence.</span></div>
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow">&rarr;</div>
             <div class="flow-node"><strong>Fused alert</strong><span>Final risk score, decision, explanation, review flag.</span></div>
           </div>
           <div class="grid two">
@@ -655,16 +655,16 @@
             </div>
             <div class="evidence-box">
               <h3>Evaluation is separate</h3>
-              <p>Ground truth is joined after fusion, so metrics such as accuracy, macro F1, TP/TN/FP/FN, top-K precision, and review precision evaluate the result rather than influencing prediction.</p>
+              <p>Ground truth is joined after fusion and feedback, so metrics such as accuracy, macro F1, TP/TN/FP/FN, top-K precision, and review precision evaluate the result rather than influencing prediction.</p>
             </div>
           </div>
         </article>
 
         <article class="slide" data-title="Feedback">
           <div class="slide-title">
-            <span class="slide-kicker">Stage 5</span>
+            <span class="slide-kicker">Human feedback layer</span>
             <h2>Human feedback changes priority, not history</h2>
-            <p>The original fusion score is preserved. Feedback creates a current risk score, records the reason, and applies guardrails so dangerous classes are not suppressed too far.</p>
+            <p>The original fusion score is preserved. Feedback creates a current risk score, records the reason, and separates real score guardrails from exception trust-gate rejections.</p>
           </div>
           <div class="grid three">
             <div class="card">
@@ -673,7 +673,7 @@
             </div>
             <div class="card">
               <h3>Expected Activity</h3>
-              <p>Can reduce repeated noisy alerts when exception memory is trusted enough.</p>
+              <p>Can reduce repeated noisy alerts. The dashboard local feedback now uses the same -30 risk adjustment as the offline feedback pipeline.</p>
             </div>
             <div class="card">
               <h3>Needs Investigation</h3>
@@ -681,17 +681,18 @@
             </div>
           </div>
           <ul class="signal-list">
-            <li><b>fusionRiskScore</b><span>Stage 4 score. It remains the baseline for reporting.</span></li>
-            <li><b>currentRiskScore</b><span>Stage 5 score after feedback and guardrails.</span></li>
-            <li><b>guardrail</b><span>Prevents feedback from making high-risk cases look falsely safe.</span></li>
+            <li><b>fusionRiskScore</b><span>Fusion score. It remains the baseline for reporting.</span></li>
+            <li><b>currentRiskScore</b><span>Score after feedback, exception memory, and score guardrails.</span></li>
+            <li><b>score guardrail</b><span>Prevents feedback from making high-risk cases look falsely safe.</span></li>
+            <li><b>trust gate</b><span>Rejects exception memory when confidence or supporting feedback is too weak.</span></li>
           </ul>
         </article>
 
         <article class="slide" data-title="Dashboard">
           <div class="slide-title">
-            <span class="slide-kicker">Stage 6 and Stage 6B</span>
+            <span class="slide-kicker">Dashboard integration</span>
             <h2>SOC dashboard shows evidence and operator action</h2>
-            <p>The dashboard reads static Stage 4 and Stage 5 JSON copies. Replay and analyst feedback are browser-local, so the demo is safe and repeatable.</p>
+            <p>The dashboard reads static pipeline JSON copies. Replay and analyst feedback are browser-local, so the demo is safe and repeatable.</p>
           </div>
           <div class="demo-screen">
             <div class="mini-dashboard">
@@ -699,10 +700,10 @@
                 <strong>Alert Queue</strong>
                 <span class="tag">Risk priority</span>
               </div>
-              <div class="mini-row highlight"><span>AL-0214</span><span>DDoS · Signature + ML agree</span><span class="risk">92</span></div>
-              <div class="mini-row"><span>AL-0181</span><span>Web Attack · Review required</span><span class="risk">84</span></div>
-              <div class="mini-row"><span>AL-0108</span><span>Botnet · ML-only evidence</span><span class="risk">76</span></div>
-              <div class="mini-row"><span>AL-0048</span><span>Benign · Expected activity</span><span class="risk">31</span></div>
+              <div class="mini-row highlight"><span>AL-0214</span><span>DDoS - Signature + ML agree</span><span class="risk">92</span></div>
+              <div class="mini-row"><span>AL-0181</span><span>Web Attack - Review required</span><span class="risk">84</span></div>
+              <div class="mini-row"><span>AL-0108</span><span>Botnet - ML-only evidence</span><span class="risk">76</span></div>
+              <div class="mini-row"><span>AL-0048</span><span>Benign - Expected activity</span><span class="risk">31</span></div>
             </div>
             <div class="mini-dashboard">
               <div class="mini-header">
@@ -716,9 +717,9 @@
             </div>
           </div>
           <div class="grid three">
-            <div class="card"><h3>Operations</h3><p>Risk queue, latest replay feed, filters, and alert detail panel.</p></div>
-            <div class="card"><h3>Investigations</h3><p>Case-style review view for selected alert evidence.</p></div>
-            <div class="card"><h3>Feedback Model</h3><p>Shows how feedback and exception memory affect workload and risk scores.</p></div>
+            <div class="card"><h3>Operations</h3><p>Main operational metrics, replay controls, latest activity, risk queue, filters, and alert detail panel.</p></div>
+            <div class="card"><h3>Investigations</h3><p>Case-style evidence review with feature context and the same analyst feedback controls as Operations.</p></div>
+            <div class="card"><h3>Feedback Model</h3><p>Feedback-specific metrics, score guardrails, trust-gate explanation, and exception memory summary.</p></div>
           </div>
         </article>
 
@@ -730,19 +731,19 @@
           </div>
           <div class="flow-diagram" data-flow>
             <div class="flow-node"><strong>1. Incoming alert</strong><span>Replay simulates alerts arriving over time.</span></div>
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow">&rarr;</div>
             <div class="flow-node"><strong>2. Evidence review</strong><span>Signature, ML, fusion, and feedback evidence are shown together.</span></div>
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow">&rarr;</div>
             <div class="flow-node"><strong>3. Analyst feedback</strong><span>Confirm threat, false positive, expected activity, or investigation.</span></div>
           </div>
           <div class="grid two">
             <div class="evidence-box">
               <h3>What changes immediately</h3>
-              <p>Local current risk score, selected feedback label, session KPI cards, and queue ordering can change during the demo.</p>
+              <p>Local current risk score, selected feedback label, session metrics, investigation feedback summary, and queue ordering can change during the demo.</p>
             </div>
             <div class="evidence-box">
               <h3>What does not change</h3>
-              <p>Source JSON, trained model artifacts, Stage 1-5 pipeline outputs, and ground-truth evaluation files are not modified by the dashboard interaction.</p>
+              <p>Source JSON, trained model artifacts, pipeline outputs, and ground-truth evaluation files are not modified by the dashboard interaction.</p>
             </div>
           </div>
         </article>
@@ -756,7 +757,7 @@
           <div class="grid two">
             <div class="card">
               <h3>Implemented now</h3>
-              <p>Dataset sampling, feature-label separation, signature rules, XGBoost prototype, fusion, feedback adjustment, replay dashboard, and evaluation summaries.</p>
+              <p>Dataset sampling, feature-label separation, signature rules, XGBoost prototype, fusion, feedback adjustment, score guardrail and trust-gate separation, replay dashboard, and evaluation summaries.</p>
               <div class="tag-row">
                 <span class="tag">End-to-end prototype</span>
                 <span class="tag">Offline demo</span>
@@ -775,14 +776,14 @@
           </div>
           <div class="evidence-box">
             <h3>Presentation message</h3>
-            <p>The key contribution is not just classification. The project shows how automated IDS evidence, human feedback, guardrails, and operational review can be combined into a dashboard that supports analyst decision-making.</p>
+            <p>The key contribution is not just classification. The project shows how automated IDS evidence, human feedback, score guardrails, exception trust gates, and operational review can be combined into a dashboard that supports analyst decision-making.</p>
           </div>
         </article>
       </section>
 
       <div class="deck-controls">
         <button id="prevBtn" type="button">Previous</button>
-        <span class="hotkeys">Keyboard: ← / →, Home, End</span>
+        <span class="hotkeys">Keyboard: Left / Right, Home, End</span>
         <button id="nextBtn" type="button">Next</button>
       </div>
     </main>
@@ -791,34 +792,34 @@
   <script>
     const stages = [
       {
-        title: 'Stage 1: Dataset preparation',
+        title: 'Dataset preparation',
         text: 'CSE-CIC-IDS2018 records are sampled and separated into observable flow features, ground truth labels, and a dashboard-ready labelled sample.',
         tags: ['CSE-CIC-IDS2018', 'Feature-only CSV', 'Ground truth separated'],
       },
       {
-        title: 'Stage 2: Signature detection',
+        title: 'Signature detection',
         text: 'Flow-based rules identify known suspicious patterns and produce readable evidence without using answer labels.',
         tags: ['Rules', 'Explainable evidence', 'No label leakage'],
       },
       {
-        title: 'Stage 3: XGBoost ML',
+        title: 'XGBoost ML detection',
         text: 'A prototype ML model predicts attack classes from numeric flow features. Current artifacts support six classes and exclude Infiltration until retraining.',
         tags: ['XGBoost', 'Model score', 'Six-class prototype'],
       },
       {
-        title: 'Stage 4: Fusion Engine',
+        title: 'Fusion Engine',
         text: 'Signature and ML outputs are joined by alert ID, then converted into a fused decision, risk score, confidence level, and explanation.',
         tags: ['Agreement', 'Disagreement', 'Review decision'],
       },
       {
-        title: 'Stage 5: Human feedback',
-        text: 'Feedback and Exception Memory adjust current risk scores while preserving original fusion scores and applying guardrails.',
-        tags: ['Current risk', 'Guardrails', 'Exception Memory'],
+        title: 'Human feedback',
+        text: 'Feedback and Exception Memory adjust current risk scores while preserving original fusion scores and separating score guardrails from trust-gate rejections.',
+        tags: ['Current risk', 'Score guardrails', 'Trust gates'],
       },
       {
-        title: 'Stage 6: Dashboard integration',
-        text: 'The React dashboard presents operations, investigations, feedback model summaries, reports, replay controls, and local analyst feedback.',
-        tags: ['SOC UI', 'Replay', 'Interactive feedback'],
+        title: 'Dashboard integration',
+        text: 'The React dashboard presents operations, investigations, feedback model summaries, reports, replay controls, and local analyst feedback without writing back to JSON.',
+        tags: ['SOC UI', 'Replay', 'Session-only feedback'],
       },
     ];
 

@@ -167,52 +167,50 @@ export default function App() {
 
       <main className="dashboard">
         <Header activeLabel={viewLabels[activeView]} />
-        <ReplayControls
-          isReplayMode={isReplayMode}
-          isReplayRunning={isReplayRunning}
-          onPause={() => setIsReplayRunning(false)}
-          onReset={resetReplay}
-          onResume={() => {
-            setIsReplayMode(true);
-            setIsReplayRunning(true);
-          }}
-          onShowAll={() => {
-            setReplayIndex(alerts.length);
-            setIsReplayRunning(false);
-          }}
-          onSpeedChange={setReplaySpeed}
-          onStart={() => {
-            setIsReplayMode(true);
-            setReplayIndex(0);
-            setLocalFeedbackMap({});
-            setIsReplayRunning(true);
-            setSelectedAlertId(undefined);
-          }}
-          onToggleReplayMode={() => {
-            setIsReplayMode((currentValue) => {
-              const nextValue = !currentValue;
-              setIsReplayRunning(false);
-              setReplayIndex(nextValue ? 0 : alerts.length);
-              if (nextValue) {
-                setLocalFeedbackMap({});
-              }
-              return nextValue;
-            });
-          }}
-          replayIndex={replayIndex}
-          replaySpeed={replaySpeed}
-          totalAlerts={alerts.length}
-        />
-
-        <KpiCards
-          feedbackSummary={feedbackSummary}
-          flowAlertCounts={flowAlertCounts}
-          fusionSummary={fusionSummary}
-          sessionKpis={sessionKpis}
-        />
-
         {activeView === 'operations' && (
           <>
+            <ReplayControls
+              isReplayMode={isReplayMode}
+              isReplayRunning={isReplayRunning}
+              onPause={() => setIsReplayRunning(false)}
+              onReset={resetReplay}
+              onResume={() => {
+                setIsReplayMode(true);
+                setIsReplayRunning(true);
+              }}
+              onShowAll={() => {
+                setReplayIndex(alerts.length);
+                setIsReplayRunning(false);
+              }}
+              onSpeedChange={setReplaySpeed}
+              onStart={() => {
+                setIsReplayMode(true);
+                setReplayIndex(0);
+                setLocalFeedbackMap({});
+                setIsReplayRunning(true);
+                setSelectedAlertId(undefined);
+              }}
+              onToggleReplayMode={() => {
+                setIsReplayMode((currentValue) => {
+                  const nextValue = !currentValue;
+                  setIsReplayRunning(false);
+                  setReplayIndex(nextValue ? 0 : alerts.length);
+                  if (nextValue) {
+                    setLocalFeedbackMap({});
+                  }
+                  return nextValue;
+                });
+              }}
+              replayIndex={replayIndex}
+              replaySpeed={replaySpeed}
+              totalAlerts={alerts.length}
+            />
+            <KpiCards
+              feedbackSummary={feedbackSummary}
+              flowAlertCounts={flowAlertCounts}
+              fusionSummary={fusionSummary}
+              sessionKpis={sessionKpis}
+            />
             <div className="operations-top-grid">
               <OperationalOverview
                 alerts={sortedAlerts}

@@ -56,6 +56,10 @@ npm run build
 - Score comparison between `fusionRiskScore` and feedback-adjusted `currentRiskScore`.
 - Sidebar navigation for Operations, Investigations, Feedback Model, and Reports views.
 
+## View Structure
+
+The Operations view contains the main operational metrics, queue, and triage workspace. Investigation, Feedback Model, and Reports views do not repeat the full metric dashboard. Instead, each view presents content specific to its purpose.
+
 ## What This Dashboard Shows
 
 - Fusion score.

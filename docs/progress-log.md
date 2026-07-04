@@ -82,6 +82,7 @@
 - Improved signature evidence explanations by separating user-friendly summaries from technical rule conditions in the dashboard.
 - Added feature-level Investigation context for selected detection records, including grouped flow features, case-style investigation timeline, ML-only signature gap explanation, and analyst recommendation.
 - Added analyst feedback controls to the Investigation view so analysts can review feature-level evidence and apply feedback decisions without returning to Operations.
+- Refined Stage 6 dashboard view structure so global operational metrics appear only in the Operations view, while Investigations, Feedback Model, and Reports focus on their specific workflows.
 
 ## Notes
 

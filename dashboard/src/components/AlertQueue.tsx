@@ -21,6 +21,7 @@ function classNameForAlert(alert: FeedbackAdjustedAlert, selected: boolean): str
   if (isHighRisk(alert)) classes.push('high-risk');
   if (isAdjusted(alert)) classes.push('adjusted');
   if (requiresReview(alert)) classes.push('review');
+  if (alert.localGuardrailMessage || Boolean(alert.feedbackGuardrailsApplied?.length)) classes.push('guardrail');
   return classes.join(' ');
 }
 

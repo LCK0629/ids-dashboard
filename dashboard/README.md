@@ -108,6 +108,16 @@ Local-only score adjustment uses front-end guardrails. Scores stay between 0 and
 
 Reset Replay clears local feedback overrides for the current browser session. No feedback is persisted.
 
+## Human Feedback Impact
+
+The dashboard demonstrates human-in-the-loop triage through local analyst feedback controls. Analyst actions can confirm threats, mark false positives, identify expected activity, request further investigation, or escalate records.
+
+These actions update the dashboard's local current risk score, review status, queue ranking, and session metrics. The original pipeline JSON outputs are not modified. This allows the prototype to demonstrate adaptive triage behaviour without backend persistence.
+
+Guardrails prevent unsafe suppression of critical, Infiltration, or conflicting-evidence records. When a guardrail applies, the detail panel and queue show the guardrail result so the analyst can see why priority or review status was preserved.
+
+The pipeline provides offline simulated feedback and exception memory. The dashboard provides interactive UI-only analyst feedback for demonstration.
+
 ## What Is Not Included Yet
 
 - No live backend.

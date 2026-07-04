@@ -45,6 +45,21 @@ export function KpiCards({
     ['Exception trust gates', metric(feedbackSummary.exceptionRejectedByTrustGateCount)],
     ['Prediction ID overlap', formatPercent(fusionSummary.idAlignmentSummary?.overlapRateAgainstStage2)],
   ];
+  const sessionImpactCards = [
+    ['Reviewed This Session', metric(sessionKpis.reviewedInSession)],
+    ['Local Feedback Applied', metric(sessionKpis.localFeedbackApplied)],
+    ['False Positives Marked', metric(sessionKpis.falsePositivesMarked)],
+    ['Expected Activity Marked', metric(sessionKpis.expectedActivityMarked)],
+    ['Confirmed Threats', metric(sessionKpis.confirmedThreats)],
+    ['Escalated Alerts', metric(sessionKpis.escalatedAlerts)],
+    ['Needs Investigation', metric(sessionKpis.needsInvestigation)],
+    ['Avg Risk Before Local Feedback', formatScore(sessionKpis.averageRiskBeforeLocalFeedback)],
+    ['Avg Risk After Local Feedback', formatScore(sessionKpis.averageRiskAfterLocalFeedback)],
+    ['Avg Risk Change', formatScore(sessionKpis.averageRiskChange)],
+    ['Review Before Local Feedback', metric(sessionKpis.reviewRequiredBeforeLocalFeedback)],
+    ['Review After Local Feedback', metric(sessionKpis.reviewRequiredAfterLocalFeedback)],
+    ['Guardrails Triggered', metric(sessionKpis.guardrailsTriggered)],
+  ];
 
   return (
     <section className="kpi-section" aria-label="Dashboard KPIs">
@@ -54,6 +69,18 @@ export function KpiCards({
       </div>
       <div className="kpi-grid">
         {sessionCards.map(([label, value]) => (
+          <article className="kpi-card" key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+          </article>
+        ))}
+      </div>
+      <div className="kpi-title secondary">
+        <strong>Current Session Metrics</strong>
+        <span>UI-only analyst feedback impact. No JSON files are modified.</span>
+      </div>
+      <div className="kpi-grid session-impact">
+        {sessionImpactCards.map(([label, value]) => (
           <article className="kpi-card" key={label}>
             <span>{label}</span>
             <strong>{value}</strong>

@@ -58,6 +58,7 @@ export interface FeedbackAdjustedAlert {
   mappedAttackType?: string;
   rawLabel?: string;
   stage5CurrentRiskScore?: number;
+  stage5RequiresAnalystReview?: boolean;
   localFeedbackAction?: string;
   localFeedbackLabel?: string;
   localFeedbackReason?: string;

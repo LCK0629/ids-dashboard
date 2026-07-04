@@ -62,9 +62,13 @@ export function applyLocalFeedbackOverride(
   override?: LocalFeedbackOverride
 ): FeedbackAdjustedAlert {
   const stage5CurrentRiskScore = Number(alert.stage5CurrentRiskScore ?? alert.currentRiskScore ?? 0);
+  const stage5RequiresAnalystReview = Boolean(
+    alert.stage5RequiresAnalystReview ?? alert.requiresAnalystReview
+  );
   const baseAlert = {
     ...alert,
     stage5CurrentRiskScore,
+    stage5RequiresAnalystReview,
   };
 
   if (!override) {
@@ -79,22 +83,22 @@ export function applyLocalFeedbackOverride(
   if (isReduction && alert.fusionConfidenceLevel === 'Critical' && nextScore < 70) {
     nextScore = 70;
     reviewRequired = true;
-    guardrailMessages.push('risk score floor preserved due to critical evidence');
+    guardrailMessages.push('critical evidence');
   }
 
   if (isReduction && alert.fusionAttackType === 'Infiltration' && nextScore < 75) {
     nextScore = 75;
     reviewRequired = true;
-    guardrailMessages.push('risk score floor preserved due to Infiltration evidence');
+    guardrailMessages.push('Infiltration evidence');
   }
 
   if (alert.fusionDecision === 'SIGNATURE_ML_DISAGREE') {
     reviewRequired = true;
-    guardrailMessages.push('review preserved due to signature/ML disagreement');
+    guardrailMessages.push('signature/ML disagreement');
   }
 
   const guardrailMessage = guardrailMessages.length
-    ? `Guardrail applied: ${guardrailMessages.join('; ')}.`
+    ? `Guardrail applied: risk score floor or review status preserved due to ${guardrailMessages.join('; ')}.`
     : undefined;
 
   return {
@@ -124,7 +128,21 @@ export function calculateSessionKpis(
   totalRecords: number
 ): SessionKpis {
   const totalRisk = visibleRecords.reduce((sum, alert) => sum + Number(alert.currentRiskScore ?? 0), 0);
+  const beforeRiskTotal = allDetectionRecords.reduce(
+    (sum, alert) => sum + Number(alert.stage5CurrentRiskScore ?? alert.currentRiskScore ?? 0),
+    0
+  );
+  const afterRiskTotal = allDetectionRecords.reduce(
+    (sum, alert) => sum + Number(alert.currentRiskScore ?? 0),
+    0
+  );
   const feedbackValues = Object.values(feedbackMap);
+  const averageBefore = allDetectionRecords.length
+    ? Number((beforeRiskTotal / allDetectionRecords.length).toFixed(2))
+    : 0;
+  const averageAfter = allDetectionRecords.length
+    ? Number((afterRiskTotal / allDetectionRecords.length).toFixed(2))
+    : 0;
   return {
     visibleRecords: visibleRecords.length,
     allDetectionRecords: allDetectionRecords.length,
@@ -136,7 +154,18 @@ export function calculateSessionKpis(
     highRiskRecords: visibleRecords.filter((alert) => Number(alert.currentRiskScore ?? 0) >= 70).length,
     requiresReview: visibleRecords.filter((alert) => alert.requiresAnalystReview).length,
     falsePositivesMarked: feedbackValues.filter((feedback) => feedback.action === 'FALSE_POSITIVE').length,
+    expectedActivityMarked: feedbackValues.filter((feedback) => feedback.action === 'EXPECTED_ACTIVITY').length,
+    confirmedThreats: feedbackValues.filter((feedback) => feedback.action === 'CONFIRMED_THREAT').length,
     escalatedAlerts: feedbackValues.filter((feedback) => feedback.action === 'ESCALATED').length,
+    needsInvestigation: feedbackValues.filter((feedback) => feedback.action === 'NEEDS_INVESTIGATION').length,
+    averageRiskBeforeLocalFeedback: averageBefore,
+    averageRiskAfterLocalFeedback: averageAfter,
+    averageRiskChange: Number((averageAfter - averageBefore).toFixed(2)),
+    reviewRequiredBeforeLocalFeedback: allDetectionRecords.filter(
+      (alert) => Boolean(alert.stage5RequiresAnalystReview ?? alert.requiresAnalystReview)
+    ).length,
+    reviewRequiredAfterLocalFeedback: allDetectionRecords.filter((alert) => alert.requiresAnalystReview).length,
+    guardrailsTriggered: allDetectionRecords.filter((alert) => Boolean(alert.localGuardrailMessage)).length,
     replayProgress: `${Math.min(replayIndex, totalRecords)} / ${totalRecords}`,
   };
 }

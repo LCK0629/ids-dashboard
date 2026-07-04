@@ -83,6 +83,7 @@ export function recordStatusBadges(alert: FeedbackAdjustedAlert): string[] {
   if (status.includes('false_positive') || status.includes('false positive')) badges.push('False Positive');
   if (status.includes('expected_activity') || status.includes('expected activity')) badges.push('Expected Activity');
   if (Number(alert.currentRiskScore ?? 0) > 0 && Number(alert.currentRiskScore ?? 0) < 40) badges.push('Low Risk');
+  if (alert.localGuardrailMessage || Boolean(alert.feedbackGuardrailsApplied?.length)) badges.push('Guardrail Applied');
   return [...new Set(badges)];
 }
 

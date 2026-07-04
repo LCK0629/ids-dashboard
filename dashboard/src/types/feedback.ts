@@ -30,6 +30,15 @@ export interface SessionKpis {
   highRiskRecords: number;
   requiresReview: number;
   falsePositivesMarked: number;
+  expectedActivityMarked: number;
+  confirmedThreats: number;
   escalatedAlerts: number;
+  needsInvestigation: number;
+  averageRiskBeforeLocalFeedback: number;
+  averageRiskAfterLocalFeedback: number;
+  averageRiskChange: number;
+  reviewRequiredBeforeLocalFeedback: number;
+  reviewRequiredAfterLocalFeedback: number;
+  guardrailsTriggered: number;
   replayProgress: string;
 }

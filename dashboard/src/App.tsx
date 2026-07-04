@@ -263,7 +263,9 @@ export default function App() {
         )}
 
         {activeView === 'investigations' && <InvestigationsPanel alert={selectedAlert} />}
-        {activeView === 'feedback' && <FeedbackSummaryPanel summary={feedbackSummary} />}
+        {activeView === 'feedback' && (
+          <FeedbackSummaryPanel sessionKpis={sessionKpis} summary={feedbackSummary} />
+        )}
         {activeView === 'reports' && (
           <ReportsPanel feedbackSummary={feedbackSummary} fusionSummary={fusionSummary} />
         )}

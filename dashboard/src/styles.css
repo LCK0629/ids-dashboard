@@ -217,6 +217,10 @@ button {
   box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15);
 }
 
+.alert-row.guardrail {
+  box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.22);
+}
+
 .alert-row.review .risk-badge {
   background: #f97316;
   color: #111827;
@@ -921,6 +925,10 @@ button {
 
 .guardrail-message {
   color: #fed7aa;
+}
+
+.feedback-panel-title {
+  padding: 0 16px;
 }
 
 /* Latest replay activity */

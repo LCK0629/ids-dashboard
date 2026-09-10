@@ -60,6 +60,8 @@ class ModelArtifacts:
     label_mapping: dict[int, str]
     preprocessing_config: dict[str, Any]
     provenance: dict[str, str]
+    objective: str
+    model_class_count: int
 
 
 def sha256_file(path: Path) -> str:
@@ -82,6 +84,19 @@ def model_version_from_json(path: Path) -> str | None:
     if version is None:
         return None
     return str(version)
+
+
+def model_contract_from_json(path: Path) -> dict[str, Any]:
+    model_json = load_json(path)
+    learner = model_json.get("learner", {})
+    objective = learner.get("objective", {})
+    model_param = learner.get("learner_model_param", {})
+    objective_name = objective.get("name")
+    num_class = int(model_param.get("num_class", 0))
+    return {
+        "objective": objective_name,
+        "numClass": num_class,
+    }
 
 
 def load_model_artifacts(
@@ -122,6 +137,22 @@ def load_model_artifacts(
     if sorted(label_mapping) != expected_indexes:
         raise InferenceConfigurationError("label-mapping.json must use contiguous zero-based class indexes.")
 
+    selected_features = preprocessing_config.get("selectedFeatures")
+    if selected_features is not None and selected_features != feature_columns:
+        raise InferenceConfigurationError(
+            "preprocessing-config.json selectedFeatures must exactly match feature-columns.json."
+        )
+
+    contract = model_contract_from_json(model_path)
+    if contract["objective"] != "multi:softprob":
+        raise InferenceConfigurationError(
+            f"Model objective must be multi:softprob, found {contract['objective']}."
+        )
+    if contract["numClass"] != len(label_mapping):
+        raise InferenceConfigurationError(
+            f"Model class count {contract['numClass']} does not match label mapping size {len(label_mapping)}."
+        )
+
     model = xgb.Booster()
     model.load_model(str(model_path))
 
@@ -148,6 +179,8 @@ def load_model_artifacts(
         label_mapping=label_mapping,
         preprocessing_config=preprocessing_config,
         provenance=provenance,
+        objective=contract["objective"],
+        model_class_count=contract["numClass"],
     )
 
 
@@ -178,15 +211,17 @@ def read_feature_csv(path: Path) -> tuple[pd.DataFrame, list[str]]:
 
 
 def unavailable_record(
-    alert_id: str,
+    alert_id: Any,
     failure_reason: str,
     missing_feature_columns: list[str] | None = None,
     invalid_feature_columns: list[str] | None = None,
     duplicate_feature_columns: list[str] | None = None,
     model_provenance: dict[str, str] | None = None,
+    source_row_number: int | None = None,
 ) -> dict[str, Any]:
     return {
-        "id": str(alert_id),
+        "id": None if alert_id is None else str(alert_id),
+        "sourceRowNumber": source_row_number,
         "predictionStatus": "unavailable",
         "failureReason": failure_reason,
         "missingFeatureColumns": missing_feature_columns or [],
@@ -207,16 +242,55 @@ def validate_dataframe_schema(dataframe: pd.DataFrame, feature_columns: list[str
     input_column_set = set(input_columns)
     return {
         "duplicateColumns": duplicate_columns(input_columns),
+        "missingIdColumns": [] if "id" in input_column_set else ["id"],
         "missingFeatureColumns": [column for column in feature_columns if column not in input_column_set],
         "forbiddenColumns": [column for column in FORBIDDEN_PREDICTION_FIELDS if column in input_column_set],
     }
 
 
-def row_id(row: pd.Series, fallback_index: int) -> str:
+def row_id(row: pd.Series, fallback_index: int, allow_synthetic_ids: bool = False) -> str | None:
     value = row.get("id", None)
     if value is None or (isinstance(value, float) and math.isnan(value)) or str(value).strip() == "":
-        return f"ROW-{fallback_index + 1:04d}"
-    return str(value)
+        if allow_synthetic_ids:
+            return f"ROW-{fallback_index + 1:04d}"
+        return None
+    if pd.isna(value):
+        if allow_synthetic_ids:
+            return f"ROW-{fallback_index + 1:04d}"
+        return None
+    return str(value).strip()
+
+
+def unavailable_for_rows(
+    dataframe: pd.DataFrame,
+    failure_reason: str,
+    artifacts: ModelArtifacts,
+    missing_feature_columns: list[str] | None = None,
+    invalid_feature_columns: list[str] | None = None,
+    duplicate_feature_columns: list[str] | None = None,
+    allow_synthetic_ids: bool = False,
+) -> list[dict[str, Any]]:
+    return [
+        unavailable_record(
+            row_id(row, index, allow_synthetic_ids),
+            failure_reason,
+            missing_feature_columns=missing_feature_columns,
+            invalid_feature_columns=invalid_feature_columns,
+            duplicate_feature_columns=duplicate_feature_columns,
+            model_provenance=artifacts.provenance,
+            source_row_number=index + 1,
+        )
+        for index, (_, row) in enumerate(dataframe.iterrows())
+    ]
+
+
+def duplicate_alert_ids(dataframe: pd.DataFrame) -> set[str]:
+    if "id" not in dataframe.columns:
+        return set()
+    ids = dataframe["id"].apply(lambda value: None if pd.isna(value) else str(value).strip())
+    valid_ids = ids[(ids.notna()) & (ids != "")]
+    duplicate_mask = valid_ids.duplicated(keep=False)
+    return set(valid_ids[duplicate_mask])
 
 
 def validate_and_prepare_row(
@@ -284,56 +358,85 @@ def probability_record(
     }
 
 
-def predict_dataframe(dataframe: pd.DataFrame, artifacts: ModelArtifacts, duplicate_header_columns: list[str] | None = None) -> list[dict[str, Any]]:
+def predict_dataframe(
+    dataframe: pd.DataFrame,
+    artifacts: ModelArtifacts,
+    duplicate_header_columns: list[str] | None = None,
+    allow_synthetic_ids: bool = False,
+) -> list[dict[str, Any]]:
     schema = validate_dataframe_schema(dataframe, artifacts.feature_columns)
     duplicate_inputs = sorted(set(schema["duplicateColumns"] + (duplicate_header_columns or [])))
 
+    if schema["missingIdColumns"] and not allow_synthetic_ids:
+        return unavailable_for_rows(
+            dataframe,
+            "missing_id_column",
+            artifacts,
+            invalid_feature_columns=schema["missingIdColumns"],
+            allow_synthetic_ids=allow_synthetic_ids,
+        )
+
     if duplicate_inputs:
-        return [
-            unavailable_record(
-                row_id(row, index),
-                "duplicate_feature_columns",
-                duplicate_feature_columns=duplicate_inputs,
-                model_provenance=artifacts.provenance,
-            )
-            for index, (_, row) in enumerate(dataframe.iterrows())
-        ]
+        return unavailable_for_rows(
+            dataframe,
+            "duplicate_feature_columns",
+            artifacts,
+            duplicate_feature_columns=duplicate_inputs,
+            allow_synthetic_ids=allow_synthetic_ids,
+        )
 
     if schema["forbiddenColumns"]:
-        return [
-            unavailable_record(
-                row_id(row, index),
-                "forbidden_prediction_fields_present",
-                invalid_feature_columns=schema["forbiddenColumns"],
-                model_provenance=artifacts.provenance,
-            )
-            for index, (_, row) in enumerate(dataframe.iterrows())
-        ]
+        return unavailable_for_rows(
+            dataframe,
+            "forbidden_prediction_fields_present",
+            artifacts,
+            invalid_feature_columns=schema["forbiddenColumns"],
+            allow_synthetic_ids=allow_synthetic_ids,
+        )
 
     if schema["missingFeatureColumns"]:
-        return [
-            unavailable_record(
-                row_id(row, index),
-                "missing_required_feature_columns",
-                missing_feature_columns=schema["missingFeatureColumns"],
-                model_provenance=artifacts.provenance,
-            )
-            for index, (_, row) in enumerate(dataframe.iterrows())
-        ]
+        return unavailable_for_rows(
+            dataframe,
+            "missing_required_feature_columns",
+            artifacts,
+            missing_feature_columns=schema["missingFeatureColumns"],
+            allow_synthetic_ids=allow_synthetic_ids,
+        )
+
+    ambiguous_ids = duplicate_alert_ids(dataframe)
 
     prepared_rows: list[np.ndarray] = []
     prepared_indexes: list[int] = []
     prediction_records: list[dict[str, Any] | None] = [None] * len(dataframe)
 
     for index, (_, row) in enumerate(dataframe.iterrows()):
+        alert_id = row_id(row, index, allow_synthetic_ids)
+        if alert_id is None:
+            prediction_records[index] = unavailable_record(
+                None,
+                "missing_or_invalid_alert_id",
+                invalid_feature_columns=["id"],
+                model_provenance=artifacts.provenance,
+                source_row_number=index + 1,
+            )
+            continue
+        if alert_id in ambiguous_ids:
+            prediction_records[index] = unavailable_record(
+                alert_id,
+                "duplicate_alert_id",
+                invalid_feature_columns=["id"],
+                model_provenance=artifacts.provenance,
+                source_row_number=index + 1,
+            )
+            continue
         prepared, invalid_columns = validate_and_prepare_row(row, artifacts.feature_columns)
-        alert_id = row_id(row, index)
         if invalid_columns:
             prediction_records[index] = unavailable_record(
                 alert_id,
                 "invalid_numeric_feature_values",
                 invalid_feature_columns=invalid_columns,
                 model_provenance=artifacts.provenance,
+                source_row_number=index + 1,
             )
             continue
         prepared_rows.append(prepared)
@@ -345,8 +448,13 @@ def predict_dataframe(dataframe: pd.DataFrame, artifacts: ModelArtifacts, duplic
         probabilities = artifacts.model.predict(dmatrix)
         if probabilities.ndim == 1:
             probabilities = probabilities.reshape(1, -1)
+        if probabilities.shape[1] != len(artifacts.label_mapping):
+            raise InferenceConfigurationError(
+                f"Probability vector length {probabilities.shape[1]} does not match "
+                f"label mapping size {len(artifacts.label_mapping)}."
+            )
         for output_index, probability_vector in zip(prepared_indexes, probabilities):
-            record_id = row_id(dataframe.iloc[output_index], output_index)
+            record_id = row_id(dataframe.iloc[output_index], output_index, allow_synthetic_ids)
             prediction_records[output_index] = probability_record(
                 record_id,
                 probability_vector,

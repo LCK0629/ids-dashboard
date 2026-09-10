@@ -23,12 +23,15 @@ from ml_inference import (  # noqa: E402
     DEFAULT_FEATURE_INPUT_PATH,
     load_model_artifacts,
     predict_csv,
+    sha256_file,
     write_predictions,
 )
 
 OUTPUT_DIR = REPO_ROOT / "stage-3" / "outputs"
+EVALUATION_DIR = REPO_ROOT / "stage-3" / "evaluation"
 DEFAULT_OUTPUT_PATH = OUTPUT_DIR / "ml-predictions.regenerated.json"
 COMMITTED_OUTPUT_PATH = OUTPUT_DIR / "ml-predictions.sample.json"
+SUMMARY_OUTPUT_PATH = EVALUATION_DIR / "ml-inference-reproducibility-summary.json"
 
 
 def load_json(path: Path) -> Any:
@@ -116,14 +119,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--overwrite-sample",
         action="store_true",
-        help="Explicitly write to stage-3/outputs/ml-predictions.sample.json.",
+        help="Blocked until Stage 4 explicitly supports unavailable ML prediction records.",
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    output_path = COMMITTED_OUTPUT_PATH if args.overwrite_sample else args.output
+    if args.overwrite_sample:
+        raise SystemExit(
+            "--overwrite-sample is blocked for this increment. Stage 4 does not yet "
+            "understand predictionStatus=unavailable, so the committed Stage 4 input "
+            "must not be replaced silently."
+        )
+
+    output_path = args.output
     artifacts = load_model_artifacts()
     predictions = predict_csv(args.input, artifacts)
     write_predictions(predictions, output_path)
@@ -131,8 +141,36 @@ def main() -> None:
 
     available_count = sum(1 for record in predictions if record.get("predictionStatus") == "available")
     unavailable_count = len(predictions) - available_count
+    summary = {
+        "inputPath": str(args.input),
+        "outputPath": str(output_path),
+        "referencePredictionPath": str(args.compare_with),
+        "inputRowCount": len(predictions),
+        "availablePredictionCount": available_count,
+        "unavailablePredictionCount": unavailable_count,
+        "comparison": comparison,
+        "modelSha256": artifacts.provenance["modelSha256"],
+        "featureSchemaSha256": artifacts.provenance["featureSchemaSha256"],
+        "preprocessingConfigSha256": artifacts.provenance["preprocessingConfigSha256"],
+        "labelMappingSha256": artifacts.provenance["labelMappingSha256"],
+        "inputCsvSha256": sha256_file(args.input),
+        "pythonVersion": sys.version.split()[0],
+        "xgboostVersion": artifacts.provenance["xgboostVersion"],
+        "modelArtifactVersion": artifacts.provenance["modelArtifactVersion"],
+        "mlClasses": list(artifacts.label_mapping.values()),
+        "infiltrationSupportedByMl": "Infiltration" in set(artifacts.label_mapping.values()),
+        "notes": [
+            "Prediction output is model evidence, not calibrated certainty or threat risk.",
+            "The full regenerated prediction artifact is reproducible and should not be treated as the primary committed evidence.",
+            "The committed Stage 3 sample should not be overwritten until Stage 4 supports predictionStatus=unavailable.",
+        ],
+    }
+    SUMMARY_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SUMMARY_OUTPUT_PATH.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+
     print(f"Input: {args.input}")
     print(f"Predictions written: {output_path}")
+    print(f"Reproducibility summary written: {SUMMARY_OUTPUT_PATH}")
     print(f"Total rows: {len(predictions)}")
     print(f"Available predictions: {available_count}")
     print(f"Unavailable predictions: {unavailable_count}")
@@ -151,4 +189,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

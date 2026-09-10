@@ -103,9 +103,17 @@ and writes regenerated predictions to:
 stage-3/outputs/ml-predictions.regenerated.json
 ```
 
-It does not overwrite the committed `ml-predictions.sample.json` unless `--overwrite-sample` is explicitly provided.
+The full regenerated prediction file is local derived evidence and is ignored by Git. The script also writes a small committed summary to:
+
+```txt
+stage-3/evaluation/ml-inference-reproducibility-summary.json
+```
+
+The committed `ml-predictions.sample.json` must not be overwritten in this increment. Stage 4 does not yet explicitly handle `predictionStatus = unavailable`, so replacing the Stage 4 input before that migration could accidentally change downstream behaviour.
 
 Inference enforces the saved 78-feature schema from `feature-columns.json`, preserves feature order, detects missing or duplicate columns, coerces numeric values deterministically, and reports invalid rows as `predictionStatus = unavailable` instead of silently dropping them.
+
+Formal inference also requires stable alert IDs. Missing `id` columns, blank row IDs, NaN row IDs, and duplicate alert IDs are reported as unavailable records. Synthetic row IDs are not generated unless a legacy compatibility option is explicitly enabled in code.
 
 Stage 3 prediction output is model evidence, not threat risk. XGBoost probabilities are raw `multi:softprob` outputs and should not be treated as calibrated certainty.
 

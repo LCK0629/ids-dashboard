@@ -76,6 +76,66 @@ The prediction step must not read ground truth, raw labels, mapped attack types,
 
 After Colab training, only model artifacts and small output/evaluation files should be copied back into the repository.
 
+## Local Inference Reproducibility
+
+The committed model can be used for local inference without retraining. Install the pinned Stage 3 inference dependencies in an isolated environment:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r stage-3\requirements.txt
+```
+
+Then regenerate prediction evidence from the committed artifacts:
+
+```powershell
+.\.venv\Scripts\python.exe stage-3\scripts\run_ml_prediction_demo.py
+```
+
+The script reads feature-only input from:
+
+```txt
+stage-1/data/processed/flow-feature-full.csv
+```
+
+and writes regenerated predictions to:
+
+```txt
+stage-3/outputs/ml-predictions.regenerated.json
+```
+
+The full regenerated prediction file is local derived evidence and is ignored by Git. The script also writes a small committed summary to:
+
+```txt
+stage-3/evaluation/ml-inference-reproducibility-summary.json
+```
+
+The committed `ml-predictions.sample.json` must not be overwritten in this increment. Stage 4 does not yet explicitly handle `predictionStatus = unavailable`, so replacing the Stage 4 input before that migration could accidentally change downstream behaviour.
+
+Inference enforces the saved 78-feature schema from `feature-columns.json`, preserves feature order, detects missing or duplicate columns, coerces numeric values deterministically, and reports invalid rows as `predictionStatus = unavailable` instead of silently dropping them.
+
+Formal inference also requires stable alert IDs. Missing `id` columns, blank row IDs, NaN row IDs, and duplicate alert IDs are reported as unavailable records. Synthetic row IDs are not generated unless a legacy compatibility option is explicitly enabled in code.
+
+Stage 3 prediction output is model evidence, not threat risk. XGBoost probabilities are raw `multi:softprob` outputs and should not be treated as calibrated certainty.
+
+For backward compatibility with the current Stage 4 fusion input contract, regenerated records still include `baseRiskScore`, but it is marked with:
+
+```txt
+baseRiskScoreStatus = legacy_confidence_compatibility_not_threat_risk
+```
+
+Stage 4 should later migrate to deriving risk from prediction evidence rather than treating Stage 3 confidence as threat risk, especially for high-confidence Benign predictions.
+
+Each regenerated prediction also includes deterministic model provenance:
+
+```txt
+xgboostVersion
+modelArtifactVersion
+modelSha256
+featureSchemaSha256
+preprocessingConfigSha256
+labelMappingSha256
+```
+
 ## Expected Model Artifacts
 
 Future training should write:
@@ -196,10 +256,15 @@ MAX_ROWS_PER_CLASS = 2_000
 
 If RAM still crashes, reduce `ROW_CAP_PER_CSV` to `5_000` or `10_000`, or set `MAX_CSV_FILES = 3` for a first test run.
 
-The Python scripts remain scaffold commands for later local implementation:
+The training script remains a scaffold for later local training reproducibility:
 
 ```powershell
 python stage-3/scripts/train_xgboost_ids.py
+```
+
+The prediction script now performs local inference from committed artifacts:
+
+```powershell
 python stage-3/scripts/run_ml_prediction_demo.py
 ```
 

@@ -78,3 +78,10 @@ Deployment is rebuilt from `main` using GitHub Actions. Local development contin
 The existing interface includes Operations, Investigations, Feedback Model, and Reports views; priority-sorted alert triage; attack-type filters; signature evidence; ML prediction evidence; feedback/guardrail context; and replay controls. The canonical artifact now carries TreeSHAP evidence, but a dedicated SHAP visualisation is intentionally deferred.
 
 The local feedback scorer remains isolated as a session preview for the existing prototype interaction. It never overwrites `detectionScore`, is not written back, and is not the authority for the initial queue ordering.
+
+## Deferred Hardening
+
+- Demonstration scenarios currently begin with synthetic Stage 4-like detection records, then pass through the real Stage 5 core. They will be generated through Stage 4 fusion before becoming user-facing.
+- The approximately 6.46 MB analyst artifact is currently bundled by Vite. Loading and bundle performance are deferred to a later dashboard increment.
+- Browser feedback remains a preview-only compatibility feature; Stage 5 remains authoritative.
+- Detector-state and queue presentation refinements are outside this data-contract patch.

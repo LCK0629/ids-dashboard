@@ -7,18 +7,22 @@ import { createRequire } from 'node:module';
 
 import analystArtifact from '../src/data/analyst-alerts.v1.json' with { type: 'json' };
 import demoArtifact from '../src/data/adaptation-demo-scenarios.v1.json' with { type: 'json' };
+import evaluatorArtifact from '../src/data/evaluator-summary.v1.json' with { type: 'json' };
 import {
   ANALYST_ARTIFACT_TYPE,
   ANALYST_SCHEMA_VERSION,
   DEMO_ARTIFACT_TYPE,
   findForbiddenGroundTruthPaths,
+  validateEvaluatorArtifact,
   validateAnalystAlert,
   validateAnalystArtifact,
+  validateStage5DashboardSourceRecord,
 } from '../src/data-contract/analystDashboardContract.js';
 import {
   buildAnalystAlert,
   buildAnalystArtifact,
   findPrivacyViolations,
+  parseArgs as parseExporterArgs,
   sortAnalystAlerts,
 } from '../scripts/export-dashboard-data.mjs';
 import { buildDemoScenarioArtifact } from '../scripts/generate-adaptation-demo-scenarios.mjs';
@@ -129,6 +133,10 @@ test('analyst artifact type is operational data', () => {
   assert.equal(analystArtifact.artifactType, ANALYST_ARTIFACT_TYPE);
 });
 
+test('complete generated analyst artifact passes runtime validation', () => {
+  assert.deepEqual(validateAnalystArtifact(analystArtifact), { valid: true, errors: [] });
+});
+
 test('generated analyst alert IDs are non-empty and unique', () => {
   const ids = analystArtifact.alerts.map((alert) => alert.identity.id);
   assert.ok(ids.every((id) => typeof id === 'string' && id.trim()));
@@ -186,6 +194,10 @@ test('missing ML record is distinct from unavailable ML', () => {
     mlPredictedClassIndex: null,
     mlPredictedAttackType: null,
     modelConfidence: null,
+    classProbabilities: null,
+    secondBestClass: null,
+    predictionMargin: null,
+    mlThreatEvidenceScore: null,
     mlExplanation: { status: 'unavailable', reason: 'no_ml_record' },
   }));
   assert.equal(missing.mlEvidence.recordPresent, false);
@@ -265,6 +277,121 @@ test('unsupported schema version is rejected', () => {
   const artifact = clone(analystArtifact);
   artifact.schemaVersion = 'ids-dashboard-analyst-v2';
   assert.equal(validateAnalystArtifact(artifact).valid, false);
+});
+
+test('modern Stage 5 dashboard source record passes source validation', () => {
+  assert.deepEqual(validateStage5DashboardSourceRecord(validStage5Alert()), { valid: true, errors: [] });
+});
+
+test('old committed Stage 5 sample is rejected as incompatible source', () => {
+  const staleSource = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'stage-5', 'outputs', 'feedback-adjusted-alerts.sample.json'), 'utf8')
+  );
+  assert.throws(
+    () => buildAnalystArtifact(staleSource),
+    /Incompatible Stage 5 dashboard source/
+  );
+});
+
+test('dashboard exporter requires explicit full-schema source paths', () => {
+  assert.throws(
+    () => parseExporterArgs([]),
+    /Explicit --analyst-input, --feedback-summary, and --fusion-summary paths are required/
+  );
+});
+
+test('ground-truth key naming variants are rejected recursively', () => {
+  const variants = [
+    'groundTruth', 'ground_truth', 'ground-truth',
+    'trueAttackType', 'true_attack_type', 'true-attack-type',
+    'rawLabel', 'raw_label', 'actualLabel', 'actual_label',
+    'isMaliciousGroundTruth', 'is_malicious_ground_truth',
+  ];
+  variants.forEach((key) => {
+    const artifact = clone(analystArtifact);
+    artifact.alerts[0].mlEvidence.debug = { nested: { [key]: 'forbidden' } };
+    assert.equal(validateAnalystArtifact(artifact).valid, false, `${key} should be rejected`);
+  });
+});
+
+test('no-record ML state cannot carry prediction evidence or usable SHAP', () => {
+  const alert = buildAnalystAlert(validStage5Alert());
+  Object.assign(alert.mlEvidence, {
+    recordPresent: false,
+    evidenceAvailable: false,
+    predictionStatus: 'missing_record',
+  });
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('unavailable ML state cannot carry prediction evidence', () => {
+  const alert = buildAnalystAlert(validStage5Alert());
+  Object.assign(alert.mlEvidence, {
+    evidenceAvailable: false,
+    predictionStatus: 'unavailable',
+    failureReason: 'invalid_numeric_feature_values',
+    explanation: { status: 'unavailable', reason: 'prediction_unavailable' },
+  });
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('available ML evidence requires available prediction status', () => {
+  const alert = buildAnalystAlert(validStage5Alert());
+  alert.mlEvidence.predictionStatus = 'unavailable';
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('available prediction may retain an unavailable TreeSHAP explanation', () => {
+  const alert = buildAnalystAlert(validStage5Alert('SHAP-U', {
+    mlExplanation: { status: 'unavailable', reason: 'additivity_check_failed', method: 'native' },
+  }));
+  assert.equal(validateAnalystAlert(alert).valid, true);
+});
+
+test('available SHAP class mismatch is rejected', () => {
+  const alert = buildAnalystAlert(validStage5Alert());
+  alert.mlEvidence.explanation.explainedClass = 'DDoS';
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('available SHAP class index mismatch is rejected', () => {
+  const alert = buildAnalystAlert(validStage5Alert());
+  alert.mlEvidence.explanation.explainedClassIndex = 3;
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('analyst summary counts must agree with alert records', () => {
+  const artifact = clone(analystArtifact);
+  artifact.summary.mlPredictionAvailableCount -= 1;
+  assert.equal(validateAnalystArtifact(artifact).valid, false);
+});
+
+test('current evaluator envelope passes runtime validation', () => {
+  assert.deepEqual(validateEvaluatorArtifact(evaluatorArtifact), { valid: true, errors: [] });
+});
+
+test('wrong evaluator schema version is rejected', () => {
+  const artifact = clone(evaluatorArtifact);
+  artifact.schemaVersion = 'ids-dashboard-analyst-v2';
+  assert.equal(validateEvaluatorArtifact(artifact).valid, false);
+});
+
+test('wrong evaluator artifact type is rejected', () => {
+  const artifact = clone(evaluatorArtifact);
+  artifact.artifactType = 'analyst_operational_data';
+  assert.equal(validateEvaluatorArtifact(artifact).valid, false);
+});
+
+test('missing evaluator fusion summary is rejected', () => {
+  const artifact = clone(evaluatorArtifact);
+  delete artifact.fusionSummary;
+  assert.equal(validateEvaluatorArtifact(artifact).valid, false);
+});
+
+test('missing evaluator feedback summary is rejected', () => {
+  const artifact = clone(evaluatorArtifact);
+  delete artifact.feedbackSummary;
+  assert.equal(validateEvaluatorArtifact(artifact).valid, false);
 });
 
 test('Stage 5 runner accepts custom fused input and output directories', (context) => {

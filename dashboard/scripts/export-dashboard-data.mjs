@@ -7,6 +7,7 @@ import {
   ANALYST_ARTIFACT_TYPE,
   ANALYST_SCHEMA_VERSION,
   EVALUATOR_ARTIFACT_TYPE,
+  assertValidStage5DashboardSource,
   assertValidAnalystArtifact,
   findForbiddenGroundTruthPaths,
 } from '../src/data-contract/analystDashboardContract.js';
@@ -15,9 +16,6 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 export const repoRoot = path.resolve(scriptDir, '..', '..');
 
 const defaultPaths = {
-  analystInput: path.join(repoRoot, 'stage-5', 'outputs', 'feedback-adjusted-alerts.sample.json'),
-  feedbackSummary: path.join(repoRoot, 'stage-5', 'evaluation', 'feedback-evaluation-summary.json'),
-  fusionSummary: path.join(repoRoot, 'stage-4', 'evaluation', 'fusion-evaluation-summary.json'),
   adaptationConfig: path.join(repoRoot, 'stage-5', 'config', 'adaptation-config.json'),
   outputDir: path.join(repoRoot, 'dashboard', 'src', 'data'),
 };
@@ -291,7 +289,7 @@ function countArtifactEvidence(alerts) {
 }
 
 export function buildAnalystArtifact(stage5Alerts, metadata = {}) {
-  if (!Array.isArray(stage5Alerts)) throw new Error('Stage 5 analyst input must be an array.');
+  assertValidStage5DashboardSource(stage5Alerts);
   const alerts = sortAnalystAlerts(stage5Alerts.map(buildAnalystAlert));
   const artifact = {
     schemaVersion: ANALYST_SCHEMA_VERSION,
@@ -338,7 +336,13 @@ export function findPrivacyViolations(value, pathLabel = '$', findings = []) {
 }
 
 export function parseArgs(argv = process.argv.slice(2)) {
-  const args = { ...defaultPaths, demoScenarios: null };
+  const args = {
+    ...defaultPaths,
+    analystInput: null,
+    feedbackSummary: null,
+    fusionSummary: null,
+    demoScenarios: null,
+  };
   const options = {
     '--analyst-input': 'analystInput',
     '--feedback-summary': 'feedbackSummary',
@@ -352,6 +356,10 @@ export function parseArgs(argv = process.argv.slice(2)) {
     if (!key || !argv[index + 1]) throw new Error(`Unknown or incomplete argument: ${argv[index]}`);
     args[key] = path.resolve(argv[index + 1]);
     index += 1;
+  }
+  const missing = ['analystInput', 'feedbackSummary', 'fusionSummary'].filter((key) => !args[key]);
+  if (missing.length) {
+    throw new Error('Explicit --analyst-input, --feedback-summary, and --fusion-summary paths are required.');
   }
   return args;
 }

@@ -14,6 +14,16 @@ const forbiddenGroundTruthKeys = new Set([
   'ismaliciousgroundtruth',
 ]);
 
+const unavailablePredictionEvidenceFields = [
+  'predictedClassIndex',
+  'predictedAttackType',
+  'modelConfidence',
+  'classProbabilities',
+  'secondBestClass',
+  'predictionMargin',
+  'threatEvidenceScore',
+];
+
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -24,6 +34,18 @@ function isNonEmptyString(value) {
 
 function isScore(value) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function isFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isNullish(value) {
+  return value === null || value === undefined;
+}
+
+function normalizedKey(key) {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 function validateFeatureContributions(features, path, errors) {
@@ -82,6 +104,29 @@ function validateMlExplanation(explanation, path, errors) {
   }
 }
 
+function validateUnavailableEvidenceFields(ml, path, errors, fields = unavailablePredictionEvidenceFields) {
+  fields.forEach((field) => {
+    if (!isNullish(ml[field])) {
+      errors.push(`${path}.${field} must be null when ML prediction evidence is unavailable.`);
+    }
+  });
+}
+
+function validateMlExplanationConsistency(ml, path, errors) {
+  const explanation = ml.explanation;
+  if (!isObject(explanation) || explanation.status !== 'available') return;
+  if (!ml.evidenceAvailable) {
+    errors.push(`${path}.explanation cannot be available when ML prediction evidence is unavailable.`);
+    return;
+  }
+  if (explanation.explainedClass !== ml.predictedAttackType) {
+    errors.push(`${path}.explanation.explainedClass must equal predictedAttackType.`);
+  }
+  if (explanation.explainedClassIndex !== ml.predictedClassIndex) {
+    errors.push(`${path}.explanation.explainedClassIndex must equal predictedClassIndex.`);
+  }
+}
+
 export function findForbiddenGroundTruthPaths(value, path = '$', matches = []) {
   if (Array.isArray(value)) {
     value.forEach((item, index) => findForbiddenGroundTruthPaths(item, `${path}[${index}]`, matches));
@@ -91,7 +136,7 @@ export function findForbiddenGroundTruthPaths(value, path = '$', matches = []) {
 
   for (const [key, child] of Object.entries(value)) {
     const childPath = `${path}.${key}`;
-    if (forbiddenGroundTruthKeys.has(key.toLowerCase())) matches.push(childPath);
+    if (forbiddenGroundTruthKeys.has(normalizedKey(key))) matches.push(childPath);
     findForbiddenGroundTruthPaths(child, childPath, matches);
   }
   return matches;
@@ -130,11 +175,30 @@ export function validateAnalystAlert(alert, index = 0) {
     if (!isNonEmptyString(ml.predictionStatus)) {
       errors.push(`${path}.mlEvidence.predictionStatus is required.`);
     }
-    if (!ml.recordPresent && ml.predictionStatus !== 'missing_record') {
-      errors.push(`${path}.mlEvidence without a record must use missing_record status.`);
-    }
-    if (ml.evidenceAvailable) {
-      if (!ml.recordPresent) errors.push(`${path}.mlEvidence cannot be available without a record.`);
+    if (!ml.recordPresent) {
+      if (ml.evidenceAvailable) errors.push(`${path}.mlEvidence cannot be available without a record.`);
+      if (ml.predictionStatus !== 'missing_record') {
+        errors.push(`${path}.mlEvidence without a record must use missing_record status.`);
+      }
+      validateUnavailableEvidenceFields(ml, `${path}.mlEvidence`, errors);
+      if (isObject(ml.explanation) && ml.explanation.status === 'available') {
+        errors.push(`${path}.mlEvidence.explanation must be unavailable when no ML record exists.`);
+      }
+    } else if (!ml.evidenceAvailable) {
+      if (ml.predictionStatus !== 'unavailable') {
+        errors.push(`${path}.mlEvidence unavailable record must use unavailable status.`);
+      }
+      if (!isNonEmptyString(ml.failureReason)) {
+        errors.push(`${path}.mlEvidence.failureReason is required for an unavailable record.`);
+      }
+      validateUnavailableEvidenceFields(ml, `${path}.mlEvidence`, errors);
+      if (isObject(ml.explanation) && ml.explanation.status === 'available') {
+        errors.push(`${path}.mlEvidence.explanation must be unavailable when prediction is unavailable.`);
+      }
+    } else {
+      if (ml.predictionStatus !== 'available') {
+        errors.push(`${path}.mlEvidence available prediction must use available status.`);
+      }
       if (!Number.isInteger(ml.predictedClassIndex) || ml.predictedClassIndex < 0) {
         errors.push(`${path}.mlEvidence.predictedClassIndex must be a non-negative integer.`);
       }
@@ -145,10 +209,12 @@ export function validateAnalystAlert(alert, index = 0) {
         || ml.modelConfidence < 0 || ml.modelConfidence > 1) {
         errors.push(`${path}.mlEvidence.modelConfidence must be between 0 and 1.`);
       }
-    } else if (ml.recordPresent && !isNonEmptyString(ml.failureReason)) {
-      errors.push(`${path}.mlEvidence.failureReason is required for an unavailable record.`);
+      if (!isScore(ml.threatEvidenceScore)) {
+        errors.push(`${path}.mlEvidence.threatEvidenceScore must be between 0 and 100.`);
+      }
     }
     validateMlExplanation(ml.explanation, `${path}.mlEvidence.explanation`, errors);
+    validateMlExplanationConsistency(ml, `${path}.mlEvidence`, errors);
   }
 
   const forbidden = findForbiddenGroundTruthPaths(alert, path);
@@ -181,8 +247,131 @@ export function validateAnalystArtifact(artifact, options = {}) {
       seenIds.add(id);
     }
   });
+  if (!isObject(artifact.summary)) {
+    errors.push('Artifact summary must be an object.');
+  } else {
+    const expectedCounts = {
+      recordCount: artifact.alerts.length,
+      mlPredictionAvailableCount: artifact.alerts.filter((alert) => alert?.mlEvidence?.evidenceAvailable === true).length,
+      mlPredictionUnavailableCount: artifact.alerts.filter((alert) => alert?.mlEvidence?.evidenceAvailable !== true).length,
+      treeShapAvailableCount: artifact.alerts.filter((alert) => alert?.mlEvidence?.explanation?.status === 'available').length,
+      treeShapUnavailableCount: artifact.alerts.filter((alert) => alert?.mlEvidence?.explanation?.status !== 'available').length,
+      groundTruthFieldCount: 0,
+    };
+    Object.entries(expectedCounts).forEach(([key, expected]) => {
+      if (artifact.summary[key] !== expected) {
+        errors.push(`Artifact summary.${key} must equal ${expected}.`);
+      }
+    });
+  }
   findForbiddenGroundTruthPaths(artifact).forEach((item) => errors.push(`Forbidden evaluator field: ${item}.`));
   return { valid: errors.length === 0, errors };
+}
+
+export function validateEvaluatorArtifact(artifact) {
+  const errors = [];
+  if (!isObject(artifact)) return { valid: false, errors: ['Evaluator artifact must be an object.'] };
+  if (artifact.schemaVersion !== ANALYST_SCHEMA_VERSION) {
+    errors.push(`Unsupported evaluator schemaVersion: ${String(artifact.schemaVersion)}.`);
+  }
+  if (artifact.artifactType !== EVALUATOR_ARTIFACT_TYPE) {
+    errors.push(`Unexpected evaluator artifactType: ${String(artifact.artifactType)}.`);
+  }
+  if (!isObject(artifact.generationMetadata)) errors.push('Evaluator generationMetadata must be an object.');
+  if (!isObject(artifact.fusionSummary)) errors.push('Evaluator fusionSummary must be an object.');
+  if (!isObject(artifact.feedbackSummary)) errors.push('Evaluator feedbackSummary must be an object.');
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateStage5DashboardSourceRecord(record, index = 0) {
+  const errors = [];
+  const path = `source[${index}]`;
+  if (!isObject(record)) return { valid: false, errors: [`${path} must be an object.`] };
+
+  if (!isNonEmptyString(record.id)) errors.push(`${path}.id must be a non-empty string.`);
+  if (!isScore(record.detectionScore)) errors.push(`${path}.detectionScore must be between 0 and 100.`);
+  if (!isScore(record.operationalPriorityScore)) {
+    errors.push(`${path}.operationalPriorityScore must be between 0 and 100.`);
+  }
+  if (typeof record.requiresAnalystReviewBeforeFeedback !== 'boolean') {
+    errors.push(`${path}.requiresAnalystReviewBeforeFeedback must be boolean.`);
+  }
+  if (typeof record.requiresAnalystReview !== 'boolean') {
+    errors.push(`${path}.requiresAnalystReview must be boolean.`);
+  }
+
+  if (typeof record.mlRecordPresent !== 'boolean') errors.push(`${path}.mlRecordPresent must be boolean.`);
+  if (!isNonEmptyString(record.mlPredictionStatus)) errors.push(`${path}.mlPredictionStatus must be a non-empty string.`);
+  if (typeof record.mlEvidenceAvailable !== 'boolean') errors.push(`${path}.mlEvidenceAvailable must be boolean.`);
+
+  const sourceMl = {
+    recordPresent: record.mlRecordPresent,
+    predictionStatus: record.mlPredictionStatus,
+    evidenceAvailable: record.mlEvidenceAvailable,
+    failureReason: record.mlFailureReason,
+    predictedClassIndex: record.mlPredictedClassIndex,
+    predictedAttackType: record.mlPredictedAttackType,
+    modelConfidence: record.modelConfidence,
+    classProbabilities: record.classProbabilities,
+    secondBestClass: record.secondBestClass,
+    predictionMargin: record.predictionMargin,
+    threatEvidenceScore: record.mlThreatEvidenceScore,
+    explanation: record.mlExplanation,
+  };
+
+  if (record.mlRecordPresent === false) {
+    if (record.mlEvidenceAvailable !== false) errors.push(`${path}.mlEvidenceAvailable must be false without an ML record.`);
+    if (record.mlPredictionStatus !== 'missing_record') errors.push(`${path}.mlPredictionStatus must be missing_record without an ML record.`);
+    validateUnavailableEvidenceFields(sourceMl, path, errors);
+  } else if (record.mlRecordPresent === true && record.mlEvidenceAvailable === false) {
+    if (record.mlPredictionStatus !== 'unavailable') errors.push(`${path}.mlPredictionStatus must be unavailable for an unavailable ML record.`);
+    if (!isNonEmptyString(record.mlFailureReason)) errors.push(`${path}.mlFailureReason is required for an unavailable ML record.`);
+    validateUnavailableEvidenceFields(sourceMl, path, errors);
+  } else if (record.mlRecordPresent === true && record.mlEvidenceAvailable === true) {
+    if (record.mlPredictionStatus !== 'available') errors.push(`${path}.mlPredictionStatus must be available when ML evidence is available.`);
+    if (!Number.isInteger(record.mlPredictedClassIndex) || record.mlPredictedClassIndex < 0) {
+      errors.push(`${path}.mlPredictedClassIndex must be a non-negative integer.`);
+    }
+    if (!isNonEmptyString(record.mlPredictedAttackType)) errors.push(`${path}.mlPredictedAttackType must be non-empty.`);
+    if (!isFiniteNumber(record.modelConfidence) || record.modelConfidence < 0 || record.modelConfidence > 1) {
+      errors.push(`${path}.modelConfidence must be between 0 and 1.`);
+    }
+    if (!isScore(record.mlThreatEvidenceScore)) errors.push(`${path}.mlThreatEvidenceScore must be between 0 and 100.`);
+  }
+
+  validateMlExplanation(record.mlExplanation, `${path}.mlExplanation`, errors);
+  validateMlExplanationConsistency(sourceMl, path, errors);
+
+  const adaptationFields = {
+    similarityMatched: (value) => typeof value === 'boolean',
+    matchedHistoricalFeedbackCount: (value) => Number.isInteger(value) && value >= 0,
+    historicalAgreementRatio: (value) => isFiniteNumber(value) && value >= 0 && value <= 1,
+    conflictDetected: (value) => typeof value === 'boolean',
+    adaptationEligible: (value) => typeof value === 'boolean',
+    proposedFeedbackAdjustment: isFiniteNumber,
+    cappedFeedbackAdjustment: isFiniteNumber,
+    feedbackAdjustment: isFiniteNumber,
+    feedbackRecorded: (value) => typeof value === 'boolean',
+    priorityAdjusted: (value) => typeof value === 'boolean',
+    adaptationSource: isNonEmptyString,
+  };
+  Object.entries(adaptationFields).forEach(([field, validator]) => {
+    if (!validator(record[field])) errors.push(`${path}.${field} is missing or invalid.`);
+  });
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function assertValidStage5DashboardSource(records) {
+  if (!Array.isArray(records)) throw new Error('Incompatible Stage 5 dashboard source: expected an array.');
+  const errors = [];
+  records.forEach((record, index) => {
+    errors.push(...validateStage5DashboardSourceRecord(record, index).errors);
+  });
+  if (errors.length) {
+    throw new Error(`Incompatible Stage 5 dashboard source:\n${errors.slice(0, 25).join('\n')}`);
+  }
+  return records;
 }
 
 export function assertValidAnalystArtifact(artifact, options = {}) {

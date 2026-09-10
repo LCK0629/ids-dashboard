@@ -10,6 +10,8 @@ dashboard/src/data/analyst-alerts.v1.json
 
 The envelope contains generation metadata, a compact summary, and explicitly whitelisted analyst records. Runtime validation rejects unsupported versions, duplicate or blank IDs, invalid score values, malformed ML/TreeSHAP states, and forbidden ground-truth keys.
 
+Before mapping begins, the exporter also validates the Stage 5 source contract. It rejects legacy records that omit explicit ML availability, prediction, explainability, review, or adaptation fields. Full-schema input paths must be supplied explicitly on the exporter command line.
+
 ## Data Boundaries
 
 These artifacts have separate purposes:
@@ -34,6 +36,8 @@ Legacy `fusionRiskScore` and `currentRiskScore` names exist only in `dashboard/s
 ## ML States
 
 `recordPresent` distinguishes a missing Stage 3 record from a present record whose prediction is unavailable. An available TreeSHAP explanation must include the predicted class, raw-margin output space, supporting/opposing features, and a passed additivity check. SHAP failure never changes the prediction.
+
+The ML fields are cross-validated: unavailable or missing predictions cannot carry class, confidence, threat-score, or analyst-usable SHAP evidence. When SHAP is available, its explained class and index must match the ML prediction. The evaluator envelope is validated separately before aggregate Reports data is used.
 
 ## Feedback Boundary
 

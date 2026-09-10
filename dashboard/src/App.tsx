@@ -22,7 +22,7 @@ import type {
 } from './types/alerts';
 import type { AnalystFeedbackAction, LocalFeedbackMap, ReplaySpeed } from './types/feedback';
 import type { AnalystArtifactV1, EvaluatorSummaryArtifactV1 } from './types/dashboardData';
-import { validateAnalystArtifact } from './data-contract/analystDashboardContract.js';
+import { validateAnalystArtifact, validateEvaluatorArtifact } from './data-contract/analystDashboardContract.js';
 import { adaptAnalystAlertsForLegacyComponents } from './utils/dashboardAdapter';
 import {
   applySessionPreviewOverrides,
@@ -42,12 +42,15 @@ const analystArtifactValidation = validateAnalystArtifact(analystAlertsData);
 const analystArtifact = analystArtifactValidation.valid
   ? analystAlertsData as AnalystArtifactV1
   : null;
-const evaluatorArtifact = evaluatorSummaryData as EvaluatorSummaryArtifactV1;
+const evaluatorArtifactValidation = validateEvaluatorArtifact(evaluatorSummaryData);
+const evaluatorArtifact = evaluatorArtifactValidation.valid
+  ? evaluatorSummaryData as EvaluatorSummaryArtifactV1
+  : null;
 const alerts = analystArtifact
   ? adaptAnalystAlertsForLegacyComponents(analystArtifact.alerts)
   : [];
-const feedbackSummary = evaluatorArtifact.feedbackSummary as unknown as FeedbackEvaluationSummary;
-const fusionSummary = evaluatorArtifact.fusionSummary as unknown as FusionEvaluationSummary;
+const feedbackSummary = (evaluatorArtifact?.feedbackSummary || {}) as unknown as FeedbackEvaluationSummary;
+const fusionSummary = (evaluatorArtifact?.fusionSummary || {}) as unknown as FusionEvaluationSummary;
 
 const viewLabels: Record<DashboardView, string> = {
   operations: 'Operations',
@@ -163,16 +166,20 @@ export default function App() {
     setSelectedAlertId(undefined);
   }
 
-  if (!analystArtifact) {
+  if (!analystArtifact || !evaluatorArtifact) {
+    const artifactErrors = [
+      ...analystArtifactValidation.errors.map((error) => `Analyst artifact: ${error}`),
+      ...evaluatorArtifactValidation.errors.map((error) => `Evaluator artifact: ${error}`),
+    ];
     return (
       <main className="dashboard artifact-error" role="alert">
         <section className="panel full-panel">
           <div className="panel-header">
             <h1>Dashboard data unavailable</h1>
           </div>
-          <p>The analyst data artifact failed schema validation. No alert records were loaded.</p>
+          <p>A dashboard data artifact failed schema validation. No alert records or evaluator metrics were loaded.</p>
           <ul>
-            {analystArtifactValidation.errors.map((error) => <li key={error}>{error}</li>)}
+            {artifactErrors.map((error) => <li key={error}>{error}</li>)}
           </ul>
         </section>
       </main>

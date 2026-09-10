@@ -10,10 +10,13 @@ export interface ValidationResult {
 
 export function findForbiddenGroundTruthPaths(value: unknown, path?: string, matches?: string[]): string[];
 export function validateAnalystAlert(alert: unknown, index?: number): ValidationResult;
+export function validateStage5DashboardSourceRecord(record: unknown, index?: number): ValidationResult;
+export function assertValidStage5DashboardSource<T>(records: T): T;
 export function validateAnalystArtifact(
   artifact: unknown,
   options?: { expectedArtifactType?: string }
 ): ValidationResult;
+export function validateEvaluatorArtifact(artifact: unknown): ValidationResult;
 export function assertValidAnalystArtifact<T>(
   artifact: T,
   options?: { expectedArtifactType?: string }

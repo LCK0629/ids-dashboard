@@ -12,10 +12,12 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const fusedAlertsPath = path.join(repoRoot, 'stage-4', 'outputs', 'fusion-alerts.sample.json');
 const analystFeedbackPath = path.join(repoRoot, 'stage-5', 'data', 'analyst-feedback.sample.json');
 const exceptionMemoryPath = path.join(repoRoot, 'stage-5', 'data', 'exception-memory.sample.json');
+const adaptationConfigPath = path.join(repoRoot, 'stage-5', 'config', 'adaptation-config.json');
 const groundTruthPath = path.join(repoRoot, 'stage-1', 'data', 'processed', 'ground-truth.json');
 const outputDir = path.join(repoRoot, 'stage-5', 'outputs');
 const evaluationDir = path.join(repoRoot, 'stage-5', 'evaluation');
 const adjustedAlertsPath = path.join(outputDir, 'feedback-adjusted-alerts.sample.json');
+const generatedHistoricalMemoryPath = path.join(outputDir, 'historical-feedback-memory.generated.json');
 const evaluationJsonPath = path.join(evaluationDir, 'feedback-evaluation-summary.json');
 const evaluationMarkdownPath = path.join(evaluationDir, 'feedback-evaluation-summary.md');
 
@@ -31,7 +33,7 @@ function renderSummaryMarkdown(summary) {
   const lines = [
     '# Stage 5 Feedback Evaluation Summary',
     '',
-    'Stage 5 applies simulated analyst feedback and JSON-based exception memory to Stage 4 fused alerts.',
+    'Stage 5 applies append-only analyst feedback events to Stage 4 fused alerts through deterministic similarity matching, historical aggregation, eligibility gates, and guardrails.',
     '',
     'Ground truth is joined only after detection, fusion, and feedback for evaluation and dashboard explanation. It is not used as input to signature matching, ML prediction, fusion scoring, or feedback adjustment.',
     '',
@@ -40,10 +42,12 @@ function renderSummaryMarkdown(summary) {
     '## Overall Counts',
     '',
     `- Total alerts: ${summary.totalAlerts}`,
+    `- Manual exception memory enabled: ${summary.manualExceptionMemoryEnabled}`,
     `- Alerts adjusted: ${summary.alertsAdjusted}`,
     `- Alerts unchanged: ${summary.alertsUnchanged}`,
     `- Direct feedback applied count: ${summary.directFeedbackAppliedCount}`,
     `- Unmatched direct feedback count: ${summary.unmatchedDirectFeedbackCount}`,
+    `- Historical feedback adaptation count: ${summary.historicalFeedbackAdaptationCount}`,
     `- Exception memory applied count: ${summary.exceptionMemoryAppliedCount}`,
     `- Ignored exception count: ${summary.ignoredExceptionCount}`,
     `- Guardrail applied count: ${summary.guardrailAppliedCount}`,
@@ -61,6 +65,16 @@ function renderSummaryMarkdown(summary) {
     '`exceptionRejectedByTrustGateCount` counts exception memory matches that were ignored because they did not meet trust requirements. This includes low confidence exceptions and exceptions with insufficient feedback evidence.',
     '',
     'Trust-gate rejections do not change the risk score. For report writing, use the split metrics when describing whether feedback changed priority or whether an exception was rejected before adjustment.',
+    '',
+    '## Adaptation Coverage',
+    '',
+    `- Similarity match count: ${summary.similarityMatchCount}`,
+    `- Similarity match coverage: ${summary.similarityMatchCoverage}`,
+    `- Adaptation eligible count: ${summary.adaptationEligibleCount}`,
+    `- Adaptation eligibility coverage: ${summary.adaptationEligibilityCoverage}`,
+    `- Actual adaptation count: ${summary.actualAdaptationCount}`,
+    `- Actual adaptation coverage: ${summary.actualAdaptationCoverage}`,
+    `- Generated historical memory count: ${summary.generatedHistoricalMemoryCount}`,
     '',
     '## Risk Before And After Feedback',
     '',
@@ -95,6 +109,10 @@ function renderSummaryMarkdown(summary) {
     '',
     renderCounter(summary.countByAnalystFeedbackStatus),
     '',
+    '## Count By Adaptation Source',
+    '',
+    renderCounter(summary.countByAdaptationSource),
+    '',
     '## Notes',
     '',
     ...summary.notes.map((note) => `- ${note}`),
@@ -111,33 +129,56 @@ function main() {
   const fusedAlerts = loadJsonFile(fusedAlertsPath);
   const analystFeedback = loadJsonFile(analystFeedbackPath);
   const exceptionMemory = loadJsonFile(exceptionMemoryPath);
+  const adaptationConfig = loadJsonFile(adaptationConfigPath);
   const groundTruth = loadJsonFile(groundTruthPath, null);
-  const { adjustedAlerts, unmatchedFeedback } = adjustAlertsWithFeedback(
+  const {
+    adjustedAlerts,
+    unmatchedFeedback,
+    generatedHistoricalMemory,
+    feedbackResolution,
+    useManualExceptionMemory,
+  } = adjustAlertsWithFeedback(
     fusedAlerts,
     analystFeedback,
-    exceptionMemory
+    exceptionMemory,
+    adaptationConfig,
+    {
+      useManualExceptionMemory: false,
+    }
   );
   const adjustedAlertsWithGroundTruth = attachGroundTruthFields(adjustedAlerts, groundTruth);
-  const evaluationSummary = summariseFeedbackResults(adjustedAlertsWithGroundTruth, unmatchedFeedback, groundTruth);
+  const evaluationSummary = summariseFeedbackResults(adjustedAlertsWithGroundTruth, unmatchedFeedback, groundTruth, {
+    feedbackResolution,
+    generatedHistoricalMemoryCount: generatedHistoricalMemory.length,
+    useManualExceptionMemory,
+  });
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
   fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(adjustedAlertsWithGroundTruth, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(generatedHistoricalMemoryPath, `${JSON.stringify(generatedHistoricalMemory, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationMarkdownPath, renderSummaryMarkdown(evaluationSummary), 'utf8');
 
   console.log(`Fused alerts loaded: ${fusedAlerts.length}`);
   console.log(`Analyst feedback records loaded: ${analystFeedback.length}`);
   console.log(`Exception memory records loaded: ${exceptionMemory.length}`);
+  console.log(`Manual exception memory enabled: ${useManualExceptionMemory}`);
   console.log(`Feedback-adjusted alerts written: ${adjustedAlertsWithGroundTruth.length}`);
+  console.log(`Generated historical memory records written: ${generatedHistoricalMemory.length}`);
   console.log(`Alerts adjusted: ${evaluationSummary.alertsAdjusted}`);
   console.log(`Direct feedback applied: ${evaluationSummary.directFeedbackAppliedCount}`);
+  console.log(`Historical feedback adaptations: ${evaluationSummary.historicalFeedbackAdaptationCount}`);
   console.log(`Unmatched direct feedback: ${evaluationSummary.unmatchedDirectFeedbackCount}`);
   console.log(`Exception memory applied: ${evaluationSummary.exceptionMemoryAppliedCount}`);
   console.log(`Guardrails applied: ${evaluationSummary.guardrailAppliedCount}`);
+  console.log(`Similarity match coverage: ${evaluationSummary.similarityMatchCoverage}`);
+  console.log(`Adaptation eligibility coverage: ${evaluationSummary.adaptationEligibilityCoverage}`);
+  console.log(`Actual adaptation coverage: ${evaluationSummary.actualAdaptationCoverage}`);
   console.log(`Review queue before: ${evaluationSummary.reviewQueueBefore}`);
   console.log(`Review queue after: ${evaluationSummary.reviewQueueAfter}`);
   console.log(`Feedback output: ${adjustedAlertsPath}`);
+  console.log(`Generated historical memory: ${generatedHistoricalMemoryPath}`);
   console.log(`Evaluation summary: ${evaluationMarkdownPath}`);
 }
 

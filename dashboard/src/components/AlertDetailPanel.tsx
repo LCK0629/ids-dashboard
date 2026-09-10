@@ -1,82 +1,43 @@
-import type { ReactNode } from 'react';
+import type { AnalystAlertV1 } from '../types/dashboardData';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import type { AnalystFeedbackAction } from '../types/feedback';
-import {
-  formatModelConfidenceScore,
-  formatScore,
-  isActionableAlert,
-  isSuppressedOrResolved,
-  recordTypeLabel,
-} from '../utils/alertFilters';
+import { AutomatedDetectionEvidence } from './automated-evidence/AutomatedDetectionEvidence';
 import { FeedbackControls } from './FeedbackControls';
 import { FeedbackImpactPanel } from './FeedbackImpactPanel';
 import { ScoreComparison } from './ScoreComparison';
 
 interface AlertDetailPanelProps {
   alert?: FeedbackAdjustedAlert;
+  analystAlert?: AnalystAlertV1;
   onApplyFeedback?: (alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) => void;
   onResetFeedback?: (alert: FeedbackAdjustedAlert) => void;
 }
 
-function value(value: unknown): string {
-  if (value === undefined || value === null || value === '') {
-    return 'N/A';
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
-  }
-  return String(value);
+function value(input: unknown): string {
+  if (input === undefined || input === null || input === '') return 'N/A';
+  if (typeof input === 'boolean') return input ? 'Yes' : 'No';
+  return String(input);
 }
 
-function ruleStatusLabel(status?: string): string {
-  if (status === 'prototype-heuristic') {
-    return 'Prototype flow-level heuristic';
-  }
-  return value(status);
-}
-
-function DetailItem({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="detail-item">
-      <span>{label}</span>
-      <strong>{children}</strong>
-    </div>
-  );
-}
-
-function EvidenceBlock({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="evidence-block">
-      <h3>{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: AlertDetailPanelProps) {
-  if (!alert) {
+export function AlertDetailPanel({ alert, analystAlert, onApplyFeedback, onResetFeedback }: AlertDetailPanelProps) {
+  if (!alert || !analystAlert) {
     return (
       <aside className="panel detail-panel empty">
         <h2>Detection Record Detail</h2>
-        <p>Select a detection record to inspect evidence and feedback adjustment.</p>
+        <p>Select a detection record to inspect its automated evidence and feedback state.</p>
       </aside>
     );
   }
 
-  const classification = recordTypeLabel(alert);
-  const classificationExplanation = isActionableAlert(alert)
-    ? 'This record is promoted into the Active Alert Queue.'
-    : isSuppressedOrResolved(alert)
-      ? 'This record is retained for auditability but is not part of the default active alert queue.'
-      : 'This record is retained for audit and evaluation. It is not necessarily an active alert unless promoted by risk score, signature evidence, fusion decision, or analyst-review requirement.';
   return (
     <aside className="panel detail-panel">
       <div className="panel-header">
-        <h2>{alert.id}</h2>
-        <span>{alert.fusionAttackType || 'Unknown'}</span>
+        <h2>{analystAlert.identity.id}</h2>
+        <span>{analystAlert.automatedDetection.attackType}</span>
       </div>
 
       <ScoreComparison alert={alert} />
+      <AutomatedDetectionEvidence alert={analystAlert} density="compact" />
 
       <FeedbackControls
         activeAction={alert.localFeedbackAction}
@@ -85,100 +46,25 @@ export function AlertDetailPanel({ alert, onApplyFeedback, onResetFeedback }: Al
         onResetFeedback={() => onResetFeedback?.(alert)}
       />
 
-      <EvidenceBlock title="Feedback Impact">
+      <section className="evidence-block">
+        <h3>Feedback Impact</h3>
         <FeedbackImpactPanel alert={alert} />
-      </EvidenceBlock>
+      </section>
 
-      <EvidenceBlock title="Identity">
+      <section className="evidence-block">
+        <h3>Feedback Evidence</h3>
         <div className="detail-grid">
-          <DetailItem label="Record classification">{classification}</DetailItem>
-          <DetailItem label="Fusion attack type">{value(alert.fusionAttackType)}</DetailItem>
-          <DetailItem label="Operational Priority">{formatScore(alert.operationalPriorityScore)}</DetailItem>
-          <DetailItem label="Detection Score">{formatScore(alert.detectionScore)}</DetailItem>
-          <DetailItem label="Confidence level">{value(alert.fusionConfidenceLevel)}</DetailItem>
-          <DetailItem label="Requires review">{value(alert.requiresAnalystReview)}</DetailItem>
-        </div>
-        <p className="helper-text">{classificationExplanation}</p>
-      </EvidenceBlock>
-
-      <EvidenceBlock title="Signature Evidence">
-        <div className="detail-grid">
-          <DetailItem label="Status">{alert.signatureHit ? 'Signature matched' : 'No signature matched'}</DetailItem>
-          <DetailItem label="Rule">{value(alert.signatureTechnicalDetails?.ruleId || alert.signatureId)}</DetailItem>
-          <DetailItem label="Predicted attack">{value(alert.signatureTechnicalDetails?.predictedAttackType || alert.signatureAttackType)}</DetailItem>
-          <DetailItem label="Severity">{value(alert.signatureSeverity)}</DetailItem>
-        </div>
-        {alert.signatureHit ? (
-          <>
-            <h4>Explanation</h4>
-            <p>
-              {alert.signaturePlainExplanation
-                || 'This flow matched a prototype signature rule based on observable traffic features. The match suggests suspicious behaviour, but the rule should be treated as a heuristic rather than definitive proof.'}
-            </p>
-            <h4>Matched conditions</h4>
-            <ul className="condition-list">
-              {(alert.matchedConditionsReadable?.length
-                ? alert.matchedConditionsReadable
-                : alert.signatureTechnicalDetails?.matchedConditions || []
-              ).map((condition) => (
-                <li key={condition}>{condition}</li>
-              ))}
-            </ul>
-            <h4>Technical rule details</h4>
-            <div className="detail-grid">
-              <DetailItem label="Rule name">{value(alert.signatureTechnicalDetails?.ruleName || alert.signatureName)}</DetailItem>
-              <DetailItem label="Rule status">{ruleStatusLabel(alert.signatureTechnicalDetails?.validationStatus)}</DetailItem>
-            </div>
-            <p className="helper-text">
-              {alert.signatureTechnicalDetails?.rationale || alert.signatureEvidence || 'Prototype flow-level heuristic.'}
-            </p>
-          </>
-        ) : (
-          <p>
-            No signature rule matched this flow. This does not prove the flow is benign; it only means the current prototype signature rules did not match observable flow conditions.
-          </p>
-        )}
-      </EvidenceBlock>
-
-      <EvidenceBlock title="ML Evidence">
-        <div className="detail-grid">
-          <DetailItem label="ML prediction">{value(alert.mlPredictedAttackType)}</DetailItem>
-          <DetailItem label="XGBoost confidence score">{formatModelConfidenceScore(alert.modelConfidence)}</DetailItem>
-          <DetailItem label="ML threat evidence">{formatScore(alert.mlThreatEvidenceScore)}</DetailItem>
-          <DetailItem label="Prediction status">{value(alert.mlPredictionStatus)}</DetailItem>
-        </div>
-        <p className="helper-text">Uncalibrated model score, not certainty.</p>
-      </EvidenceBlock>
-
-      <EvidenceBlock title="Fusion Evidence">
-        <div className="detail-grid">
-          <DetailItem label="Fusion decision">{value(alert.fusionDecision)}</DetailItem>
-        </div>
-        <p>{alert.fusionEvidence || 'No fusion evidence available.'}</p>
-      </EvidenceBlock>
-
-      <EvidenceBlock title="Feedback Evidence">
-        <div className="detail-grid">
-          <DetailItem label="Feedback applied">{value(alert.feedbackApplied)}</DetailItem>
-          <DetailItem label="Adjustment">{value(alert.feedbackAdjustment)}</DetailItem>
-          <DetailItem label="Matched feedback">{value(alert.matchedFeedbackId)}</DetailItem>
-          <DetailItem label="Matched exception">{value(alert.matchedExceptionId)}</DetailItem>
-          <DetailItem label="Feedback status">{value(alert.analystFeedbackStatus)}</DetailItem>
-          <DetailItem label="Local feedback">{value(alert.localFeedbackLabel)}</DetailItem>
+          <div className="detail-item"><span>Feedback applied</span><strong>{value(alert.feedbackApplied)}</strong></div>
+          <div className="detail-item"><span>Adjustment</span><strong>{value(alert.feedbackAdjustment)}</strong></div>
+          <div className="detail-item"><span>Matched feedback</span><strong>{value(alert.matchedFeedbackId)}</strong></div>
+          <div className="detail-item"><span>Feedback status</span><strong>{value(alert.analystFeedbackStatus)}</strong></div>
+          <div className="detail-item"><span>Local feedback</span><strong>{value(alert.localFeedbackLabel)}</strong></div>
         </div>
         <p>{alert.feedbackReason || 'No feedback reason recorded.'}</p>
         {alert.localFeedbackReason && <p>{alert.localFeedbackReason}</p>}
         {alert.localGuardrailMessage && <p className="guardrail-message">{alert.localGuardrailMessage}</p>}
-        <p className="helper-text">
-          Score guardrails limit unsafe risk-score reduction. Exception trust-gate rejections mean exception memory was ignored because it was not reliable enough.
-        </p>
-        <div className="tag-list">
-          {(alert.feedbackGuardrailsApplied || []).length
-            ? alert.feedbackGuardrailsApplied?.map((guardrail) => <span key={guardrail}>{guardrail}</span>)
-            : <span>no guardrail</span>}
-        </div>
-      </EvidenceBlock>
-
+        <p className="helper-text">Historical adaptation detail will be expanded in the dedicated feedback-causal-chain increment.</p>
+      </section>
     </aside>
   );
 }

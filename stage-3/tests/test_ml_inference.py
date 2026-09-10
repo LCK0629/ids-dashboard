@@ -26,6 +26,9 @@ from ml_inference import (  # noqa: E402
     DEFAULT_MODEL_PATH,
     DEFAULT_PREPROCESSING_CONFIG_PATH,
     InferenceConfigurationError,
+    TREESHAP_ADDITIVITY_TOLERANCE,
+    TREESHAP_METHOD,
+    TREESHAP_OUTPUT_SPACE,
     load_json,
     load_model_artifacts,
     predict_dataframe,
@@ -48,6 +51,21 @@ def assert_available_prediction(record: dict) -> None:
     assert record["predictedAttackType"]
     assert record["modelConfidence"] is not None
     assert record["classProbabilities"]
+
+
+PREDICTION_INVARIANT_FIELDS = [
+    "predictionStatus",
+    "predictedClassIndex",
+    "predictedAttackType",
+    "modelConfidence",
+    "classProbabilities",
+    "secondBestClass",
+    "predictionMargin",
+    "modelProvenance",
+    "legacyBaseRiskScore",
+    "baseRiskScore",
+    "baseRiskScoreStatus",
+]
 
 
 def test_committed_model_loads_successfully() -> None:
@@ -222,7 +240,7 @@ def test_probabilities_sum_to_one() -> None:
 
 def test_probability_vector_length_must_match_label_mapping() -> None:
     class WrongLengthModel:
-        def predict(self, dmatrix):
+        def predict(self, dmatrix, **kwargs):
             return np.array([[0.2, 0.2, 0.2, 0.2, 0.2]])
 
     artifacts = load_model_artifacts()
@@ -292,6 +310,135 @@ def test_unsupported_infiltration_is_represented_in_artifacts() -> None:
 
     assert "Infiltration" not in set(artifacts.label_mapping.values())
     assert preprocessing_config["missingExpectedAttackTypes"] == ["Infiltration"]
+
+
+def test_native_treeshap_returns_expected_multiclass_shapes() -> None:
+    artifacts = load_model_artifacts()
+    dataframe = load_feature_rows(2)
+    feature_matrix = dataframe[artifacts.feature_columns].astype(np.float32).to_numpy()
+    import xgboost as xgb
+
+    dmatrix = xgb.DMatrix(feature_matrix, feature_names=artifacts.feature_columns)
+
+    probabilities = artifacts.model.predict(dmatrix, strict_shape=True)
+    raw_margins = artifacts.model.predict(dmatrix, output_margin=True, strict_shape=True)
+    contributions = artifacts.model.predict(dmatrix, pred_contribs=True, strict_shape=True)
+
+    assert probabilities.shape == (2, len(artifacts.label_mapping))
+    assert raw_margins.shape == (2, len(artifacts.label_mapping))
+    assert contributions.shape == (2, len(artifacts.label_mapping), len(artifacts.feature_columns) + 1)
+
+
+def test_treeshap_explains_the_predicted_class_only() -> None:
+    artifacts = load_model_artifacts()
+    record = predict_dataframe(load_feature_rows(1), artifacts, include_explanations=True)[0]
+    explanation = record["mlExplanation"]
+
+    assert explanation["status"] == "available"
+    assert explanation["method"] == TREESHAP_METHOD
+    assert explanation["outputSpace"] == TREESHAP_OUTPUT_SPACE
+    assert explanation["explainedClassIndex"] == record["predictedClassIndex"]
+    assert explanation["explainedClass"] == record["predictedAttackType"]
+
+
+def test_treeshap_base_value_and_all_feature_contributions_are_additive() -> None:
+    artifacts = load_model_artifacts()
+    predictions = predict_dataframe(load_feature_rows(1000), artifacts, include_explanations=True)
+    available = [record for record in predictions if record["predictionStatus"] == "available"]
+    represented_classes = sorted({record["predictedAttackType"] for record in available})
+
+    assert len(represented_classes) > 1
+    for class_name in represented_classes:
+        record = next(item for item in available if item["predictedAttackType"] == class_name)
+        check = record["mlExplanation"]["additivityCheck"]
+        assert check["passed"] is True
+        assert check["difference"] <= TREESHAP_ADDITIVITY_TOLERANCE
+        assert check["tolerance"] == TREESHAP_ADDITIVITY_TOLERANCE
+
+
+def test_treeshap_supporting_and_opposing_features_are_signed_ordered_and_limited() -> None:
+    artifacts = load_model_artifacts()
+    record = predict_dataframe(load_feature_rows(1), artifacts, include_explanations=True)[0]
+    explanation = record["mlExplanation"]
+    supporting = explanation["topSupportingFeatures"]
+    opposing = explanation["topOpposingFeatures"]
+
+    assert len(supporting) <= 5
+    assert len(opposing) <= 5
+    assert all(item["shapContribution"] > 0 for item in supporting)
+    assert all(item["direction"] == "supports_prediction" for item in supporting)
+    assert all(item["shapContribution"] < 0 for item in opposing)
+    assert all(item["direction"] == "opposes_prediction" for item in opposing)
+    assert supporting == sorted(supporting, key=lambda item: (-item["shapContribution"], item["featureName"]))
+    assert opposing == sorted(opposing, key=lambda item: (item["shapContribution"], item["featureName"]))
+
+
+def test_treeshap_feature_values_match_model_input_values() -> None:
+    artifacts = load_model_artifacts()
+    dataframe = load_feature_rows(1)
+    record = predict_dataframe(dataframe, artifacts, include_explanations=True)[0]
+    explanation = record["mlExplanation"]
+
+    for item in explanation["topSupportingFeatures"] + explanation["topOpposingFeatures"]:
+        expected_value = float(np.float32(pd.to_numeric(pd.Series([dataframe.loc[dataframe.index[0], item["featureName"]]])).iloc[0]))
+        assert math.isclose(item["featureValue"], expected_value, rel_tol=0, abs_tol=1e-6)
+
+
+def test_treeshap_failure_leaves_prediction_fields_unchanged() -> None:
+    class FailingExplanationModel:
+        def __init__(self, wrapped_model):
+            self.wrapped_model = wrapped_model
+
+        def predict(self, dmatrix, **kwargs):
+            if kwargs.get("output_margin") or kwargs.get("pred_contribs"):
+                raise RuntimeError("forced explanation failure")
+            return self.wrapped_model.predict(dmatrix, **kwargs)
+
+    artifacts = load_model_artifacts()
+    baseline = predict_dataframe(load_feature_rows(3), artifacts, include_explanations=False)
+    broken_artifacts = replace(artifacts, model=FailingExplanationModel(artifacts.model))
+    with_failure = predict_dataframe(load_feature_rows(3), broken_artifacts, include_explanations=True)
+
+    for old_record, new_record in zip(baseline, with_failure):
+        for field in PREDICTION_INVARIANT_FIELDS:
+            assert old_record[field] == new_record[field]
+        assert new_record["predictionStatus"] == "available"
+        assert new_record["mlExplanation"]["status"] == "unavailable"
+        assert "treeshap_generation_failed" in new_record["mlExplanation"]["reason"]
+
+
+def test_invalid_prediction_record_does_not_attempt_treeshap() -> None:
+    artifacts = load_model_artifacts()
+    dataframe = load_feature_rows(1).drop(columns=["id"])
+    record = predict_dataframe(dataframe, artifacts, include_explanations=True)[0]
+
+    assert record["predictionStatus"] == "unavailable"
+    assert record["mlExplanation"] == {
+        "status": "unavailable",
+        "reason": "prediction_unavailable",
+        "method": TREESHAP_METHOD,
+    }
+
+
+def test_ml_explanation_contains_no_ground_truth_fields() -> None:
+    artifacts = load_model_artifacts()
+    record = predict_dataframe(load_feature_rows(1), artifacts, include_explanations=True)[0]
+    explanation_text = json.dumps(record["mlExplanation"])
+
+    assert "groundTruth" not in explanation_text
+    assert "rawLabel" not in explanation_text
+    assert "mappedAttackType" not in explanation_text
+
+
+def test_explanations_do_not_change_prediction_outputs() -> None:
+    artifacts = load_model_artifacts()
+    without_explanations = predict_dataframe(load_feature_rows(20), artifacts, include_explanations=False)
+    with_explanations = predict_dataframe(load_feature_rows(20), artifacts, include_explanations=True)
+
+    for plain_record, explained_record in zip(without_explanations, with_explanations):
+        for field in PREDICTION_INVARIANT_FIELDS:
+            assert plain_record[field] == explained_record[field]
+        assert explained_record["mlExplanation"]["status"] == "available"
 
 
 def copy_artifacts_to_temp(temp_dir: Path) -> dict[str, Path]:

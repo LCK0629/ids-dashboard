@@ -136,6 +136,53 @@ preprocessingConfigSha256
 labelMappingSha256
 ```
 
+## ML Explainability
+
+Stage 3 now generates XGBoost native TreeSHAP explanation evidence during local inference. This uses the committed `xgboost_ids_model.json` Booster with native `pred_contribs=True`; the separate Python `shap` package is not required for this increment.
+
+TreeSHAP is generated only after a row has passed feature validation and received a valid model prediction. Invalid rows keep `predictionStatus = unavailable` and receive an unavailable explanation with `reason = prediction_unavailable`.
+
+For multiclass output, Stage 3 explains only the predicted class:
+
+```txt
+softprob argmax
+-> predictedClassIndex
+-> selected raw margin
+-> selected TreeSHAP contribution vector
+```
+
+The explanation output space is `raw_margin`. SHAP contributions explain the raw XGBoost model margin for the predicted class. They are not probability changes, threat severity, Detection Score, Operational Priority, Fusion input, or HITL adaptation input.
+
+Each available explanation includes:
+
+```txt
+method
+outputSpace
+explainedClass
+explainedClassIndex
+baseValue
+rawModelMargin
+topSupportingFeatures
+topOpposingFeatures
+additivityCheck
+```
+
+The full 78 feature contributions are used internally for additivity validation:
+
+```txt
+baseValue + sum(78 feature SHAP contributions) ~= predicted-class rawModelMargin
+```
+
+The display-oriented explanation keeps only the top supporting and opposing features, up to five each. Supporting features must have positive SHAP contributions, and opposing features must have negative SHAP contributions.
+
+The compact explainability summary is written to:
+
+```txt
+stage-3/evaluation/ml-explainability-summary.json
+```
+
+The full regenerated prediction output remains local/regenerable and should not be treated as the primary committed evidence.
+
 ## Expected Model Artifacts
 
 Future training should write:
@@ -171,13 +218,27 @@ Each prediction should eventually include:
 ```json
 {
   "id": "AL-0001",
+  "predictionStatus": "available",
+  "predictedClassIndex": 4,
   "predictedAttackType": "DoS",
   "modelConfidence": 0.91,
-  "baseRiskScore": 91
+  "classProbabilities": {
+    "Benign": 0.01,
+    "Botnet": 0.01,
+    "Brute Force": 0.01,
+    "DDoS": 0.03,
+    "DoS": 0.91,
+    "Web Attack": 0.03
+  },
+  "mlExplanation": {
+    "status": "available",
+    "method": "xgboost_native_treeshap_pred_contribs",
+    "outputSpace": "raw_margin"
+  }
 }
 ```
 
-`modelConfidence` is the classifier probability for the selected class. `baseRiskScore` can initially be derived from confidence, for example confidence multiplied by 100, but this can be refined in Stage 4.
+`modelConfidence` is the classifier score for the selected class from XGBoost `multi:softprob`. It is not calibrated certainty and should not be used directly as threat risk.
 
 ## Evaluation Plan
 
@@ -230,12 +291,12 @@ This is a known limitation, not a silent model feature. Future retraining should
 
 ## What Is Not Included Yet
 
-- No final model is trained in this scaffold task.
 - No dashboard integration.
 - No Fusion Engine.
 - No human feedback adaptation.
 - No production IDS deployment.
 - No Snort or Suricata integration.
+- No SHAP package dependency; explainability currently uses native XGBoost TreeSHAP only.
 
 ## How to Run Later
 

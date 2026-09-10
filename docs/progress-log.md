@@ -89,6 +89,8 @@
 - Hardened Stage 3 local inference by enforcing stable alert IDs, validating the model/class/schema contract, blocking unsafe replacement of the Stage 4 ML sample input, and replacing the committed full regenerated prediction artifact with a compact reproducibility summary.
 - Added native XGBoost TreeSHAP explainability for Stage 3 inference, explaining only the predicted class raw margin and recording compact explainability coverage without changing prediction, risk, fusion, dashboard, or HITL adaptation behaviour.
 - Hardened Stage 3 TreeSHAP explanation integrity so failed additivity checks are not marked analyst-usable and explainability coverage reports prediction-unavailable, TreeSHAP-generation, and additivity-failure counts separately.
+- Integrated Stage 3 ML evidence semantics into Stage 4 fusion by separating ML record presence from valid ML predictions, deriving class-aware ML threat evidence from confidence, passing TreeSHAP evidence through without using it for scoring, and adding Stage 4 regression tests plus a compact ML evidence integration summary.
+- Hardened Stage 4 ML evidence validation by requiring real numeric confidence and safe class indexes, preserving model provenance for unavailable predictions, replacing local-only regenerated test fixtures with synthetic test data, and documenting temporary output paths for clean test runs.
 
 ## Notes
 

@@ -21,6 +21,9 @@ sys.path.insert(0, str(REPO_ROOT / "stage-3" / "core"))
 
 from ml_inference import (  # noqa: E402
     DEFAULT_FEATURE_INPUT_PATH,
+    TREESHAP_ADDITIVITY_TOLERANCE,
+    TREESHAP_METHOD,
+    TREESHAP_OUTPUT_SPACE,
     load_model_artifacts,
     predict_csv,
     sha256_file,
@@ -32,6 +35,7 @@ EVALUATION_DIR = REPO_ROOT / "stage-3" / "evaluation"
 DEFAULT_OUTPUT_PATH = OUTPUT_DIR / "ml-predictions.regenerated.json"
 COMMITTED_OUTPUT_PATH = OUTPUT_DIR / "ml-predictions.sample.json"
 SUMMARY_OUTPUT_PATH = EVALUATION_DIR / "ml-inference-reproducibility-summary.json"
+EXPLAINABILITY_SUMMARY_OUTPUT_PATH = EVALUATION_DIR / "ml-explainability-summary.json"
 
 
 def load_json(path: Path) -> Any:
@@ -101,6 +105,122 @@ def compare_predictions(regenerated: list[dict[str, Any]], committed_path: Path 
         "predictedClassAgreementRate": round(agreement_count / len(shared_ids), 6) if shared_ids else 0,
         "confidenceDifferenceStats": confidence_stats,
         "mismatchExamples": mismatch_examples,
+    }
+
+
+def summarize_explainability(
+    predictions: list[dict[str, Any]],
+    artifacts: Any,
+    input_path: Path | None = None,
+    output_path: Path | None = None,
+) -> dict[str, Any]:
+    available_predictions = [record for record in predictions if record.get("predictionStatus") == "available"]
+    unavailable_predictions = [record for record in predictions if record.get("predictionStatus") != "available"]
+    available_explanations = [
+        record for record in predictions if record.get("mlExplanation", {}).get("status") == "available"
+    ]
+    unavailable_explanations = [
+        record for record in predictions if record.get("mlExplanation", {}).get("status") != "available"
+    ]
+
+    additivity_differences: list[float] = []
+    additivity_passed_count = 0
+    additivity_failed_count = 0
+    unavailable_reason_counts = {
+        "predictionUnavailable": 0,
+        "treeShapGenerationFailure": 0,
+        "additivityFailure": 0,
+        "other": 0,
+    }
+    per_class: dict[str, dict[str, int]] = {
+        label: {
+            "predictions": 0,
+            "explanationsAvailable": 0,
+            "explanationsUnavailable": 0,
+            "additivityPassed": 0,
+            "additivityFailed": 0,
+        }
+        for label in artifacts.label_mapping.values()
+    }
+
+    for record in available_predictions:
+        predicted_class = str(record.get("predictedAttackType"))
+        per_class.setdefault(
+            predicted_class,
+            {
+                "predictions": 0,
+                "explanationsAvailable": 0,
+                "explanationsUnavailable": 0,
+                "additivityPassed": 0,
+                "additivityFailed": 0,
+            },
+        )
+        per_class[predicted_class]["predictions"] += 1
+        explanation = record.get("mlExplanation", {})
+        if explanation.get("status") == "available":
+            per_class[predicted_class]["explanationsAvailable"] += 1
+            additivity_check = explanation.get("additivityCheck", {})
+            difference = additivity_check.get("difference")
+            if difference is not None:
+                additivity_differences.append(float(difference))
+            if additivity_check.get("passed") is True:
+                additivity_passed_count += 1
+                per_class[predicted_class]["additivityPassed"] += 1
+            else:
+                additivity_failed_count += 1
+                per_class[predicted_class]["additivityFailed"] += 1
+        else:
+            per_class[predicted_class]["explanationsUnavailable"] += 1
+            additivity_check = explanation.get("additivityCheck", {})
+            difference = additivity_check.get("difference")
+            if difference is not None:
+                additivity_differences.append(float(difference))
+            if additivity_check.get("passed") is False:
+                additivity_failed_count += 1
+                per_class[predicted_class]["additivityFailed"] += 1
+
+    for record in unavailable_explanations:
+        explanation = record.get("mlExplanation", {})
+        reason = str(explanation.get("reason", ""))
+        if reason == "prediction_unavailable":
+            unavailable_reason_counts["predictionUnavailable"] += 1
+        elif reason.startswith("treeshap_generation_failed"):
+            unavailable_reason_counts["treeShapGenerationFailure"] += 1
+        elif reason == "additivity_check_failed":
+            unavailable_reason_counts["additivityFailure"] += 1
+        else:
+            unavailable_reason_counts["other"] += 1
+
+    return {
+        "method": TREESHAP_METHOD,
+        "outputSpace": TREESHAP_OUTPUT_SPACE,
+        "inputPath": repo_relative_path(input_path) if input_path is not None else None,
+        "outputPath": repo_relative_path(output_path) if output_path is not None else None,
+        "inputCount": len(predictions),
+        "availablePredictionCount": len(available_predictions),
+        "unavailablePredictionCount": len(unavailable_predictions),
+        "availableExplanationCount": len(available_explanations),
+        "unavailableExplanationCount": len(unavailable_explanations),
+        "unavailableExplanationReasons": unavailable_reason_counts,
+        "validTreeShapExplanationCount": len(available_explanations),
+        "treeShapGenerationFailureCount": unavailable_reason_counts["treeShapGenerationFailure"],
+        "additivityPassedCount": additivity_passed_count,
+        "additivityFailedCount": additivity_failed_count,
+        "additivityTolerance": TREESHAP_ADDITIVITY_TOLERANCE,
+        "maxAdditivityDifference": max(additivity_differences) if additivity_differences else None,
+        "meanAdditivityDifference": statistics.fmean(additivity_differences) if additivity_differences else None,
+        "predictedClassesRepresented": sorted(
+            class_name for class_name, coverage in per_class.items() if coverage["predictions"] > 0
+        ),
+        "perPredictedClassExplanationCoverage": per_class,
+        "modelSha256": artifacts.provenance["modelSha256"],
+        "featureSchemaSha256": artifacts.provenance["featureSchemaSha256"],
+        "xgboostVersion": artifacts.provenance["xgboostVersion"],
+        "notes": [
+            "TreeSHAP explains the predicted class raw margin, not probability change.",
+            "TreeSHAP values are explanation-only and are not Detection Score, Operational Priority, or Fusion input.",
+            "The current ML model remains a six-class prototype and does not predict Infiltration.",
+        ],
     }
 
 
@@ -175,10 +295,17 @@ def main() -> None:
     }
     SUMMARY_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     SUMMARY_OUTPUT_PATH.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    explainability_summary = summarize_explainability(predictions, artifacts, args.input, output_path)
+    EXPLAINABILITY_SUMMARY_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    EXPLAINABILITY_SUMMARY_OUTPUT_PATH.write_text(
+        json.dumps(explainability_summary, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
     print(f"Input: {args.input}")
     print(f"Predictions written: {output_path}")
     print(f"Reproducibility summary written: {SUMMARY_OUTPUT_PATH}")
+    print(f"Explainability summary written: {EXPLAINABILITY_SUMMARY_OUTPUT_PATH}")
     print(f"Total rows: {len(predictions)}")
     print(f"Available predictions: {available_count}")
     print(f"Unavailable predictions: {unavailable_count}")
@@ -193,6 +320,8 @@ def main() -> None:
         print(json.dumps(comparison, indent=2))
     else:
         print("Prediction comparison: committed output not found.")
+    print("Explainability summary:")
+    print(json.dumps(explainability_summary, indent=2))
 
 
 if __name__ == "__main__":

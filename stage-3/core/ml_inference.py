@@ -47,6 +47,10 @@ FORBIDDEN_PREDICTION_FIELDS = {
     "similarityKey",
 }
 MAX_FLOAT32 = float(np.finfo(np.float32).max)
+TREESHAP_METHOD = "xgboost_native_treeshap_pred_contribs"
+TREESHAP_OUTPUT_SPACE = "raw_margin"
+TREESHAP_ADDITIVITY_TOLERANCE = 1e-4
+TREESHAP_DISPLAY_FEATURE_LIMIT = 5
 
 
 class InferenceConfigurationError(RuntimeError):
@@ -234,6 +238,7 @@ def unavailable_record(
         "secondBestClass": None,
         "predictionMargin": None,
         "modelProvenance": model_provenance or {},
+        "mlExplanation": unavailable_ml_explanation("prediction_unavailable"),
     }
 
 
@@ -358,11 +363,181 @@ def probability_record(
     }
 
 
+def unavailable_ml_explanation(reason: str) -> dict[str, Any]:
+    return {
+        "status": "unavailable",
+        "reason": reason,
+        "method": TREESHAP_METHOD,
+    }
+
+
+def feature_contribution_record(
+    feature_name: str,
+    feature_value: float,
+    shap_contribution: float,
+    direction: str,
+) -> dict[str, Any]:
+    return {
+        "featureName": feature_name,
+        "featureValue": float(feature_value),
+        "shapContribution": float(shap_contribution),
+        "direction": direction,
+    }
+
+
+def top_feature_contributions(
+    feature_values: np.ndarray,
+    contributions: np.ndarray,
+    feature_columns: list[str],
+    limit: int = TREESHAP_DISPLAY_FEATURE_LIMIT,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    supporting_indexes = [index for index, value in enumerate(contributions) if float(value) > 0]
+    opposing_indexes = [index for index, value in enumerate(contributions) if float(value) < 0]
+
+    supporting_indexes.sort(key=lambda index: (-float(contributions[index]), feature_columns[index]))
+    opposing_indexes.sort(key=lambda index: (float(contributions[index]), feature_columns[index]))
+
+    supporting = [
+        feature_contribution_record(
+            feature_columns[index],
+            float(feature_values[index]),
+            float(contributions[index]),
+            "supports_prediction",
+        )
+        for index in supporting_indexes[:limit]
+    ]
+    opposing = [
+        feature_contribution_record(
+            feature_columns[index],
+            float(feature_values[index]),
+            float(contributions[index]),
+            "opposes_prediction",
+        )
+        for index in opposing_indexes[:limit]
+    ]
+    return supporting, opposing
+
+
+def validate_prediction_output_shape(probabilities: np.ndarray, row_count: int, class_count: int) -> np.ndarray:
+    probabilities = np.asarray(probabilities, dtype=float)
+    if probabilities.ndim == 1:
+        probabilities = probabilities.reshape(1, -1)
+    if probabilities.shape != (row_count, class_count):
+        raise InferenceConfigurationError(
+            f"Probability vector length or output shape {probabilities.shape} does not match "
+            f"expected shape ({row_count}, {class_count})."
+        )
+    return probabilities
+
+
+def validate_raw_margin_shape(raw_margins: np.ndarray, row_count: int, class_count: int) -> np.ndarray:
+    raw_margins = np.asarray(raw_margins, dtype=float)
+    if raw_margins.shape != (row_count, class_count):
+        raise InferenceConfigurationError(
+            f"Raw-margin output shape {raw_margins.shape} does not match expected "
+            f"shape ({row_count}, {class_count})."
+        )
+    return raw_margins
+
+
+def validate_treeshap_contribution_shape(
+    contributions: np.ndarray,
+    row_count: int,
+    class_count: int,
+    feature_count: int,
+) -> np.ndarray:
+    contributions = np.asarray(contributions, dtype=float)
+    expected_shape = (row_count, class_count, feature_count + 1)
+    if contributions.shape != expected_shape:
+        raise InferenceConfigurationError(
+            f"TreeSHAP contribution shape {contributions.shape} does not match expected "
+            f"shape {expected_shape}."
+        )
+    return contributions
+
+
+def predicted_class_explanation(
+    predicted_class_index: int,
+    predicted_attack_type: str,
+    feature_values: np.ndarray,
+    raw_margin: float,
+    contribution_vector: np.ndarray,
+    feature_columns: list[str],
+    tolerance: float = TREESHAP_ADDITIVITY_TOLERANCE,
+) -> dict[str, Any]:
+    feature_contributions = np.asarray(contribution_vector[:-1], dtype=float)
+    base_value = float(contribution_vector[-1])
+    if len(feature_contributions) != len(feature_columns):
+        return unavailable_ml_explanation("unexpected_treeshap_feature_dimension")
+
+    reconstructed_margin = base_value + float(np.sum(feature_contributions))
+    difference = abs(reconstructed_margin - float(raw_margin))
+    additivity_passed = difference <= tolerance
+    supporting, opposing = top_feature_contributions(feature_values, feature_contributions, feature_columns)
+
+    return {
+        "status": "available" if additivity_passed else "unavailable",
+        **({} if additivity_passed else {"reason": "additivity_check_failed"}),
+        "method": TREESHAP_METHOD,
+        "outputSpace": TREESHAP_OUTPUT_SPACE,
+        "explainedClass": predicted_attack_type,
+        "explainedClassIndex": predicted_class_index,
+        "baseValue": base_value,
+        "rawModelMargin": float(raw_margin),
+        "topSupportingFeatures": supporting,
+        "topOpposingFeatures": opposing,
+        "additivityCheck": {
+            "passed": additivity_passed,
+            "difference": difference,
+            "tolerance": tolerance,
+        },
+    }
+
+
+def generate_treeshap_explanations(
+    artifacts: ModelArtifacts,
+    dmatrix: Any,
+    feature_matrix: np.ndarray,
+    prediction_records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    row_count = len(prediction_records)
+    class_count = len(artifacts.label_mapping)
+    feature_count = len(artifacts.feature_columns)
+
+    raw_margins = validate_raw_margin_shape(
+        artifacts.model.predict(dmatrix, output_margin=True, strict_shape=True),
+        row_count,
+        class_count,
+    )
+    contributions = validate_treeshap_contribution_shape(
+        artifacts.model.predict(dmatrix, pred_contribs=True, strict_shape=True),
+        row_count,
+        class_count,
+        feature_count,
+    )
+
+    explanations: list[dict[str, Any]] = []
+    for index, record in enumerate(prediction_records):
+        predicted_index = int(record["predictedClassIndex"])
+        explanations.append(
+            predicted_class_explanation(
+                predicted_index,
+                str(record["predictedAttackType"]),
+                feature_matrix[index],
+                float(raw_margins[index, predicted_index]),
+                contributions[index, predicted_index],
+                artifacts.feature_columns,
+            )
+        )
+    return explanations
+
+
 def predict_dataframe(
     dataframe: pd.DataFrame,
     artifacts: ModelArtifacts,
     duplicate_header_columns: list[str] | None = None,
     allow_synthetic_ids: bool = False,
+    include_explanations: bool = True,
 ) -> list[dict[str, Any]]:
     schema = validate_dataframe_schema(dataframe, artifacts.feature_columns)
     duplicate_inputs = sorted(set(schema["duplicateColumns"] + (duplicate_header_columns or [])))
@@ -445,29 +620,50 @@ def predict_dataframe(
     if prepared_rows:
         feature_matrix = np.vstack(prepared_rows).astype(np.float32)
         dmatrix = xgb.DMatrix(feature_matrix, feature_names=artifacts.feature_columns)
-        probabilities = artifacts.model.predict(dmatrix)
-        if probabilities.ndim == 1:
-            probabilities = probabilities.reshape(1, -1)
-        if probabilities.shape[1] != len(artifacts.label_mapping):
-            raise InferenceConfigurationError(
-                f"Probability vector length {probabilities.shape[1]} does not match "
-                f"label mapping size {len(artifacts.label_mapping)}."
-            )
+        probabilities = validate_prediction_output_shape(
+            artifacts.model.predict(dmatrix, strict_shape=True),
+            len(prepared_rows),
+            len(artifacts.label_mapping),
+        )
+        available_records: list[dict[str, Any]] = []
         for output_index, probability_vector in zip(prepared_indexes, probabilities):
             record_id = row_id(dataframe.iloc[output_index], output_index, allow_synthetic_ids)
-            prediction_records[output_index] = probability_record(
+            record = probability_record(
                 record_id,
                 probability_vector,
                 artifacts.label_mapping,
                 artifacts.provenance,
             )
+            available_records.append(record)
+            prediction_records[output_index] = record
+
+        if include_explanations:
+            try:
+                explanations = generate_treeshap_explanations(artifacts, dmatrix, feature_matrix, available_records)
+            except Exception as exc:  # Explanation failure must not invalidate prediction.
+                reason = f"treeshap_generation_failed: {type(exc).__name__}: {exc}"
+                explanations = [unavailable_ml_explanation(reason) for _ in available_records]
+        else:
+            explanations = [unavailable_ml_explanation("explainability_disabled") for _ in available_records]
+
+        for record, explanation in zip(available_records, explanations):
+            record["mlExplanation"] = explanation
+
+    for record in prediction_records:
+        if record is not None and record.get("predictionStatus") == "unavailable":
+            record["mlExplanation"] = unavailable_ml_explanation("prediction_unavailable")
 
     return [record for record in prediction_records if record is not None]
 
 
-def predict_csv(input_path: Path, artifacts: ModelArtifacts) -> list[dict[str, Any]]:
+def predict_csv(input_path: Path, artifacts: ModelArtifacts, include_explanations: bool = True) -> list[dict[str, Any]]:
     dataframe, duplicate_header_columns = read_feature_csv(input_path)
-    return predict_dataframe(dataframe, artifacts, duplicate_header_columns=duplicate_header_columns)
+    return predict_dataframe(
+        dataframe,
+        artifacts,
+        duplicate_header_columns=duplicate_header_columns,
+        include_explanations=include_explanations,
+    )
 
 
 def write_predictions(predictions: list[dict[str, Any]], output_path: Path) -> None:

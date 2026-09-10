@@ -37,6 +37,8 @@ function renderSummaryMarkdown(summary) {
     '',
     'Stage 5 applies append-only analyst feedback events to Stage 4 fused alerts through deterministic similarity matching, historical aggregation, eligibility gates, and guardrails.',
     '',
+    'The current evaluation uses a frozen calibration / held-out split. It does not claim chronological temporal evaluation because the current sample is not ordered by reliable operational time.',
+    '',
     'Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.',
     '',
     'This is a prototype workload and priority evaluation, not production IDS performance.',
@@ -44,6 +46,10 @@ function renderSummaryMarkdown(summary) {
     '## Overall Counts',
     '',
     `- Total alerts: ${summary.totalAlerts}`,
+    `- Evaluation split: ${summary.evaluationSplit}`,
+    `- Calibration alert ids: ${summary.calibrationAlertCount}`,
+    `- Held-out alerts ranked: ${summary.heldOutAlertCount}`,
+    `- Held-out feedback ignored during ranking: ${summary.ignoredHeldOutFeedbackCount}`,
     `- Manual exception memory enabled: ${summary.manualExceptionMemoryEnabled}`,
     `- Alerts adjusted: ${summary.alertsAdjusted}`,
     `- Alerts unchanged: ${summary.alertsUnchanged}`,
@@ -129,6 +135,54 @@ function renderSummaryMarkdown(summary) {
   return `${lines.join('\n')}\n`;
 }
 
+function buildFrozenCalibrationHeldOutEvaluation({
+  fusedAlerts,
+  analystFeedback,
+  calibrationFeedback,
+  heldOutFeedback,
+  exceptionMemory,
+  adaptationConfig,
+}) {
+  const frozenCalibrationFeedback = calibrationFeedback || analystFeedback || [];
+  const ignoredHeldOutFeedback = heldOutFeedback || [];
+  const fusedAlertIds = new Set(fusedAlerts.map((alert) => String(alert.id)));
+  const calibrationAlertIds = new Set(
+    frozenCalibrationFeedback
+      .filter((feedback) => feedback.alertId && fusedAlertIds.has(String(feedback.alertId)))
+      .map((feedback) => String(feedback.alertId))
+  );
+  const heldOutAlerts = fusedAlerts.filter((alert) => !calibrationAlertIds.has(String(alert.id)));
+  const {
+    adjustedAlerts,
+    unmatchedFeedback,
+    generatedHistoricalMemory,
+    feedbackResolution,
+    useManualExceptionMemory,
+  } = adjustAlertsWithFeedback(
+    heldOutAlerts,
+    [],
+    exceptionMemory,
+    adaptationConfig,
+    {
+      historicalFeedbackEvents: frozenCalibrationFeedback,
+      similarityReferenceAlerts: fusedAlerts,
+      useManualExceptionMemory: false,
+    }
+  );
+
+  return {
+    adjustedAlerts,
+    unmatchedFeedback,
+    generatedHistoricalMemory,
+    feedbackResolution,
+    useManualExceptionMemory,
+    calibrationAlertIds: [...calibrationAlertIds].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+    heldOutAlerts,
+    ignoredHeldOutFeedbackCount: ignoredHeldOutFeedback.length,
+    evaluationSplit: 'frozen_calibration_held_out',
+  };
+}
+
 function main() {
   if (!fs.existsSync(fusedAlertsPath)) {
     throw new Error('Stage 4 fused alerts were not found. Run `node stage-4/scripts/run-fusion-demo.js` before Stage 5.');
@@ -138,31 +192,26 @@ function main() {
   const analystFeedback = loadJsonFile(analystFeedbackPath);
   const exceptionMemory = loadJsonFile(exceptionMemoryPath);
   const adaptationConfig = loadJsonFile(adaptationConfigPath);
-  const groundTruth = loadJsonFile(groundTruthPath, null);
-  const fusedAlertIds = new Set(fusedAlerts.map((alert) => String(alert.id)));
-  const calibrationAlertIds = new Set(
-    analystFeedback
-      .filter((feedback) => feedback.alertId && fusedAlertIds.has(String(feedback.alertId)))
-      .map((feedback) => String(feedback.alertId))
-  );
-  const futureAlerts = fusedAlerts.filter((alert) => !calibrationAlertIds.has(String(alert.id)));
+  const evaluationResult = buildFrozenCalibrationHeldOutEvaluation({
+    fusedAlerts,
+    analystFeedback,
+    exceptionMemory,
+    adaptationConfig,
+  });
+
   const {
     adjustedAlerts,
     unmatchedFeedback,
     generatedHistoricalMemory,
     feedbackResolution,
     useManualExceptionMemory,
-  } = adjustAlertsWithFeedback(
-    futureAlerts,
-    [],
-    exceptionMemory,
-    adaptationConfig,
-    {
-      historicalFeedbackEvents: analystFeedback,
-      similarityReferenceAlerts: fusedAlerts,
-      useManualExceptionMemory: false,
-    }
-  );
+    calibrationAlertIds,
+    heldOutAlerts,
+    ignoredHeldOutFeedbackCount,
+  } = evaluationResult;
+
+  // Ground truth is loaded only after baseline/adaptive ranking is complete.
+  const groundTruth = loadJsonFile(groundTruthPath, null);
   const analystFacingAdjustedAlerts = stripGroundTruthFields(adjustedAlerts);
   const evaluatorRecords = buildEvaluatorRecords(adjustedAlerts, groundTruth);
   const evaluationSummary = summariseFeedbackResults(evaluatorRecords, unmatchedFeedback, groundTruth, {
@@ -170,20 +219,28 @@ function main() {
     generatedHistoricalMemoryCount: generatedHistoricalMemory.length,
     useManualExceptionMemory,
     config: adaptationConfig,
+    evaluationSplit: evaluationResult.evaluationSplit,
+    calibrationAlertCount: calibrationAlertIds.length,
+    heldOutAlertCount: heldOutAlerts.length,
+    ignoredHeldOutFeedbackCount,
   });
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
   fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(analystFacingAdjustedAlerts, null, 2)}\n`, 'utf8');
   fs.writeFileSync(generatedHistoricalMemoryPath, `${JSON.stringify(generatedHistoricalMemory, null, 2)}\n`, 'utf8');
-  fs.writeFileSync(evaluatorRecordsPath, `${JSON.stringify(evaluatorRecords, null, 2)}\n`, 'utf8');
+  if (process.env.WRITE_FULL_EVALUATOR_RECORDS === '1') {
+    fs.writeFileSync(evaluatorRecordsPath, `${JSON.stringify(evaluatorRecords, null, 2)}\n`, 'utf8');
+  }
   fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationMarkdownPath, renderSummaryMarkdown(evaluationSummary), 'utf8');
 
   console.log(`Fused alerts loaded: ${fusedAlerts.length}`);
   console.log(`Analyst feedback records loaded: ${analystFeedback.length}`);
-  console.log(`Calibration alert ids: ${calibrationAlertIds.size}`);
-  console.log(`Future alerts ranked: ${futureAlerts.length}`);
+  console.log(`Evaluation split: ${evaluationResult.evaluationSplit}`);
+  console.log(`Calibration alert ids: ${calibrationAlertIds.length}`);
+  console.log(`Held-out alerts ranked: ${heldOutAlerts.length}`);
+  console.log(`Held-out feedback ignored during ranking: ${ignoredHeldOutFeedbackCount}`);
   console.log(`Exception memory records loaded: ${exceptionMemory.length}`);
   console.log(`Manual exception memory enabled: ${useManualExceptionMemory}`);
   console.log(`Analyst-facing adjusted alerts written: ${analystFacingAdjustedAlerts.length}`);
@@ -200,9 +257,16 @@ function main() {
   console.log(`Review queue before: ${evaluationSummary.reviewQueueBefore}`);
   console.log(`Review queue after: ${evaluationSummary.reviewQueueAfter}`);
   console.log(`Feedback output: ${adjustedAlertsPath}`);
-  console.log(`Evaluator-only records: ${evaluatorRecordsPath}`);
+  console.log(`Evaluator-only records: ${process.env.WRITE_FULL_EVALUATOR_RECORDS === '1' ? evaluatorRecordsPath : 'not written; set WRITE_FULL_EVALUATOR_RECORDS=1 to regenerate locally'}`);
   console.log(`Generated historical memory: ${generatedHistoricalMemoryPath}`);
   console.log(`Evaluation summary: ${evaluationMarkdownPath}`);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  buildFrozenCalibrationHeldOutEvaluation,
+  renderSummaryMarkdown,
+};

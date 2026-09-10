@@ -2,6 +2,8 @@
 
 Stage 5 applies append-only analyst feedback events to Stage 4 fused alerts through deterministic similarity matching, historical aggregation, eligibility gates, and guardrails.
 
+The current evaluation uses a frozen calibration / held-out split. It does not claim chronological temporal evaluation because the current sample is not ordered by reliable operational time.
+
 Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.
 
 This is a prototype workload and priority evaluation, not production IDS performance.
@@ -9,6 +11,10 @@ This is a prototype workload and priority evaluation, not production IDS perform
 ## Overall Counts
 
 - Total alerts: 995
+- Evaluation split: frozen_calibration_held_out
+- Calibration alert ids: 5
+- Held-out alerts ranked: 995
+- Held-out feedback ignored during ranking: 0
 - Manual exception memory enabled: false
 - Alerts adjusted: 0
 - Alerts unchanged: 995
@@ -89,7 +95,9 @@ Trust-gate rejections do not change the risk score. For report writing, use the 
 ## Notes
 
 - Analyst feedback events are the source of truth. Generated historical feedback memory is derived data and should not be manually authored.
+- This evaluation uses a frozen calibration / held-out split. It should not be described as temporal evaluation until reliable chronological ordering metadata is used.
 - Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.
+- Full evaluator-only records are reproducible from the runner and are not required as the primary committed evidence.
 - Detection score is preserved as detectionScore/fusionRiskScore. Historical feedback affects operationalPriorityScore for ranking.
 - Manual exception memory is disabled for formal adaptive evaluation so improvements can be attributed to analyst feedback events.
 - This is a prototype feedback evaluation, not production IDS performance.

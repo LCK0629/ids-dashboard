@@ -14,6 +14,9 @@ const {
   buildEvaluatorRecords,
   stripGroundTruthFields,
 } = require('../core/feedback-engine');
+const {
+  buildFrozenCalibrationHeldOutEvaluation,
+} = require('../scripts/run-feedback-demo');
 
 function alert(id, overrides = {}) {
   return {
@@ -160,6 +163,7 @@ test('reverted feedback is excluded from active aggregation', () => {
       eventType: 'feedback_reverted',
       revertsFeedbackId: 'FB-1',
       alertId: 'AL-H1',
+      analystId: 'analyst-test',
       timestamp: '2026-07-04T10:05:00Z',
     },
   ];
@@ -180,6 +184,7 @@ test('FP amended to TP then amendment reverted restores the previous FP disposit
       eventType: 'feedback_reverted',
       revertsFeedbackId: 'FB-2',
       alertId: 'AL-H1',
+      analystId: 'analyst-test',
       timestamp: '2026-07-04T10:05:00Z',
     },
   ];
@@ -202,6 +207,7 @@ test('cross-alert revert or supersede references are invalid', () => {
       eventType: 'feedback_reverted',
       revertsFeedbackId: 'FB-1',
       alertId: 'AL-H2',
+      analystId: 'analyst-test',
       timestamp: '2026-07-04T10:05:00Z',
     },
   ]);
@@ -230,6 +236,63 @@ test('formal feedback events without stable IDs are invalid unless legacy genera
 
   assert.equal(resolved.integrityErrors.some((error) => error.code === 'missing_feedback_id'), true);
   assert.equal(legacyResolved.effectiveEvents[0].feedbackId, 'FB-GENERATED-1');
+});
+
+test('feedback event validation rejects missing required fields and invalid enums', () => {
+  const resolved = resolveEffectiveFeedbackEvents([
+    {
+      feedbackId: 'FB-BAD',
+      alertId: '',
+      analystId: '',
+      timestamp: 'not-a-date',
+      eventType: 'bad_event',
+      feedbackType: 'bad_feedback',
+    },
+  ]);
+  const codes = resolved.integrityErrors.map((error) => error.code);
+
+  assert.equal(codes.includes('missing_alert_id'), true);
+  assert.equal(codes.includes('missing_analyst_id'), true);
+  assert.equal(codes.includes('invalid_timestamp'), true);
+  assert.equal(codes.includes('invalid_event_type'), true);
+  assert.equal(resolved.effectiveEvents.length, 0);
+});
+
+test('submitted feedback events require a valid feedbackType', () => {
+  const missingType = resolveEffectiveFeedbackEvents([
+    feedback('FB-1', 'AL-H1', undefined),
+  ]);
+  const invalidType = resolveEffectiveFeedbackEvents([
+    feedback('FB-2', 'AL-H1', 'not_a_valid_type'),
+  ]);
+
+  assert.equal(missingType.integrityErrors.some((error) => error.code === 'missing_feedback_type'), true);
+  assert.equal(invalidType.integrityErrors.some((error) => error.code === 'invalid_feedback_type'), true);
+  assert.equal(missingType.effectiveEvents.length, 0);
+  assert.equal(invalidType.effectiveEvents.length, 0);
+});
+
+test('revert and supersede references must point to earlier events', () => {
+  const resolved = resolveEffectiveFeedbackEvents([
+    feedback('FB-1', 'AL-H1', 'mark_false_positive', {
+      timestamp: '2026-07-04T10:10:00Z',
+    }),
+    feedback('FB-2', 'AL-H1', 'confirm_true_positive', {
+      supersedesFeedbackId: 'FB-1',
+      timestamp: '2026-07-04T10:00:00Z',
+    }),
+    {
+      feedbackId: 'FB-3',
+      alertId: 'AL-H1',
+      analystId: 'analyst-test',
+      eventType: 'feedback_reverted',
+      revertsFeedbackId: 'FB-1',
+      timestamp: '2026-07-04T10:00:00Z',
+    },
+  ]);
+
+  assert.equal(resolved.integrityErrors.some((error) => error.code === 'invalid_order_supersedesFeedbackId'), true);
+  assert.equal(resolved.integrityErrors.some((error) => error.code === 'invalid_order_revertsFeedbackId'), true);
 });
 
 test('ties in historical feedback set conflictDetected and no dominant feedback', () => {
@@ -318,7 +381,7 @@ test('formal adaptive evaluation runs with manual exception memory disabled', ()
   assert.equal(adjustedAlerts[0].operationalPriorityScore, adjustedAlerts[0].detectionScore);
 });
 
-test('temporal evaluation uses frozen calibration feedback and excludes future feedback from adaptation', () => {
+test('held-out evaluation uses frozen calibration feedback and excludes held-out feedback from adaptation', () => {
   const calibrationAlerts = [
     alert('AL-H1'),
     alert('AL-H2'),
@@ -339,13 +402,18 @@ test('temporal evaluation uses frozen calibration feedback and excludes future f
     feedback('FB-6', 'AL-FUTURE-FEEDBACK', 'confirm_true_positive'),
   ];
 
-  const { adjustedAlerts } = adjustAlertsWithFeedback(futureAlerts, [], [], adaptationConfig, {
-    historicalFeedbackEvents: calibrationFeedback,
-    similarityReferenceAlerts: [...calibrationAlerts, ...futureAlerts],
+  const evaluation = buildFrozenCalibrationHeldOutEvaluation({
+    fusedAlerts: [...calibrationAlerts, ...futureAlerts],
+    calibrationFeedback,
+    heldOutFeedback: futureFeedback,
+    analystFeedback: [...calibrationFeedback, ...futureFeedback],
+    exceptionMemory: [],
+    adaptationConfig,
   });
-  const target = adjustedAlerts.find((item) => item.id === 'AL-TARGET');
+  const target = evaluation.adjustedAlerts.find((item) => item.id === 'AL-TARGET');
 
-  assert.equal(futureFeedback.length, 3);
+  assert.equal(evaluation.evaluationSplit, 'frozen_calibration_held_out');
+  assert.equal(evaluation.ignoredHeldOutFeedbackCount, 3);
   assert.equal(target.dominantHistoricalFeedback, 'mark_false_positive');
   assert.equal(target.operationalPriorityScore, 55);
 });

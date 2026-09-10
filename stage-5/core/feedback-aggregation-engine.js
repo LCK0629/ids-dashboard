@@ -17,6 +17,14 @@ const WORKFLOW_TYPES = [
   'duplicate',
   'uncertain',
 ];
+const ALLOWED_EVENT_TYPES = [
+  'feedback_submitted',
+  'feedback_reverted',
+];
+const ALLOWED_FEEDBACK_TYPES = [
+  ...DEFAULT_LEARNING_TYPES,
+  ...WORKFLOW_TYPES,
+];
 
 function normalizeFeedbackEvent(event, index = 0, options = {}) {
   const allowGeneratedIds = options.allowGeneratedIds === true;
@@ -46,6 +54,51 @@ function validateFeedbackEvents(events = []) {
         event,
       });
       continue;
+    }
+    if (!event.alertId) {
+      errors.push({
+        code: 'missing_alert_id',
+        feedbackId: event.feedbackId,
+        message: 'Formal feedback events must include alertId.',
+      });
+    }
+    if (!event.analystId) {
+      errors.push({
+        code: 'missing_analyst_id',
+        feedbackId: event.feedbackId,
+        message: 'Formal feedback events must include analystId.',
+      });
+    }
+    if (!event.timestamp || Number.isNaN(Date.parse(event.timestamp))) {
+      errors.push({
+        code: 'invalid_timestamp',
+        feedbackId: event.feedbackId,
+        message: 'Formal feedback events must include a valid timestamp.',
+      });
+    }
+    if (!event.eventType || !ALLOWED_EVENT_TYPES.includes(event.eventType)) {
+      errors.push({
+        code: 'invalid_event_type',
+        feedbackId: event.feedbackId,
+        eventType: event.eventType || null,
+        message: `Invalid eventType: ${event.eventType || 'missing'}.`,
+      });
+    }
+    if (event.eventType === 'feedback_submitted') {
+      if (!event.feedbackType) {
+        errors.push({
+          code: 'missing_feedback_type',
+          feedbackId: event.feedbackId,
+          message: 'Submitted feedback events must include feedbackType.',
+        });
+      } else if (!ALLOWED_FEEDBACK_TYPES.includes(event.feedbackType)) {
+        errors.push({
+          code: 'invalid_feedback_type',
+          feedbackId: event.feedbackId,
+          feedbackType: event.feedbackType,
+          message: `Invalid feedbackType: ${event.feedbackType}.`,
+        });
+      }
     }
     const id = String(event.feedbackId);
     if (byId.has(id)) {
@@ -83,6 +136,20 @@ function validateFeedbackEvents(events = []) {
           feedbackId: event.feedbackId || null,
           referencedFeedbackId: String(value),
           message: `${field} must reference a feedback event for the same alert.`,
+        });
+      }
+      if (
+        event.timestamp
+        && referenced.timestamp
+        && !Number.isNaN(Date.parse(event.timestamp))
+        && !Number.isNaN(Date.parse(referenced.timestamp))
+        && Date.parse(referenced.timestamp) >= Date.parse(event.timestamp)
+      ) {
+        errors.push({
+          code: `invalid_order_${field}`,
+          feedbackId: event.feedbackId || null,
+          referencedFeedbackId: String(value),
+          message: `${field} must reference an earlier feedback event.`,
         });
       }
     }

@@ -766,6 +766,10 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
 
   const summary = {
     totalAlerts: adjustedAlerts.length,
+    evaluationSplit: metadata.evaluationSplit || 'frozen_calibration_held_out',
+    calibrationAlertCount: metadata.calibrationAlertCount || 0,
+    heldOutAlertCount: metadata.heldOutAlertCount || adjustedAlerts.length,
+    ignoredHeldOutFeedbackCount: metadata.ignoredHeldOutFeedbackCount || 0,
     detectionScoreField: 'detectionScore',
     operationalPriorityScoreField: 'operationalPriorityScore',
     manualExceptionMemoryEnabled: Boolean(metadata.useManualExceptionMemory),
@@ -837,7 +841,9 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
     countByFeedbackRecorded: {},
     notes: [
       'Analyst feedback events are the source of truth. Generated historical feedback memory is derived data and should not be manually authored.',
+      'This evaluation uses a frozen calibration / held-out split. It should not be described as temporal evaluation until reliable chronological ordering metadata is used.',
       'Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.',
+      'Full evaluator-only records are reproducible from the runner and are not required as the primary committed evidence.',
       'Detection score is preserved as detectionScore/fusionRiskScore. Historical feedback affects operationalPriorityScore for ranking.',
       'Manual exception memory is disabled for formal adaptive evaluation so improvements can be attributed to analyst feedback events.',
       'This is a prototype feedback evaluation, not production IDS performance.',

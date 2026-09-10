@@ -21,10 +21,45 @@
   },
   "fusionScoreChangedCount": 0,
   "fusionScoreUnchangedCount": 1000,
-  "fusionDecisionChangedCount": 0,
-  "fusionScoreOrDecisionChangedCount": 0,
-  "categorizedIntentionalChanges": {},
-  "changedRecords": [],
+  "fusionDecisionChangedCount": 4,
+  "fusionScoreOrDecisionChangedCount": 4,
+  "categorizedIntentionalChanges": {
+    "unavailable_ml_prediction_not_valid_evidence": 4
+  },
+  "changedRecords": [
+    {
+      "id": "AL-0376",
+      "beforeFusionRiskScore": 0,
+      "afterFusionRiskScore": 0,
+      "beforeFusionDecision": "LOW_RISK_NO_DETECTION_INPUT",
+      "afterFusionDecision": "LOW_RISK_ML_UNAVAILABLE",
+      "reason": "unavailable_ml_prediction_not_valid_evidence"
+    },
+    {
+      "id": "AL-0423",
+      "beforeFusionRiskScore": 0,
+      "afterFusionRiskScore": 0,
+      "beforeFusionDecision": "LOW_RISK_NO_DETECTION_INPUT",
+      "afterFusionDecision": "LOW_RISK_ML_UNAVAILABLE",
+      "reason": "unavailable_ml_prediction_not_valid_evidence"
+    },
+    {
+      "id": "AL-0447",
+      "beforeFusionRiskScore": 0,
+      "afterFusionRiskScore": 0,
+      "beforeFusionDecision": "LOW_RISK_NO_DETECTION_INPUT",
+      "afterFusionDecision": "LOW_RISK_ML_UNAVAILABLE",
+      "reason": "unavailable_ml_prediction_not_valid_evidence"
+    },
+    {
+      "id": "AL-0984",
+      "beforeFusionRiskScore": 0,
+      "afterFusionRiskScore": 0,
+      "beforeFusionDecision": "LOW_RISK_NO_DETECTION_INPUT",
+      "afterFusionDecision": "LOW_RISK_ML_UNAVAILABLE",
+      "reason": "unavailable_ml_prediction_not_valid_evidence"
+    }
+  ],
   "infiltrationLimitationCount": 0,
   "modelSha256": "0a002d41d20f9b8ae1c7d1231f4c47b010f6bea2c34537c4fbb0554594e4af4d",
   "notes": [

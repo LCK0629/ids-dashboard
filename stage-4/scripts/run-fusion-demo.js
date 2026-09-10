@@ -4,6 +4,7 @@ const path = require('path');
 const {
   loadJsonFile,
   fuseAlerts,
+  fuseAlertsLegacyBaseline,
   summariseFusionResults,
 } = require('../core/fusion-engine');
 
@@ -11,22 +12,46 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const signatureOutputPath = path.join(repoRoot, 'stage-2', 'data', 'signature-output.sample.json');
 const mlPredictionsPath = path.join(repoRoot, 'stage-3', 'outputs', 'ml-predictions.sample.json');
 const groundTruthPath = path.join(repoRoot, 'stage-1', 'data', 'processed', 'ground-truth.json');
-const outputDir = path.join(repoRoot, 'stage-4', 'outputs');
-const evaluationDir = path.join(repoRoot, 'stage-4', 'evaluation');
-const fusionOutputPath = path.join(outputDir, 'fusion-alerts.sample.json');
-const evaluationJsonPath = path.join(evaluationDir, 'fusion-evaluation-summary.json');
-const evaluationMarkdownPath = path.join(evaluationDir, 'fusion-evaluation-summary.md');
-const mlEvidenceIntegrationSummaryPath = path.join(evaluationDir, 'ml-evidence-integration-summary.json');
+const defaultOutputDir = path.join(repoRoot, 'stage-4', 'outputs');
+const defaultEvaluationDir = path.join(repoRoot, 'stage-4', 'evaluation');
+
+function buildOutputPaths(outputDir, evaluationDir) {
+  return {
+    outputDir,
+    evaluationDir,
+    fusionOutputPath: path.join(outputDir, 'fusion-alerts.sample.json'),
+    evaluationJsonPath: path.join(evaluationDir, 'fusion-evaluation-summary.json'),
+    evaluationMarkdownPath: path.join(evaluationDir, 'fusion-evaluation-summary.md'),
+    mlEvidenceIntegrationSummaryPath: path.join(evaluationDir, 'ml-evidence-integration-summary.json'),
+  };
+}
 
 function parseArgs(argv) {
   const args = {
     mlPredictionsPath,
+    outputDir: defaultOutputDir,
+    evaluationDir: defaultEvaluationDir,
   };
 
   for (let index = 2; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === '--ml-predictions') {
+      if (!argv[index + 1]) {
+        throw new Error('--ml-predictions requires a file path');
+      }
       args.mlPredictionsPath = path.resolve(argv[index + 1]);
+      index += 1;
+    } else if (argument === '--output-dir') {
+      if (!argv[index + 1]) {
+        throw new Error('--output-dir requires a directory path');
+      }
+      args.outputDir = path.resolve(argv[index + 1]);
+      index += 1;
+    } else if (argument === '--evaluation-dir') {
+      if (!argv[index + 1]) {
+        throw new Error('--evaluation-dir requires a directory path');
+      }
+      args.evaluationDir = path.resolve(argv[index + 1]);
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${argument}`);
@@ -335,6 +360,7 @@ function buildMlEvidenceIntegrationSummary({
   legacyBaselineAlerts,
   idAlignmentSummary,
   selectedMlPredictionsPath,
+  fusionOutputPath,
 }) {
   const explanationCounts = countMlExplanations(fusedAlerts);
   const scoreRegression = compareFusionScores(legacyBaselineAlerts, fusedAlerts);
@@ -377,10 +403,11 @@ function buildMlEvidenceIntegrationSummary({
 
 function main() {
   const args = parseArgs(process.argv);
+  const paths = buildOutputPaths(args.outputDir, args.evaluationDir);
   const signatureOutput = loadJsonFile(signatureOutputPath);
   const mlPredictions = loadJsonFile(args.mlPredictionsPath);
   const { fusedAlerts, outOfScopeMlPredictionIds, idAlignmentSummary } = fuseAlerts(signatureOutput, mlPredictions);
-  const legacyBaseline = fuseAlerts(signatureOutput, mlPredictions, { riskMode: 'legacyConfidenceRisk' });
+  const legacyBaseline = fuseAlertsLegacyBaseline(signatureOutput, mlPredictions);
   const groundTruth = loadJsonFile(groundTruthPath, null);
   const evaluationSummary = summariseFusionResults(fusedAlerts, groundTruth, idAlignmentSummary);
   const mlEvidenceIntegrationSummary = buildMlEvidenceIntegrationSummary({
@@ -390,15 +417,16 @@ function main() {
     legacyBaselineAlerts: legacyBaseline.fusedAlerts,
     idAlignmentSummary,
     selectedMlPredictionsPath: args.mlPredictionsPath,
+    fusionOutputPath: paths.fusionOutputPath,
   });
 
-  fs.mkdirSync(outputDir, { recursive: true });
-  fs.mkdirSync(evaluationDir, { recursive: true });
-  fs.writeFileSync(fusionOutputPath, `${JSON.stringify(fusedAlerts, null, 2)}\n`, 'utf8');
-  fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
-  fs.writeFileSync(evaluationMarkdownPath, renderEvaluationMarkdown(evaluationSummary), 'utf8');
+  fs.mkdirSync(paths.outputDir, { recursive: true });
+  fs.mkdirSync(paths.evaluationDir, { recursive: true });
+  fs.writeFileSync(paths.fusionOutputPath, `${JSON.stringify(fusedAlerts, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(paths.evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(paths.evaluationMarkdownPath, renderEvaluationMarkdown(evaluationSummary), 'utf8');
   fs.writeFileSync(
-    mlEvidenceIntegrationSummaryPath,
+    paths.mlEvidenceIntegrationSummaryPath,
     `${JSON.stringify(mlEvidenceIntegrationSummary, null, 2)}\n`,
     'utf8'
   );
@@ -422,10 +450,10 @@ function main() {
   console.log(`ML evidence available: ${idAlignmentSummary.stage3AvailablePredictionCount}`);
   console.log(`ML evidence unavailable: ${idAlignmentSummary.stage3UnavailablePredictionCount}`);
   console.log(`TreeSHAP explanations propagated: ${mlEvidenceIntegrationSummary.explanationAvailableCountPropagated}`);
-  console.log(`Fusion score/decision changes vs legacy confidence-risk semantics: ${mlEvidenceIntegrationSummary.fusionScoreChangedCount}`);
-  console.log(`Fusion output: ${fusionOutputPath}`);
-  console.log(`Evaluation summary: ${evaluationMarkdownPath}`);
-  console.log(`ML evidence integration summary: ${mlEvidenceIntegrationSummaryPath}`);
+  console.log(`Fusion score/decision changes vs legacy confidence-risk semantics: ${mlEvidenceIntegrationSummary.fusionScoreOrDecisionChangedCount}`);
+  console.log(`Fusion output: ${paths.fusionOutputPath}`);
+  console.log(`Evaluation summary: ${paths.evaluationMarkdownPath}`);
+  console.log(`ML evidence integration summary: ${paths.mlEvidenceIntegrationSummaryPath}`);
 }
 
 main();

@@ -130,6 +130,8 @@ fusionRiskScore != Operational Priority
 
 TreeSHAP evidence is passed through unchanged when present. It is not recalculated in JavaScript and is never used as a fusion scoring input.
 
+For the newer Stage 3 schema, an ML prediction is treated as valid evidence only when `predictionStatus` is `available`, `modelConfidence` is a real finite JSON number between 0 and 1, `predictedClassIndex` is a non-negative integer, and `predictedAttackType` is present. Unavailable or malformed ML records are preserved for audit, but they do not become ML threat evidence.
+
 ## Infiltration ML Limitation Handling
 
 The current Stage 3 ML model does not support `Infiltration`. The current ML artifacts are a six-class prototype.
@@ -190,6 +192,12 @@ From the repository root:
 
 ```powershell
 node stage-4/scripts/run-fusion-demo.js
+```
+
+For test runs or ad-hoc experiments that should not rewrite the committed Stage 4 outputs:
+
+```powershell
+node stage-4/scripts/run-fusion-demo.js --ml-predictions stage-3/outputs/ml-predictions.regenerated.json --output-dir .tmp-stage-4/outputs --evaluation-dir .tmp-stage-4/evaluation
 ```
 
 ## What Is Not Included Yet

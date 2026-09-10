@@ -12,19 +12,19 @@ export function ScoreComparison({ alert }: ScoreComparisonProps) {
   return (
     <section className="score-comparison">
       <div>
-        <span>Fusion score</span>
-        <strong>{formatScore(alert.fusionRiskScore)}</strong>
+        <span>Detection Score</span>
+        <strong>{formatScore(alert.detectionScore)}</strong>
       </div>
       <div>
-        <span>Current score</span>
-        <strong>{formatScore(alert.currentRiskScore)}</strong>
+        <span>Operational Priority</span>
+        <strong>{formatScore(alert.operationalPriorityScore)}</strong>
       </div>
       <div>
         <span>Feedback adjustment</span>
         <strong className={direction}>{adjustment > 0 ? `+${adjustment}` : adjustment}</strong>
       </div>
-      <p>Fusion score is the machine-generated score before analyst feedback.</p>
-      <p>Current score is the feedback-adjusted score used for prioritisation.</p>
+      <p>Detection Score preserves the automated Signature and ML result.</p>
+      <p>Operational Priority is the Stage 5 value used for queue ranking.</p>
     </section>
   );
 }

@@ -13,18 +13,53 @@ const {
 } = require('../core/feedback-aggregation-engine');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const fusedAlertsPath = path.join(repoRoot, 'stage-4', 'outputs', 'fusion-alerts.sample.json');
+const defaultFusedAlertsPath = path.join(repoRoot, 'stage-4', 'outputs', 'fusion-alerts.sample.json');
 const analystFeedbackPath = path.join(repoRoot, 'stage-5', 'data', 'analyst-feedback.sample.json');
 const exceptionMemoryPath = path.join(repoRoot, 'stage-5', 'data', 'exception-memory.sample.json');
 const adaptationConfigPath = path.join(repoRoot, 'stage-5', 'config', 'adaptation-config.json');
 const groundTruthPath = path.join(repoRoot, 'stage-1', 'data', 'processed', 'ground-truth.json');
-const outputDir = path.join(repoRoot, 'stage-5', 'outputs');
-const evaluationDir = path.join(repoRoot, 'stage-5', 'evaluation');
-const adjustedAlertsPath = path.join(outputDir, 'feedback-adjusted-alerts.sample.json');
-const generatedHistoricalMemoryPath = path.join(outputDir, 'historical-feedback-memory.generated.json');
-const evaluatorRecordsPath = path.join(evaluationDir, 'feedback-evaluation-records.json');
-const evaluationJsonPath = path.join(evaluationDir, 'feedback-evaluation-summary.json');
-const evaluationMarkdownPath = path.join(evaluationDir, 'feedback-evaluation-summary.md');
+const defaultOutputDir = path.join(repoRoot, 'stage-5', 'outputs');
+const defaultEvaluationDir = path.join(repoRoot, 'stage-5', 'evaluation');
+
+function parseArgs(argv = process.argv.slice(2)) {
+  const args = {
+    fusedAlertsPath: defaultFusedAlertsPath,
+    outputDir: defaultOutputDir,
+    evaluationDir: defaultEvaluationDir,
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    const value = argv[index + 1];
+    if (argument === '--fused-alerts') {
+      if (!value) throw new Error('--fused-alerts requires a file path');
+      args.fusedAlertsPath = path.resolve(value);
+      index += 1;
+    } else if (argument === '--output-dir') {
+      if (!value) throw new Error('--output-dir requires a directory path');
+      args.outputDir = path.resolve(value);
+      index += 1;
+    } else if (argument === '--evaluation-dir') {
+      if (!value) throw new Error('--evaluation-dir requires a directory path');
+      args.evaluationDir = path.resolve(value);
+      index += 1;
+    } else {
+      throw new Error(`Unknown argument: ${argument}`);
+    }
+  }
+
+  return args;
+}
+
+function buildRunPaths(args) {
+  return {
+    adjustedAlertsPath: path.join(args.outputDir, 'feedback-adjusted-alerts.sample.json'),
+    generatedHistoricalMemoryPath: path.join(args.outputDir, 'historical-feedback-memory.generated.json'),
+    evaluatorRecordsPath: path.join(args.evaluationDir, 'feedback-evaluation-records.json'),
+    evaluationJsonPath: path.join(args.evaluationDir, 'feedback-evaluation-summary.json'),
+    evaluationMarkdownPath: path.join(args.evaluationDir, 'feedback-evaluation-summary.md'),
+  };
+}
 
 function renderCounter(counter) {
   const entries = Object.entries(counter || {}).sort((a, b) => b[1] - a[1]);
@@ -188,12 +223,14 @@ function buildFrozenCalibrationHeldOutEvaluation({
   };
 }
 
-function main() {
-  if (!fs.existsSync(fusedAlertsPath)) {
+function main(argv = process.argv.slice(2)) {
+  const args = parseArgs(argv);
+  const paths = buildRunPaths(args);
+  if (!fs.existsSync(args.fusedAlertsPath)) {
     throw new Error('Stage 4 fused alerts were not found. Run `node stage-4/scripts/run-fusion-demo.js` before Stage 5.');
   }
 
-  const fusedAlerts = loadJsonFile(fusedAlertsPath);
+  const fusedAlerts = loadJsonFile(args.fusedAlertsPath);
   const analystFeedback = loadJsonFile(analystFeedbackPath);
   const exceptionMemory = loadJsonFile(exceptionMemoryPath);
   const adaptationConfig = loadJsonFile(adaptationConfigPath);
@@ -230,15 +267,15 @@ function main() {
     ignoredHeldOutFeedbackCount,
   });
 
-  fs.mkdirSync(outputDir, { recursive: true });
-  fs.mkdirSync(evaluationDir, { recursive: true });
-  fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(analystFacingAdjustedAlerts, null, 2)}\n`, 'utf8');
-  fs.writeFileSync(generatedHistoricalMemoryPath, `${JSON.stringify(generatedHistoricalMemory, null, 2)}\n`, 'utf8');
+  fs.mkdirSync(args.outputDir, { recursive: true });
+  fs.mkdirSync(args.evaluationDir, { recursive: true });
+  fs.writeFileSync(paths.adjustedAlertsPath, `${JSON.stringify(analystFacingAdjustedAlerts, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(paths.generatedHistoricalMemoryPath, `${JSON.stringify(generatedHistoricalMemory, null, 2)}\n`, 'utf8');
   if (process.env.WRITE_FULL_EVALUATOR_RECORDS === '1') {
-    fs.writeFileSync(evaluatorRecordsPath, `${JSON.stringify(evaluatorRecords, null, 2)}\n`, 'utf8');
+    fs.writeFileSync(paths.evaluatorRecordsPath, `${JSON.stringify(evaluatorRecords, null, 2)}\n`, 'utf8');
   }
-  fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
-  fs.writeFileSync(evaluationMarkdownPath, renderSummaryMarkdown(evaluationSummary), 'utf8');
+  fs.writeFileSync(paths.evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(paths.evaluationMarkdownPath, renderSummaryMarkdown(evaluationSummary), 'utf8');
 
   console.log(`Fused alerts loaded: ${fusedAlerts.length}`);
   console.log(`Analyst feedback records loaded: ${analystFeedback.length}`);
@@ -261,10 +298,11 @@ function main() {
   console.log(`Actual adaptation coverage: ${evaluationSummary.actualAdaptationCoverage}`);
   console.log(`Review queue before: ${evaluationSummary.reviewQueueBefore}`);
   console.log(`Review queue after: ${evaluationSummary.reviewQueueAfter}`);
-  console.log(`Feedback output: ${adjustedAlertsPath}`);
-  console.log(`Evaluator-only records: ${process.env.WRITE_FULL_EVALUATOR_RECORDS === '1' ? evaluatorRecordsPath : 'not written; set WRITE_FULL_EVALUATOR_RECORDS=1 to regenerate locally'}`);
-  console.log(`Generated historical memory: ${generatedHistoricalMemoryPath}`);
-  console.log(`Evaluation summary: ${evaluationMarkdownPath}`);
+  console.log(`Fused alert input: ${args.fusedAlertsPath}`);
+  console.log(`Feedback output: ${paths.adjustedAlertsPath}`);
+  console.log(`Evaluator-only records: ${process.env.WRITE_FULL_EVALUATOR_RECORDS === '1' ? paths.evaluatorRecordsPath : 'not written; set WRITE_FULL_EVALUATOR_RECORDS=1 to regenerate locally'}`);
+  console.log(`Generated historical memory: ${paths.generatedHistoricalMemoryPath}`);
+  console.log(`Evaluation summary: ${paths.evaluationMarkdownPath}`);
 }
 
 if (require.main === module) {
@@ -272,6 +310,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  buildRunPaths,
   buildFrozenCalibrationHeldOutEvaluation,
+  main,
+  parseArgs,
   renderSummaryMarkdown,
 };

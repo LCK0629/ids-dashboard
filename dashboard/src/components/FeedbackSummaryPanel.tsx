@@ -20,8 +20,8 @@ export function FeedbackSummaryPanel({ summary, sessionKpis }: FeedbackSummaryPa
     ['Exception trust-gate rejections', value(summary.exceptionRejectedByTrustGateCount)],
     ['Review queue before', value(summary.reviewQueueBefore)],
     ['Review queue after', value(summary.reviewQueueAfter)],
-    ['Average risk before', formatScore(summary.averageRiskBeforeFeedback)],
-    ['Average risk after', formatScore(summary.averageRiskAfterFeedback)],
+    ['Average Detection Score', formatScore(summary.averageRiskBeforeFeedback)],
+    ['Average Operational Priority', formatScore(summary.averageRiskAfterFeedback)],
   ];
   const sessionMetrics = [
     ['Local feedback applied', value(sessionKpis.localFeedbackApplied)],
@@ -30,7 +30,7 @@ export function FeedbackSummaryPanel({ summary, sessionKpis }: FeedbackSummaryPa
     ['Expected activity marked', value(sessionKpis.expectedActivityMarked)],
     ['Needs investigation', value(sessionKpis.needsInvestigation)],
     ['Escalated alerts', value(sessionKpis.escalatedAlerts)],
-    ['Average risk change', formatScore(sessionKpis.averageRiskChange)],
+    ['Average priority change', formatScore(sessionKpis.averageRiskChange)],
     ['Guardrails triggered', value(sessionKpis.guardrailsTriggered)],
   ];
 
@@ -39,7 +39,7 @@ export function FeedbackSummaryPanel({ summary, sessionKpis }: FeedbackSummaryPa
       <div className="panel-header">
         <div>
           <h2>Feedback Model</h2>
-          <p>Simulated analyst feedback and JSON-based exception memory impact</p>
+          <p>Frozen calibration feedback and held-out priority evaluation</p>
         </div>
         <span className="impact-pill">No live write-back</span>
       </div>
@@ -55,7 +55,7 @@ export function FeedbackSummaryPanel({ summary, sessionKpis }: FeedbackSummaryPa
       </div>
       <div className="kpi-title feedback-panel-title">
         <strong>Pipeline Feedback Summary</strong>
-        <span>Offline feedback and exception memory already applied to the static pipeline output</span>
+        <span>Formal held-out pipeline summary; manual exception memory is disabled</span>
       </div>
       <div className="metric-grid">
         {pipelineMetrics.map(([label, metric]) => (
@@ -80,8 +80,8 @@ export function FeedbackSummaryPanel({ summary, sessionKpis }: FeedbackSummaryPa
       <div className="explain-panel">
         <h3>Interpretation</h3>
         <p>
-          The pipeline simulates feedback and exception memory offline. The dashboard adds UI-only feedback controls so
-          an analyst can test how feedback affects priority during the current session.
+          The formal artifact uses frozen calibration feedback and keeps held-out records isolated during ranking. The
+          dashboard also provides a separate UI-only preview so an analyst can explore priority changes in this session.
         </p>
         <p>
           The dashboard includes interactive controls for simulated feedback input and detection record replay.

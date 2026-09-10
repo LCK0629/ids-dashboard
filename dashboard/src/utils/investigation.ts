@@ -141,7 +141,7 @@ export function analystRecommendation(record: FeedbackAdjustedAlert): string {
     return 'Review this record because it is currently promoted into the Active Alert Queue.';
   }
   if (Number(record.currentRiskScore || 0) >= 70) {
-    return 'Prioritise this record due to its high current risk score.';
+    return 'Prioritise this record due to its high Operational Priority.';
   }
   if (!record.signatureHit && record.mlPredictedAttackType && record.mlPredictedAttackType !== 'Benign') {
     return 'Treat this as ML-only evidence. Review the model prediction and flow features before making a decision.';
@@ -170,11 +170,11 @@ export function buildInvestigationTimeline(record: FeedbackAdjustedAlert): Array
     ],
     [
       'Fusion decision',
-      `Fusion combined signature and ML evidence as ${record.fusionDecision || 'N/A'}, with fusion risk ${formatScore(record.fusionRiskScore)} and evidence source ${evidenceSource(record)}.`,
+      `Fusion combined signature and ML evidence as ${record.fusionDecision || 'N/A'}, with Detection Score ${formatScore(record.detectionScore)} and evidence source ${evidenceSource(record)}.`,
     ],
     [
       'Human feedback',
-      `Feedback can adjust the current risk score to ${formatScore(record.currentRiskScore)} while guardrails prevent unsafe suppression. ${record.localFeedbackLabel || record.analystFeedbackStatus || 'No local feedback selected.'}`,
+      `Feedback can adjust Operational Priority to ${formatScore(record.operationalPriorityScore)} while guardrails prevent unsafe suppression. ${record.localFeedbackLabel || record.analystFeedbackStatus || 'No local feedback selected.'}`,
     ],
     ['Analyst recommendation', analystRecommendation(record)],
   ];

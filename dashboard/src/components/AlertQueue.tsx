@@ -47,8 +47,8 @@ export function AlertQueue({
           <thead>
             <tr>
               <th>ID</th>
-              <th>Current risk</th>
-              <th>Fusion risk</th>
+              <th>Operational Priority</th>
+              <th>Detection Score</th>
               <th>Attack type</th>
               <th>Decision</th>
               <th>Review</th>
@@ -66,8 +66,8 @@ export function AlertQueue({
                   onClick={() => onSelectAlert(alert)}
                 >
                   <td><strong>{alert.id}</strong></td>
-                  <td><span className="risk-badge">{formatScore(alert.currentRiskScore)}</span></td>
-                  <td>{formatScore(alert.fusionRiskScore)}</td>
+                  <td><span className="risk-badge">{formatScore(alert.operationalPriorityScore)}</span></td>
+                  <td>{formatScore(alert.detectionScore)}</td>
                   <td className="attack-type">{alert.fusionAttackType || 'Unknown'}</td>
                   <td>{alert.fusionDecision || 'No decision'}</td>
                   <td>{alert.requiresAnalystReview ? 'Review' : 'No review'}</td>

@@ -1,7 +1,7 @@
 import type { AttackTypeFilter, FeedbackAdjustedAlert, FilterKey, FlowAlertCounts } from '../types/alerts';
 
 export function isHighRisk(alert: FeedbackAdjustedAlert): boolean {
-  return Number(alert.currentRiskScore ?? 0) >= 70;
+  return Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0) >= 70;
 }
 
 export function isAdjusted(alert: FeedbackAdjustedAlert): boolean {
@@ -16,6 +16,9 @@ const scoreGuardrailCodes = [
   'maximum_reduction_capped_at_30',
   'critical_alert_floor_70',
   'infiltration_floor_75',
+  'maximum_negative_adjustment_capped',
+  'critical_alert_floor',
+  'infiltration_alert_floor',
 ];
 
 const exceptionTrustGateCodes = [
@@ -43,7 +46,7 @@ export function isSignatureMlDisagree(alert: FeedbackAdjustedAlert): boolean {
 }
 
 export function isActionableAlert(alert: FeedbackAdjustedAlert): boolean {
-  const riskScore = Number(alert.currentRiskScore ?? 0);
+  const riskScore = Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0);
   const decision = String(alert.fusionDecision || '');
   return Boolean(alert.requiresAnalystReview)
     || riskScore >= 40
@@ -52,7 +55,7 @@ export function isActionableAlert(alert: FeedbackAdjustedAlert): boolean {
 }
 
 export function isSuppressedOrResolved(alert: FeedbackAdjustedAlert): boolean {
-  const riskScore = Number(alert.currentRiskScore ?? 0);
+  const riskScore = Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0);
   const status = String(alert.analystFeedbackStatus || alert.localFeedbackAction || '').toLowerCase();
   const resolvedStatus = status.includes('false_positive')
     || status.includes('false positive')
@@ -76,10 +79,10 @@ export function getFlowAlertCounts(records: FeedbackAdjustedAlert[]): FlowAlertC
     reviewRequiredAlerts: records.filter((record) => Boolean(record.requiresAnalystReview)).length,
     suppressedOrResolvedRecords: records.filter(isSuppressedOrResolved).length,
     lowRiskRecords: records.filter((record) => {
-      const score = Number(record.currentRiskScore ?? 0);
+      const score = Number(record.operationalPriorityScore ?? record.currentRiskScore ?? 0);
       return score > 0 && score < 40;
     }).length,
-    highRiskRecords: records.filter((record) => Number(record.currentRiskScore ?? 0) >= 70).length,
+    highRiskRecords: records.filter((record) => Number(record.operationalPriorityScore ?? record.currentRiskScore ?? 0) >= 70).length,
     feedbackAdjustedRecords: records.filter(isAdjusted).length,
     guardrailLimitedRecords: records.filter(isScoreGuardrailApplied).length,
     exceptionTrustGateRejectedRecords: records.filter(isExceptionTrustGateRejected).length,
@@ -100,45 +103,20 @@ export function recordStatusBadges(alert: FeedbackAdjustedAlert): string[] {
   const badges: string[] = [];
   const status = String(alert.analystFeedbackStatus || alert.localFeedbackAction || '').toLowerCase();
   if (isSuppressedOrResolved(alert)) badges.push('Suppressed / Resolved');
-  if (Number(alert.currentRiskScore ?? 0) === 0) badges.push('Suppressed');
+  if (Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0) === 0) badges.push('Suppressed');
   if (status.includes('false_positive') || status.includes('false positive')) badges.push('False Positive');
   if (status.includes('expected_activity') || status.includes('expected activity')) badges.push('Expected Activity');
-  if (Number(alert.currentRiskScore ?? 0) > 0 && Number(alert.currentRiskScore ?? 0) < 40) badges.push('Low Risk');
+  if (Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0) > 0
+    && Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0) < 40) badges.push('Low Priority');
   if (isScoreGuardrailApplied(alert)) badges.push('Score Guardrail Applied');
   if (isExceptionTrustGateRejected(alert)) badges.push('Exception Trust Gate Rejected');
   return [...new Set(badges)];
 }
 
-export function getGroundTruthLabel(alert: FeedbackAdjustedAlert): 'benign' | 'malicious' | null {
-  const groundTruth = String(alert.groundTruth || '').toLowerCase();
-  if (groundTruth === 'benign') {
-    return 'benign';
-  }
-  if (groundTruth === 'malicious') {
-    return 'malicious';
-  }
-
-  const mapped = String(alert.trueAttackType || alert.mappedAttackType || alert.rawLabel || '').toLowerCase();
-  if (!mapped) {
-    return null;
-  }
-  if (mapped === 'benign') {
-    return 'benign';
-  }
-  return 'malicious';
-}
-
-function isBenign(alert: FeedbackAdjustedAlert): boolean {
-  return getGroundTruthLabel(alert) === 'benign';
-}
-
-function isMalicious(alert: FeedbackAdjustedAlert): boolean {
-  return getGroundTruthLabel(alert) === 'malicious';
-}
-
 export function sortAlerts(alerts: FeedbackAdjustedAlert[]): FeedbackAdjustedAlert[] {
   return [...alerts].sort((a, b) => {
-    const riskDiff = Number(b.currentRiskScore ?? 0) - Number(a.currentRiskScore ?? 0);
+    const riskDiff = Number(b.operationalPriorityScore ?? b.currentRiskScore ?? 0)
+      - Number(a.operationalPriorityScore ?? a.currentRiskScore ?? 0);
     if (riskDiff !== 0) {
       return riskDiff;
     }
@@ -151,7 +129,7 @@ export function sortAlerts(alerts: FeedbackAdjustedAlert[]): FeedbackAdjustedAle
 
 export function filterAlerts(alerts: FeedbackAdjustedAlert[], filter: FilterKey): FeedbackAdjustedAlert[] {
   return alerts.filter((alert) => {
-    const riskScore = Number(alert.currentRiskScore ?? 0);
+    const riskScore = Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0);
     switch (filter) {
       case 'active-alerts':
         return isActionableAlert(alert);
@@ -177,10 +155,6 @@ export function filterAlerts(alerts: FeedbackAdjustedAlert[], filter: FilterKey)
         return isScoreGuardrailApplied(alert);
       case 'exception-trust-gate':
         return isExceptionTrustGateRejected(alert);
-      case 'benign':
-        return isBenign(alert);
-      case 'malicious':
-        return isMalicious(alert);
       default:
         return isActionableAlert(alert);
     }

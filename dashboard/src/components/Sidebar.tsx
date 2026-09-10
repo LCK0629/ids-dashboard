@@ -61,7 +61,7 @@ export function Sidebar({
           <strong>Alert Queue</strong>
           <span><b>{flowAlertCounts.activeAlerts}</b> Active Alerts</span>
           <span><b>{flowAlertCounts.reviewRequiredAlerts}</b> Requires Review</span>
-          <span><b>{flowAlertCounts.highRiskRecords}</b> High Risk</span>
+          <span><b>{flowAlertCounts.highRiskRecords}</b> High Priority</span>
         </div>
         <div className="sidebar-count-group">
           <strong>Suppressed / Audit</strong>
@@ -80,7 +80,7 @@ export function Sidebar({
       <div className="model-card">
         <span className="label">Feedback Impact</span>
         <strong>{feedbackSummary.alertsAdjusted ?? 'N/A'}</strong>
-        <p>Adjusted detection records from simulated analyst feedback and exception memory</p>
+        <p>Held-out records adjusted by effective calibration feedback</p>
       </div>
     </aside>
   );

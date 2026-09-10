@@ -42,7 +42,7 @@ function labelForAction(action: AnalystFeedbackAction): string {
     .join(' ');
 }
 
-export function createLocalFeedbackOverride(
+export function createSessionPreviewOverride(
   alert: FeedbackAdjustedAlert,
   action: AnalystFeedbackAction
 ): LocalFeedbackOverride {
@@ -57,7 +57,7 @@ export function createLocalFeedbackOverride(
   };
 }
 
-export function applyLocalFeedbackOverride(
+export function applySessionPreviewOverride(
   alert: FeedbackAdjustedAlert,
   override?: LocalFeedbackOverride
 ): FeedbackAdjustedAlert {
@@ -69,6 +69,7 @@ export function applyLocalFeedbackOverride(
     ...alert,
     stage5CurrentRiskScore,
     stage5RequiresAnalystReview,
+    operationalPriorityScore: stage5CurrentRiskScore,
   };
 
   if (!override) {
@@ -103,6 +104,7 @@ export function applyLocalFeedbackOverride(
 
   return {
     ...baseAlert,
+    operationalPriorityScore: nextScore,
     currentRiskScore: nextScore,
     requiresAnalystReview: reviewRequired || nextScore >= 70,
     localFeedbackAction: override.action,
@@ -113,11 +115,11 @@ export function applyLocalFeedbackOverride(
   };
 }
 
-export function applyLocalFeedbackOverrides(
+export function applySessionPreviewOverrides(
   alerts: FeedbackAdjustedAlert[],
   feedbackMap: LocalFeedbackMap
 ): FeedbackAdjustedAlert[] {
-  return alerts.map((alert) => applyLocalFeedbackOverride(alert, feedbackMap[alert.id]));
+  return alerts.map((alert) => applySessionPreviewOverride(alert, feedbackMap[alert.id]));
 }
 
 export function calculateSessionKpis(

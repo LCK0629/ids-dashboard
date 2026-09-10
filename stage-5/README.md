@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Stage 5 applies simulated analyst feedback and exception memory to Stage 4 fused alerts.
+Stage 5 applies append-only analyst feedback history to Stage 4 fused alerts through deterministic similarity, aggregation, eligibility, and guardrail logic. Manual exception memory remains available only for backwards-compatible demonstrations and is disabled in formal held-out evaluation.
 
-It preserves the original Stage 4 `fusionRiskScore` and adds a feedback-adjusted `currentRiskScore`.
+It preserves the original Stage 4 Detection Score and produces a separate Operational Priority for ranking. Legacy field aliases remain in output for compatibility.
 
 ## Role in Human-in-the-Loop IDS
 
@@ -105,18 +105,27 @@ Ground truth is joined only after feedback adjustment for evaluation.
 
 ## How to Run
 
-From the repository root:
+From the repository root, use the committed defaults:
 
 ```powershell
 node stage-5/scripts/run-feedback-demo.js
 ```
 
+To consume a temporary full-schema Stage 4 artifact without overwriting committed Stage 5 outputs:
+
+```powershell
+node stage-5/scripts/run-feedback-demo.js --fused-alerts .tmp-stage-3-artifacts/stage5b/stage4/outputs/fusion-alerts.sample.json --output-dir .tmp-stage-3-artifacts/stage5b/stage5/outputs --evaluation-dir .tmp-stage-3-artifacts/stage5b/stage5/evaluation
+```
+
+The formal run uses a frozen calibration / held-out split. It does not claim chronological temporal evaluation. Ground truth is loaded only after held-out ranking and is written only to evaluator outputs.
+
+The versioned React contract and transformation boundary are documented in `dashboard/ANALYST_DATA_CONTRACT.md`. The Stage 5 runner is the score authority; the dashboard exporter only validates and reshapes its analyst-safe output.
+
 Run Stage 4 first if `stage-4/outputs/fusion-alerts.sample.json` does not exist.
 
 ## What Is Not Included Yet
 
-- No real analyst UI.
-- No dashboard integration.
+- No persistent analyst write-back.
 - No database.
 - No model retraining.
 - No online learning.

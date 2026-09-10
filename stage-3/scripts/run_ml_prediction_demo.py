@@ -42,6 +42,14 @@ def index_by_id(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(record.get("id")): record for record in records}
 
 
+def repo_relative_path(path: Path) -> str:
+    resolved_path = path.resolve()
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def compare_predictions(regenerated: list[dict[str, Any]], committed_path: Path = COMMITTED_OUTPUT_PATH) -> dict[str, Any] | None:
     if not committed_path.exists():
         return None
@@ -142,9 +150,9 @@ def main() -> None:
     available_count = sum(1 for record in predictions if record.get("predictionStatus") == "available")
     unavailable_count = len(predictions) - available_count
     summary = {
-        "inputPath": str(args.input),
-        "outputPath": str(output_path),
-        "referencePredictionPath": str(args.compare_with),
+        "inputPath": repo_relative_path(args.input),
+        "outputPath": repo_relative_path(output_path),
+        "referencePredictionPath": repo_relative_path(args.compare_with),
         "inputRowCount": len(predictions),
         "availablePredictionCount": available_count,
         "unavailablePredictionCount": unavailable_count,

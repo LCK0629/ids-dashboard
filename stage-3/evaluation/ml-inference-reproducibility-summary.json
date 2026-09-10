@@ -1,7 +1,7 @@
 {
-  "inputPath": "C:\\Users\\cheek\\OneDrive - SIM - Singapore Institute of Management\\university\\FFYP\\prototype\\stage-1\\data\\processed\\flow-feature-full.csv",
-  "outputPath": "C:\\Users\\cheek\\OneDrive - SIM - Singapore Institute of Management\\university\\FFYP\\prototype\\stage-3\\outputs\\ml-predictions.regenerated.json",
-  "referencePredictionPath": "C:\\Users\\cheek\\OneDrive - SIM - Singapore Institute of Management\\university\\FFYP\\prototype\\stage-3\\outputs\\ml-predictions.sample.json",
+  "inputPath": "stage-1/data/processed/flow-feature-full.csv",
+  "outputPath": "stage-3/outputs/ml-predictions.regenerated.json",
+  "referencePredictionPath": "stage-3/outputs/ml-predictions.sample.json",
   "inputRowCount": 1000,
   "availablePredictionCount": 996,
   "unavailablePredictionCount": 4,

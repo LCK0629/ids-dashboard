@@ -31,7 +31,7 @@ from ml_inference import (  # noqa: E402
     predict_dataframe,
     sha256_file,
 )
-from run_ml_prediction_demo import compare_predictions  # noqa: E402
+from run_ml_prediction_demo import compare_predictions, repo_relative_path  # noqa: E402
 
 
 def load_feature_rows(limit: int = 3) -> pd.DataFrame:
@@ -382,6 +382,15 @@ def test_overwrite_sample_is_blocked_until_stage_4_supports_unavailable_predicti
 
     assert result.returncode != 0
     assert "blocked" in result.stderr or "blocked" in result.stdout
+
+
+def test_reproducibility_summary_paths_are_repo_relative() -> None:
+    regenerated_path = REPO_ROOT / "stage-3" / "outputs" / "ml-predictions.regenerated.json"
+    committed_path = REPO_ROOT / "stage-3" / "outputs" / "ml-predictions.sample.json"
+
+    assert repo_relative_path(DEFAULT_FEATURE_INPUT_PATH) == "stage-1/data/processed/flow-feature-full.csv"
+    assert repo_relative_path(regenerated_path) == "stage-3/outputs/ml-predictions.regenerated.json"
+    assert repo_relative_path(committed_path) == "stage-3/outputs/ml-predictions.sample.json"
 
 
 def test_prediction_output_can_be_regenerated_from_committed_artifacts() -> None:

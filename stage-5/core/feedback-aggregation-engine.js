@@ -341,6 +341,10 @@ function aggregateHistoricalFeedback(currentAlert, alertsById, effectiveEvents =
       alertId: event.alertId,
       feedbackType: event.feedbackType,
       similarityScore: similarity.score,
+      evidenceCoverage: similarity.evidenceCoverage,
+      matchedFields: [...similarity.matchedFields],
+      differedFields: [...similarity.differedFields],
+      unavailableFields: [...similarity.unavailableFields],
       similarityReasons: similarity.reasons,
       exactExpectedActivityContext: hasExactContext(
         currentAlert,
@@ -354,6 +358,9 @@ function aggregateHistoricalFeedback(currentAlert, alertsById, effectiveEvents =
   const matchedFeedbackCount = matchedFeedback.length;
   const averageSimilarity = matchedFeedbackCount
     ? Number((matchedFeedback.reduce((sum, item) => sum + item.similarityScore, 0) / matchedFeedbackCount).toFixed(4))
+    : 0;
+  const averageEvidenceCoverage = matchedFeedbackCount
+    ? Number((matchedFeedback.reduce((sum, item) => sum + item.evidenceCoverage, 0) / matchedFeedbackCount).toFixed(4))
     : 0;
   const lowEvidenceCoverageCount = similarityAttempts.filter((attempt) => (
     attempt.similarity && attempt.similarity.failureReason === 'below_evidence_coverage_threshold'
@@ -373,6 +380,7 @@ function aggregateHistoricalFeedback(currentAlert, alertsById, effectiveEvents =
     agreementRatio: dominant.agreementRatio,
     conflictDetected: dominant.conflictDetected,
     averageSimilarity,
+    averageEvidenceCoverage,
     lowEvidenceCoverageCount,
     lowSimilarityCount,
     matchedFeedback,

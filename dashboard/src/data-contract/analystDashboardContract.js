@@ -40,6 +40,20 @@ function isFiniteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function isUnitInterval(value) {
+  return isFiniteNumber(value) && value >= 0 && value <= 1;
+}
+
+function isNonNegativeInteger(value) {
+  return Number.isInteger(value) && value >= 0;
+}
+
+function validateStringArray(value, path, errors) {
+  if (!Array.isArray(value) || value.some((item) => !isNonEmptyString(item))) {
+    errors.push(`${path} must be an array of non-empty strings.`);
+  }
+}
+
 function isNullish(value) {
   return value === null || value === undefined;
 }
@@ -142,6 +156,99 @@ function validateMlExplanationConsistency(ml, path, errors) {
   }
 }
 
+function validateAdaptationDiagnostics(diagnostics, path, errors) {
+  if (!isObject(diagnostics)) {
+    errors.push(`${path} is required.`);
+    return;
+  }
+  if (typeof diagnostics.evaluated !== 'boolean') errors.push(`${path}.evaluated must be boolean.`);
+
+  const similarity = diagnostics.similarity;
+  if (!isObject(similarity)) {
+    errors.push(`${path}.similarity is required.`);
+  } else {
+    ['averageScore', 'averageEvidenceCoverage', 'threshold', 'minimumEvidenceCoverage'].forEach((field) => {
+      if (!isUnitInterval(similarity[field])) errors.push(`${path}.similarity.${field} must be between 0 and 1.`);
+    });
+    ['matchedCount', 'lowSimilarityAttemptCount', 'lowEvidenceCoverageAttemptCount'].forEach((field) => {
+      if (!isNonNegativeInteger(similarity[field])) errors.push(`${path}.similarity.${field} must be a non-negative integer.`);
+    });
+  }
+
+  const history = diagnostics.historicalFeedback;
+  if (!isObject(history) || !isObject(history.counts)) {
+    errors.push(`${path}.historicalFeedback and counts are required.`);
+  } else {
+    ['falsePositive', 'confirmedThreat', 'expectedActivity'].forEach((field) => {
+      if (!isNonNegativeInteger(history.counts[field])) {
+        errors.push(`${path}.historicalFeedback.counts.${field} must be a non-negative integer.`);
+      }
+    });
+    if (history.dominantFeedback !== null && !isNonEmptyString(history.dominantFeedback)) {
+      errors.push(`${path}.historicalFeedback.dominantFeedback must be null or a non-empty string.`);
+    }
+    if (!isUnitInterval(history.agreementRatio)) {
+      errors.push(`${path}.historicalFeedback.agreementRatio must be between 0 and 1.`);
+    }
+    if (typeof history.conflictDetected !== 'boolean') {
+      errors.push(`${path}.historicalFeedback.conflictDetected must be boolean.`);
+    }
+  }
+
+  const thresholds = diagnostics.eligibilityThresholds;
+  if (!isObject(thresholds)) {
+    errors.push(`${path}.eligibilityThresholds is required.`);
+  } else {
+    if (!isNonNegativeInteger(thresholds.minimumFeedbackCount)) {
+      errors.push(`${path}.eligibilityThresholds.minimumFeedbackCount must be a non-negative integer.`);
+    }
+    ['minimumAgreementRatio', 'strongAgreementRatio'].forEach((field) => {
+      if (!isUnitInterval(thresholds[field])) {
+        errors.push(`${path}.eligibilityThresholds.${field} must be between 0 and 1.`);
+      }
+    });
+  }
+
+  if (!Array.isArray(diagnostics.matchedExamples)) {
+    errors.push(`${path}.matchedExamples must be an array.`);
+    return;
+  }
+  if (diagnostics.matchedExamples.length > 3) {
+    errors.push(`${path}.matchedExamples must contain at most 3 records.`);
+  }
+  diagnostics.matchedExamples.forEach((example, index) => {
+    const examplePath = `${path}.matchedExamples[${index}]`;
+    if (!isObject(example)) {
+      errors.push(`${examplePath} must be an object.`);
+      return;
+    }
+    ['feedbackId', 'historicalAlertId', 'feedbackType'].forEach((field) => {
+      if (!isNonEmptyString(example[field])) errors.push(`${examplePath}.${field} must be a non-empty string.`);
+    });
+    ['similarityScore', 'evidenceCoverage'].forEach((field) => {
+      if (!isUnitInterval(example[field])) errors.push(`${examplePath}.${field} must be between 0 and 1.`);
+    });
+    ['matchedFields', 'differedFields', 'unavailableFields'].forEach((field) => {
+      validateStringArray(example[field], `${examplePath}.${field}`, errors);
+    });
+  });
+}
+
+function findPrivacySensitivePaths(value, path = '$', findings = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => findPrivacySensitivePaths(item, `${path}[${index}]`, findings));
+    return findings;
+  }
+  if (isObject(value)) {
+    Object.entries(value).forEach(([key, child]) => findPrivacySensitivePaths(child, `${path}.${key}`, findings));
+    return findings;
+  }
+  if (typeof value !== 'string') return findings;
+  const patterns = [/[A-Za-z]:[\\/]Users[\\/]/i, /\/Users\//i, /\/home\//i, /OneDrive/i, /github_pat_[A-Za-z0-9_]+/, /ghp_[A-Za-z0-9]+/, /AKIA[0-9A-Z]{16}/];
+  if (patterns.some((pattern) => pattern.test(value))) findings.push(path);
+  return findings;
+}
+
 export function findForbiddenGroundTruthPaths(value, path = '$', matches = []) {
   if (Array.isArray(value)) {
     value.forEach((item, index) => findForbiddenGroundTruthPaths(item, `${path}[${index}]`, matches));
@@ -179,6 +286,8 @@ export function validateAnalystAlert(alert, index = 0) {
   }
   if (!isObject(alert.adaptation) || !isScore(alert.adaptation.operationalPriorityScore)) {
     errors.push(`${path}.adaptation.operationalPriorityScore must be between 0 and 100.`);
+  } else {
+    validateAdaptationDiagnostics(alert.adaptation.diagnostics, `${path}.adaptation.diagnostics`, errors);
   }
   if (!isObject(alert.mlEvidence)) {
     errors.push(`${path}.mlEvidence is required.`);
@@ -298,6 +407,67 @@ export function validateEvaluatorArtifact(artifact) {
   return { valid: errors.length === 0, errors };
 }
 
+export function validateDemoArtifact(artifact) {
+  const errors = [];
+  if (!isObject(artifact)) return { valid: false, errors: ['Demo artifact must be an object.'] };
+  if (artifact.schemaVersion !== ANALYST_SCHEMA_VERSION) errors.push(`Unsupported demo schemaVersion: ${String(artifact.schemaVersion)}.`);
+  if (artifact.artifactType !== DEMO_ARTIFACT_TYPE) errors.push(`Unexpected demo artifactType: ${String(artifact.artifactType)}.`);
+  const metadata = artifact.generationMetadata;
+  if (!isObject(metadata)) {
+    errors.push('Demo generationMetadata must be an object.');
+  } else {
+    if (metadata.formalEvaluationResult !== false) errors.push('Demo formalEvaluationResult must be false.');
+    if (metadata.generationMode !== 'deterministic_stage4_stage5_demonstration') {
+      errors.push('Demo generationMode must identify deterministic Stage 4 and Stage 5 processing.');
+    }
+    if (metadata.automatedDetectionAuthority !== 'stage-4/core/fusion-engine.js') {
+      errors.push('Demo automatedDetectionAuthority is invalid.');
+    }
+    if (metadata.adaptationAuthority !== 'stage-5/core/feedback-engine.js') {
+      errors.push('Demo adaptationAuthority is invalid.');
+    }
+    if (metadata.actualXgboostInference !== false) {
+      errors.push('Demo actualXgboostInference must be false.');
+    }
+    if (metadata.manualExceptionMemoryEnabled !== false) {
+      errors.push('Demo manualExceptionMemoryEnabled must be false.');
+    }
+  }
+  if (!Array.isArray(artifact.scenarios)) {
+    errors.push('Demo scenarios must be an array.');
+    return { valid: false, errors };
+  }
+  const scenarioIds = new Set();
+  const alertIds = new Set();
+  artifact.scenarios.forEach((scenario, index) => {
+    const scenarioPath = `scenarios[${index}]`;
+    if (!isObject(scenario)) {
+      errors.push(`${scenarioPath} must be an object.`);
+      return;
+    }
+    if (!isNonEmptyString(scenario.scenarioId)) errors.push(`${scenarioPath}.scenarioId is required.`);
+    else if (scenarioIds.has(scenario.scenarioId)) errors.push(`Duplicate demo scenario id: ${scenario.scenarioId}.`);
+    else scenarioIds.add(scenario.scenarioId);
+    if (!isNonEmptyString(scenario.title)) errors.push(`${scenarioPath}.title is required.`);
+    if (!isNonEmptyString(scenario.purpose)) errors.push(`${scenarioPath}.purpose is required.`);
+    const alertValidation = validateAnalystAlert(scenario.alert, index);
+    errors.push(...alertValidation.errors.map((error) => `${scenarioPath}: ${error}`));
+    const alertId = scenario.alert?.identity?.id;
+    if (isNonEmptyString(alertId)) {
+      if (alertIds.has(alertId)) errors.push(`Duplicate demo alert id: ${alertId}.`);
+      alertIds.add(alertId);
+    }
+  });
+  if (!isObject(artifact.summary) || artifact.summary.scenarioCount !== artifact.scenarios.length) {
+    errors.push('Demo summary.scenarioCount must equal the scenario array length.');
+  } else if (artifact.summary.groundTruthFieldCount !== 0) {
+    errors.push('Demo summary.groundTruthFieldCount must be zero.');
+  }
+  findForbiddenGroundTruthPaths(artifact).forEach((item) => errors.push(`Forbidden evaluator field: ${item}.`));
+  findPrivacySensitivePaths(artifact).forEach((item) => errors.push(`Privacy-sensitive value: ${item}.`));
+  return { valid: errors.length === 0, errors };
+}
+
 export function validateStage5DashboardSourceRecord(record, index = 0) {
   const errors = [];
   const path = `source[${index}]`;
@@ -373,6 +543,7 @@ export function validateStage5DashboardSourceRecord(record, index = 0) {
   Object.entries(adaptationFields).forEach(([field, validator]) => {
     if (!validator(record[field])) errors.push(`${path}.${field} is missing or invalid.`);
   });
+  validateAdaptationDiagnostics(record.adaptationDiagnostics, `${path}.adaptationDiagnostics`, errors);
 
   return { valid: errors.length === 0, errors };
 }

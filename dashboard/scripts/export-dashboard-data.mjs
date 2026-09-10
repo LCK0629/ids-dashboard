@@ -114,6 +114,55 @@ function copyFeatureContributions(source) {
   }));
 }
 
+function copyAdaptationDiagnostics(source) {
+  if (!source || typeof source !== 'object') return null;
+  const similarity = source.similarity || {};
+  const history = source.historicalFeedback || {};
+  const counts = history.counts || {};
+  const thresholds = source.eligibilityThresholds || {};
+  return {
+    evaluated: source.evaluated === true,
+    similarity: {
+      averageScore: numberOrNull(similarity.averageScore),
+      averageEvidenceCoverage: numberOrNull(similarity.averageEvidenceCoverage),
+      threshold: numberOrNull(similarity.threshold),
+      minimumEvidenceCoverage: numberOrNull(similarity.minimumEvidenceCoverage),
+      matchedCount: Number.isInteger(similarity.matchedCount) ? similarity.matchedCount : null,
+      lowSimilarityAttemptCount: Number.isInteger(similarity.lowSimilarityAttemptCount) ? similarity.lowSimilarityAttemptCount : null,
+      lowEvidenceCoverageAttemptCount: Number.isInteger(similarity.lowEvidenceCoverageAttemptCount)
+        ? similarity.lowEvidenceCoverageAttemptCount
+        : null,
+    },
+    historicalFeedback: {
+      counts: {
+        falsePositive: Number.isInteger(counts.falsePositive) ? counts.falsePositive : null,
+        confirmedThreat: Number.isInteger(counts.confirmedThreat) ? counts.confirmedThreat : null,
+        expectedActivity: Number.isInteger(counts.expectedActivity) ? counts.expectedActivity : null,
+      },
+      dominantFeedback: stringOrNull(history.dominantFeedback),
+      agreementRatio: numberOrNull(history.agreementRatio),
+      conflictDetected: history.conflictDetected === true,
+    },
+    eligibilityThresholds: {
+      minimumFeedbackCount: Number.isInteger(thresholds.minimumFeedbackCount) ? thresholds.minimumFeedbackCount : null,
+      minimumAgreementRatio: numberOrNull(thresholds.minimumAgreementRatio),
+      strongAgreementRatio: numberOrNull(thresholds.strongAgreementRatio),
+    },
+    matchedExamples: Array.isArray(source.matchedExamples)
+      ? source.matchedExamples.slice(0, 3).map((example) => ({
+        feedbackId: stringOrNull(example.feedbackId),
+        historicalAlertId: stringOrNull(example.historicalAlertId),
+        feedbackType: stringOrNull(example.feedbackType),
+        similarityScore: numberOrNull(example.similarityScore),
+        evidenceCoverage: numberOrNull(example.evidenceCoverage),
+        matchedFields: copyStringArray(example.matchedFields),
+        differedFields: copyStringArray(example.differedFields),
+        unavailableFields: copyStringArray(example.unavailableFields),
+      }))
+      : [],
+  };
+}
+
 function copyMlExplanation(source, mlFailureReason) {
   if (!source || typeof source !== 'object') {
     return {
@@ -254,6 +303,7 @@ export function buildAnalystAlert(alert) {
       source: stringOrNull(alert.adaptationSource) || 'none',
       explanation: stringOrNull(alert.adaptationExplanation || alert.feedbackReason)
         || 'No historical feedback adaptation was applied.',
+      diagnostics: copyAdaptationDiagnostics(alert.adaptationDiagnostics),
     },
     workflow: {
       requiresAnalystReviewBeforeFeedback: Boolean(alert.requiresAnalystReviewBeforeFeedback),

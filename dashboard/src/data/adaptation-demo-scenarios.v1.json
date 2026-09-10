@@ -2,10 +2,12 @@
   "schemaVersion": "ids-dashboard-analyst-v1",
   "artifactType": "demonstration_scenarios",
   "generationMetadata": {
-    "generationMode": "deterministic_stage5_core_demonstration",
+    "generationMode": "deterministic_stage4_stage5_demonstration",
     "generatedAtPolicy": "omitted_for_deterministic_artifact",
     "formalEvaluationResult": false,
-    "scoringAuthority": "stage-5/core/feedback-engine.js",
+    "automatedDetectionAuthority": "stage-4/core/fusion-engine.js",
+    "adaptationAuthority": "stage-5/core/feedback-engine.js",
+    "actualXgboostInference": false,
     "manualExceptionMemoryEnabled": false
   },
   "summary": {
@@ -53,7 +55,7 @@
           "requiresAnalystReview": true,
           "detectorState": "ml_only",
           "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
-          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "fusionExplanation": "ML predicted a non-benign class with high confidence, but no signature rule matched. The score is slightly discounted because the alert has ML-only evidence.",
           "confidenceLevel": "High"
         },
         "signatureEvidence": {
@@ -63,7 +65,7 @@
           "ruleName": null,
           "attackType": null,
           "severity": null,
-          "explanation": null,
+          "explanation": "No signature evidence available.",
           "matchedConditions": [],
           "technicalDetail": null
         },
@@ -75,18 +77,18 @@
           "schemaMode": "new",
           "predictedClassIndex": 4,
           "predictedAttackType": "DoS",
-          "modelConfidence": 0.9,
+          "modelConfidence": 0.82,
           "classProbabilities": {
-            "Benign": 0.1,
-            "DoS": 0.9
+            "Benign": 0.18,
+            "DoS": 0.82
           },
           "secondBestClass": "Benign",
-          "predictionMargin": 0.8,
-          "threatEvidenceScore": 90,
+          "predictionMargin": 0.64,
+          "threatEvidenceScore": 82,
           "modelProvenance": null,
           "explanation": {
             "status": "unavailable",
-            "reason": "demonstration_scenario_has_no_model_run",
+            "reason": "demonstration_scenario_no_model_run",
             "method": null,
             "outputSpace": null,
             "explainedClass": null,
@@ -119,7 +121,35 @@
           "guardrailInterventions": [],
           "operationalPriorityScore": 72,
           "source": "none",
-          "explanation": "No direct feedback or trusted historical feedback matched this alert."
+          "explanation": "No direct feedback or trusted historical feedback matched this alert.",
+          "diagnostics": {
+            "evaluated": true,
+            "similarity": {
+              "averageScore": 0,
+              "averageEvidenceCoverage": 0,
+              "threshold": 0.7,
+              "minimumEvidenceCoverage": 0.7,
+              "matchedCount": 0,
+              "lowSimilarityAttemptCount": 0,
+              "lowEvidenceCoverageAttemptCount": 0
+            },
+            "historicalFeedback": {
+              "counts": {
+                "falsePositive": 0,
+                "confirmedThreat": 0,
+                "expectedActivity": 0
+              },
+              "dominantFeedback": null,
+              "agreementRatio": 0,
+              "conflictDetected": false
+            },
+            "eligibilityThresholds": {
+              "minimumFeedbackCount": 3,
+              "minimumAgreementRatio": 0.67,
+              "strongAgreementRatio": 0.8
+            },
+            "matchedExamples": []
+          }
         },
         "workflow": {
           "requiresAnalystReviewBeforeFeedback": true,
@@ -163,7 +193,7 @@
           "requiresAnalystReview": true,
           "detectorState": "ml_only",
           "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
-          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "fusionExplanation": "ML predicted a non-benign class with high confidence, but no signature rule matched. The score is slightly discounted because the alert has ML-only evidence.",
           "confidenceLevel": "High"
         },
         "signatureEvidence": {
@@ -173,7 +203,7 @@
           "ruleName": null,
           "attackType": null,
           "severity": null,
-          "explanation": null,
+          "explanation": "No signature evidence available.",
           "matchedConditions": [],
           "technicalDetail": null
         },
@@ -196,7 +226,7 @@
           "modelProvenance": null,
           "explanation": {
             "status": "unavailable",
-            "reason": "demonstration_scenario_has_no_model_run",
+            "reason": "demonstration_scenario_no_model_run",
             "method": null,
             "outputSpace": null,
             "explainedClass": null,
@@ -233,7 +263,87 @@
           "guardrailInterventions": [],
           "operationalPriorityScore": 55,
           "source": "historical_feedback",
-          "explanation": "Detection score 80 became operational priority 55. Similar historical feedback strongly indicates repeated false positives."
+          "explanation": "Detection score 80 became operational priority 55. Similar historical feedback strongly indicates repeated false positives.",
+          "diagnostics": {
+            "evaluated": true,
+            "similarity": {
+              "averageScore": 1,
+              "averageEvidenceCoverage": 0.85,
+              "threshold": 0.7,
+              "minimumEvidenceCoverage": 0.7,
+              "matchedCount": 3,
+              "lowSimilarityAttemptCount": 0,
+              "lowEvidenceCoverageAttemptCount": 0
+            },
+            "historicalFeedback": {
+              "counts": {
+                "falsePositive": 3,
+                "confirmedThreat": 0,
+                "expectedActivity": 0
+              },
+              "dominantFeedback": "mark_false_positive",
+              "agreementRatio": 1,
+              "conflictDetected": false
+            },
+            "eligibilityThresholds": {
+              "minimumFeedbackCount": 3,
+              "minimumAgreementRatio": 0.67,
+              "strongAgreementRatio": 0.8
+            },
+            "matchedExamples": [
+              {
+                "feedbackId": "DEMO-FP-FB1",
+                "historicalAlertId": "DEMO-FP-H1",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              },
+              {
+                "feedbackId": "DEMO-FP-FB2",
+                "historicalAlertId": "DEMO-FP-H2",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              },
+              {
+                "feedbackId": "DEMO-FP-FB3",
+                "historicalAlertId": "DEMO-FP-H3",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              }
+            ]
+          }
         },
         "workflow": {
           "requiresAnalystReviewBeforeFeedback": true,
@@ -272,13 +382,13 @@
           "pshFlagCount": null
         },
         "automatedDetection": {
-          "detectionScore": 60,
+          "detectionScore": 59,
           "attackType": "DoS",
-          "requiresAnalystReview": true,
+          "requiresAnalystReview": false,
           "detectorState": "ml_only",
-          "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
-          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
-          "confidenceLevel": "High"
+          "fusionDecision": "ML_ONLY_MEDIUM_CONFIDENCE",
+          "fusionExplanation": "ML predicted a non-benign class with medium confidence, but no signature rule matched. The score is discounted more strongly due to weaker ML-only evidence.",
+          "confidenceLevel": "Medium"
         },
         "signatureEvidence": {
           "available": true,
@@ -287,7 +397,7 @@
           "ruleName": null,
           "attackType": null,
           "severity": null,
-          "explanation": null,
+          "explanation": "No signature evidence available.",
           "matchedConditions": [],
           "technicalDetail": null
         },
@@ -299,18 +409,18 @@
           "schemaMode": "new",
           "predictedClassIndex": 4,
           "predictedAttackType": "DoS",
-          "modelConfidence": 0.9,
+          "modelConfidence": 0.79,
           "classProbabilities": {
-            "Benign": 0.1,
-            "DoS": 0.9
+            "Benign": 0.21,
+            "DoS": 0.79
           },
           "secondBestClass": "Benign",
-          "predictionMargin": 0.8,
-          "threatEvidenceScore": 90,
+          "predictionMargin": 0.58,
+          "threatEvidenceScore": 79,
           "modelProvenance": null,
           "explanation": {
             "status": "unavailable",
-            "reason": "demonstration_scenario_has_no_model_run",
+            "reason": "demonstration_scenario_no_model_run",
             "method": null,
             "outputSpace": null,
             "explainedClass": null,
@@ -345,12 +455,92 @@
           "priorityAdjusted": true,
           "guardrailsApplied": [],
           "guardrailInterventions": [],
-          "operationalPriorityScore": 75,
+          "operationalPriorityScore": 74,
           "source": "historical_feedback",
-          "explanation": "Detection score 60 became operational priority 75. Similar historical feedback strongly confirms threat priority."
+          "explanation": "Detection score 59 became operational priority 74. Similar historical feedback strongly confirms threat priority.",
+          "diagnostics": {
+            "evaluated": true,
+            "similarity": {
+              "averageScore": 1,
+              "averageEvidenceCoverage": 0.85,
+              "threshold": 0.7,
+              "minimumEvidenceCoverage": 0.7,
+              "matchedCount": 3,
+              "lowSimilarityAttemptCount": 0,
+              "lowEvidenceCoverageAttemptCount": 0
+            },
+            "historicalFeedback": {
+              "counts": {
+                "falsePositive": 0,
+                "confirmedThreat": 3,
+                "expectedActivity": 0
+              },
+              "dominantFeedback": "confirm_true_positive",
+              "agreementRatio": 1,
+              "conflictDetected": false
+            },
+            "eligibilityThresholds": {
+              "minimumFeedbackCount": 3,
+              "minimumAgreementRatio": 0.67,
+              "strongAgreementRatio": 0.8
+            },
+            "matchedExamples": [
+              {
+                "feedbackId": "DEMO-TP-FB1",
+                "historicalAlertId": "DEMO-TP-H1",
+                "feedbackType": "confirm_true_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              },
+              {
+                "feedbackId": "DEMO-TP-FB2",
+                "historicalAlertId": "DEMO-TP-H2",
+                "feedbackType": "confirm_true_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              },
+              {
+                "feedbackId": "DEMO-TP-FB3",
+                "historicalAlertId": "DEMO-TP-H3",
+                "feedbackType": "confirm_true_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              }
+            ]
+          }
         },
         "workflow": {
-          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReviewBeforeFeedback": false,
           "requiresAnalystReview": true,
           "analystFeedbackStatus": "adjusted_by_historical_feedback",
           "matchedFeedbackId": null
@@ -391,7 +581,7 @@
           "requiresAnalystReview": true,
           "detectorState": "ml_only",
           "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
-          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "fusionExplanation": "ML predicted a non-benign class with high confidence, but no signature rule matched. The score is slightly discounted because the alert has ML-only evidence.",
           "confidenceLevel": "High"
         },
         "signatureEvidence": {
@@ -401,7 +591,7 @@
           "ruleName": null,
           "attackType": null,
           "severity": null,
-          "explanation": null,
+          "explanation": "No signature evidence available.",
           "matchedConditions": [],
           "technicalDetail": null
         },
@@ -413,18 +603,18 @@
           "schemaMode": "new",
           "predictedClassIndex": 4,
           "predictedAttackType": "DoS",
-          "modelConfidence": 0.9,
+          "modelConfidence": 0.8,
           "classProbabilities": {
-            "Benign": 0.1,
-            "DoS": 0.9
+            "Benign": 0.2,
+            "DoS": 0.8
           },
           "secondBestClass": "Benign",
-          "predictionMargin": 0.8,
-          "threatEvidenceScore": 90,
+          "predictionMargin": 0.6,
+          "threatEvidenceScore": 80,
           "modelProvenance": null,
           "explanation": {
             "status": "unavailable",
-            "reason": "demonstration_scenario_has_no_model_run",
+            "reason": "demonstration_scenario_no_model_run",
             "method": null,
             "outputSpace": null,
             "explainedClass": null,
@@ -462,7 +652,87 @@
           "guardrailInterventions": [],
           "operationalPriorityScore": 70,
           "source": "none",
-          "explanation": "No direct feedback or trusted historical feedback matched this alert."
+          "explanation": "No direct feedback or trusted historical feedback matched this alert.",
+          "diagnostics": {
+            "evaluated": true,
+            "similarity": {
+              "averageScore": 1,
+              "averageEvidenceCoverage": 0.85,
+              "threshold": 0.7,
+              "minimumEvidenceCoverage": 0.7,
+              "matchedCount": 4,
+              "lowSimilarityAttemptCount": 0,
+              "lowEvidenceCoverageAttemptCount": 0
+            },
+            "historicalFeedback": {
+              "counts": {
+                "falsePositive": 2,
+                "confirmedThreat": 2,
+                "expectedActivity": 0
+              },
+              "dominantFeedback": null,
+              "agreementRatio": 0.5,
+              "conflictDetected": true
+            },
+            "eligibilityThresholds": {
+              "minimumFeedbackCount": 3,
+              "minimumAgreementRatio": 0.67,
+              "strongAgreementRatio": 0.8
+            },
+            "matchedExamples": [
+              {
+                "feedbackId": "DEMO-CONFLICT-FB1",
+                "historicalAlertId": "DEMO-CONFLICT-H1",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              },
+              {
+                "feedbackId": "DEMO-CONFLICT-FB2",
+                "historicalAlertId": "DEMO-CONFLICT-H2",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              },
+              {
+                "feedbackId": "DEMO-CONFLICT-FB3",
+                "historicalAlertId": "DEMO-CONFLICT-H3",
+                "feedbackType": "confirm_true_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 0.85,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": [
+                  "signatureId"
+                ]
+              }
+            ]
+          }
         },
         "workflow": {
           "requiresAnalystReviewBeforeFeedback": true,
@@ -501,12 +771,12 @@
           "pshFlagCount": null
         },
         "automatedDetection": {
-          "detectionScore": 85,
+          "detectionScore": 90,
           "attackType": "DoS",
           "requiresAnalystReview": true,
-          "detectorState": "agreement",
-          "fusionDecision": "SIGNATURE_ML_AGREE",
-          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "detectorState": "disagreement",
+          "fusionDecision": "SIGNATURE_ONLY_ML_BENIGN",
+          "fusionExplanation": "Signature rule matched known attack-like behavior. ML predicted Benign. The alert is retained because known-pattern evidence exists.",
           "confidenceLevel": "Critical"
         },
         "signatureEvidence": {
@@ -515,8 +785,8 @@
           "ruleId": "SIG-DEMO-CRITICAL-DOS",
           "ruleName": null,
           "attackType": "DoS",
-          "severity": "Critical",
-          "explanation": null,
+          "severity": "High",
+          "explanation": "Synthetic high-severity signature input for deterministic guardrail demonstration.",
           "matchedConditions": [],
           "technicalDetail": null
         },
@@ -526,20 +796,20 @@
           "evidenceAvailable": true,
           "failureReason": null,
           "schemaMode": "new",
-          "predictedClassIndex": 4,
-          "predictedAttackType": "DoS",
-          "modelConfidence": 0.9,
+          "predictedClassIndex": 0,
+          "predictedAttackType": "Benign",
+          "modelConfidence": 0.95,
           "classProbabilities": {
-            "Benign": 0.1,
-            "DoS": 0.9
+            "Benign": 0.95,
+            "DoS": 0.05
           },
-          "secondBestClass": "Benign",
-          "predictionMargin": 0.8,
-          "threatEvidenceScore": 90,
+          "secondBestClass": "DoS",
+          "predictionMargin": 0.9,
+          "threatEvidenceScore": 5,
           "modelProvenance": null,
           "explanation": {
             "status": "unavailable",
-            "reason": "demonstration_scenario_has_no_model_run",
+            "reason": "demonstration_scenario_no_model_run",
             "method": null,
             "outputSpace": null,
             "explainedClass": null,
@@ -569,7 +839,7 @@
           "eligibilityReason": "Similarity and historical-feedback agreement gates passed.",
           "proposedAdjustment": -25,
           "cappedAdjustment": -25,
-          "appliedAdjustment": -15,
+          "appliedAdjustment": -20,
           "feedbackRecorded": false,
           "priorityAdjusted": true,
           "guardrailsApplied": [
@@ -579,13 +849,90 @@
             {
               "code": "critical_alert_floor",
               "configuredValue": 70,
-              "originalValue": 60,
+              "originalValue": 65,
               "appliedValue": 70
             }
           ],
           "operationalPriorityScore": 70,
           "source": "historical_feedback",
-          "explanation": "Detection score 85 became operational priority 70. Similar historical feedback strongly indicates repeated false positives."
+          "explanation": "Detection score 90 became operational priority 70. Similar historical feedback strongly indicates repeated false positives.",
+          "diagnostics": {
+            "evaluated": true,
+            "similarity": {
+              "averageScore": 1,
+              "averageEvidenceCoverage": 1,
+              "threshold": 0.7,
+              "minimumEvidenceCoverage": 0.7,
+              "matchedCount": 3,
+              "lowSimilarityAttemptCount": 0,
+              "lowEvidenceCoverageAttemptCount": 0
+            },
+            "historicalFeedback": {
+              "counts": {
+                "falsePositive": 3,
+                "confirmedThreat": 0,
+                "expectedActivity": 0
+              },
+              "dominantFeedback": "mark_false_positive",
+              "agreementRatio": 1,
+              "conflictDetected": false
+            },
+            "eligibilityThresholds": {
+              "minimumFeedbackCount": 3,
+              "minimumAgreementRatio": 0.67,
+              "strongAgreementRatio": 0.8
+            },
+            "matchedExamples": [
+              {
+                "feedbackId": "DEMO-GUARDRAIL-FB1",
+                "historicalAlertId": "DEMO-GUARDRAIL-H1",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 1,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "signatureId",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": []
+              },
+              {
+                "feedbackId": "DEMO-GUARDRAIL-FB2",
+                "historicalAlertId": "DEMO-GUARDRAIL-H2",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 1,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "signatureId",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": []
+              },
+              {
+                "feedbackId": "DEMO-GUARDRAIL-FB3",
+                "historicalAlertId": "DEMO-GUARDRAIL-H3",
+                "feedbackType": "mark_false_positive",
+                "similarityScore": 1,
+                "evidenceCoverage": 1,
+                "matchedFields": [
+                  "fusionAttackType",
+                  "protocol",
+                  "destinationPort",
+                  "signatureId",
+                  "fusionDecision"
+                ],
+                "differedFields": [],
+                "unavailableFields": []
+              }
+            ]
+          }
         },
         "workflow": {
           "requiresAnalystReviewBeforeFeedback": true,
@@ -629,7 +976,7 @@
           "requiresAnalystReview": true,
           "detectorState": "signature_only",
           "fusionDecision": "SIGNATURE_ONLY_ML_UNAVAILABLE",
-          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "fusionExplanation": "Signature evidence exists. Stage 3 ML prediction was unavailable because invalid_numeric_feature_values. Risk is based on signature severity.",
           "confidenceLevel": "High"
         },
         "signatureEvidence": {
@@ -639,7 +986,7 @@
           "ruleName": null,
           "attackType": "DoS",
           "severity": "High",
-          "explanation": null,
+          "explanation": "Synthetic signature input retained while ML prediction is unavailable.",
           "matchedConditions": [],
           "technicalDetail": null
         },
@@ -692,7 +1039,35 @@
           "guardrailInterventions": [],
           "operationalPriorityScore": 80,
           "source": "none",
-          "explanation": "No direct feedback or trusted historical feedback matched this alert."
+          "explanation": "No direct feedback or trusted historical feedback matched this alert.",
+          "diagnostics": {
+            "evaluated": true,
+            "similarity": {
+              "averageScore": 0,
+              "averageEvidenceCoverage": 0,
+              "threshold": 0.7,
+              "minimumEvidenceCoverage": 0.7,
+              "matchedCount": 0,
+              "lowSimilarityAttemptCount": 0,
+              "lowEvidenceCoverageAttemptCount": 0
+            },
+            "historicalFeedback": {
+              "counts": {
+                "falsePositive": 0,
+                "confirmedThreat": 0,
+                "expectedActivity": 0
+              },
+              "dominantFeedback": null,
+              "agreementRatio": 0,
+              "conflictDetected": false
+            },
+            "eligibilityThresholds": {
+              "minimumFeedbackCount": 3,
+              "minimumAgreementRatio": 0.67,
+              "strongAgreementRatio": 0.8
+            },
+            "matchedExamples": []
+          }
         },
         "workflow": {
           "requiresAnalystReviewBeforeFeedback": true,

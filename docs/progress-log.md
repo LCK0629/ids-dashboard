@@ -96,6 +96,9 @@
 - Added runtime dashboard artifact validation, explicit Detection Score and Operational Priority semantics, and 32 data-integration tests without changing Stage 3, Stage 4, or Stage 5 scoring behaviour.
 - Hardened the Stage 5B boundary to reject stale Stage 5 sources before export, normalize forbidden ground-truth key variants, enforce consistent ML/TreeSHAP states, validate evaluator envelopes, verify generated summary counts, and expand the integration suite to 49 tests.
 - Added shared Stage 5C automated-evidence components for friendly detector states, signature evidence, distinct ML availability states, predicted-class TreeSHAP contributions, and collapsible model provenance in Operations and Investigations without changing scoring.
+- Added Stage 5D HITL adaptation explanations that expose the complete Detection Score-to-Operational Priority decision chain, including historical feedback, similarity applicability, evidence coverage, agreement, eligibility, adjustments, and guardrail intervention.
+- Rebuilt the six controlled adaptation demonstrations so synthetic detector inputs pass through the real Stage 4 fusion engine and real Stage 5 adaptation engine, while remaining separate from formal held-out evaluation and browser session preview.
+- Extended the analyst-safe dashboard contract with bounded Stage 5 diagnostics and validation without changing Detection Scores, Operational Priorities, queue ordering, or ground-truth separation.
 
 ## Notes
 

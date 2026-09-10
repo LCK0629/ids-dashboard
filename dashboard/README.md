@@ -15,7 +15,7 @@ dashboard/src/data/adaptation-demo-scenarios.v1.json
 dashboard/src/data/dashboard-data-manifest.v1.json
 ```
 
-The formal analyst artifact contains 995 held-out records. In the current dataset, 204 have at least one similarity match, but none pass every eligibility gate, so it honestly reports zero historical adaptations. Successful adaptation behaviour is shown only in the separately labelled demonstration-scenario artifact, generated through the real Stage 5 core.
+The formal analyst artifact contains 995 held-out records. In the current dataset, 204 have at least one similarity match, but none pass every eligibility gate, so it honestly reports zero historical adaptations. Successful adaptation behaviour is shown only in the separately labelled demonstration-scenario artifact. Synthetic detector inputs are processed by the real Stage 4 fusion engine and then the real Stage 5 adaptation engine; the scenarios do not claim actual XGBoost inference.
 
 See [ANALYST_DATA_CONTRACT.md](ANALYST_DATA_CONTRACT.md) for field definitions, score semantics, runtime validation, privacy checks, and analyst/evaluator boundaries.
 
@@ -86,6 +86,23 @@ Operations and Investigations share one canonical automated-evidence implementat
 - Predicted-class TreeSHAP supporting and opposing features using signed raw-margin contributions.
 - Class probabilities, model provenance, fusion decision code, and SHAP diagnostics behind an Advanced disclosure.
 
+They also share a canonical HITL adaptation explanation. Operations shows a compact view and Investigations shows the expanded evidence chain:
+
+```txt
+Detection Score
+→ Historical Feedback
+→ Similarity / Applicability
+→ Agreement / Conflict
+→ Eligibility
+→ Proposed / Capped / Applied Adjustment
+→ Guardrail
+→ Operational Priority
+```
+
+The explanation uses Stage 5 diagnostics directly. Similarity is feedback applicability, evidence coverage is the share of configured comparison evidence available, and historical agreement is consistency rather than truth. None of these explanation fields changes scoring.
+
+The Feedback Model view keeps three contexts separate: formal held-out evaluation, six controlled deterministic demonstrations, and temporary browser-session feedback preview. Demo alerts never enter the formal Operations queue or formal metrics.
+
 TreeSHAP bars use relative visual widths within one explanation only. The displayed signed values remain the original raw-margin contributions. They are not probability changes, risk points, causal effects, or inputs to fusion and priority scoring.
 
 The local feedback scorer remains isolated as a session preview for the existing prototype interaction. It never overwrites `detectionScore`, is not written back, and is not the authority for the initial queue ordering.
@@ -96,9 +113,14 @@ Run the automated-evidence display tests with:
 npm run test:evidence
 ```
 
+Run the HITL adaptation explanation tests with:
+
+```powershell
+npm run test:adaptation
+```
+
 ## Deferred Hardening
 
-- Demonstration scenarios currently begin with synthetic Stage 4-like detection records, then pass through the real Stage 5 core. They will be generated through Stage 4 fusion before becoming user-facing.
 - The approximately 6.46 MB analyst artifact is currently bundled by Vite. Loading and bundle performance are deferred to a later dashboard increment.
 - Browser feedback remains a preview-only compatibility feature; Stage 5 remains authoritative.
 - Detector-state and queue presentation refinements are outside this data-contract patch.

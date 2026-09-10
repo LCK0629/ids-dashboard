@@ -54,6 +54,44 @@ function validExplanation() {
   };
 }
 
+function validAdaptationDiagnostics() {
+  return {
+    evaluated: true,
+    similarity: {
+      averageScore: 0.9,
+      averageEvidenceCoverage: 1,
+      threshold: 0.7,
+      minimumEvidenceCoverage: 0.6,
+      matchedCount: 3,
+      lowSimilarityAttemptCount: 0,
+      lowEvidenceCoverageAttemptCount: 0,
+    },
+    historicalFeedback: {
+      counts: { falsePositive: 3, confirmedThreat: 0, expectedActivity: 0 },
+      dominantFeedback: 'mark_false_positive',
+      agreementRatio: 1,
+      conflictDetected: false,
+    },
+    eligibilityThresholds: {
+      minimumFeedbackCount: 3,
+      minimumAgreementRatio: 0.67,
+      strongAgreementRatio: 0.85,
+    },
+    matchedExamples: [
+      {
+        feedbackId: 'FB-1',
+        historicalAlertId: 'AL-HIST-1',
+        feedbackType: 'mark_false_positive',
+        similarityScore: 0.9,
+        evidenceCoverage: 1,
+        matchedFields: ['fusionAttackType', 'destinationPort'],
+        differedFields: [],
+        unavailableFields: [],
+      },
+    ],
+  };
+}
+
 function validStage5Alert(id = 'TEST-001', overrides = {}) {
   return {
     id,
@@ -117,6 +155,7 @@ function validStage5Alert(id = 'TEST-001', overrides = {}) {
     lowEvidenceCoverageCount: 0,
     lowSimilarityCount: 0,
     matchedFeedbackId: null,
+    adaptationDiagnostics: validAdaptationDiagnostics(),
     ...overrides,
   };
 }

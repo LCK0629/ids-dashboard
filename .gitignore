@@ -3,6 +3,7 @@ __pycache__/
 .tmp-stage-3-artifacts/
 .tmp-stage-3-artifacts*/
 *.py[cod]
+.venv/
 archive.zip
 *.zip
 *.csv

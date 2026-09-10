@@ -238,6 +238,20 @@ test('formal feedback events without stable IDs are invalid unless legacy genera
   assert.equal(legacyResolved.effectiveEvents[0].feedbackId, 'FB-GENERATED-1');
 });
 
+test('formal feedback events require eventType unless legacy compatibility inference is explicitly enabled', () => {
+  const resolved = resolveEffectiveFeedbackEvents([
+    feedback('FB-1', 'AL-H1', 'mark_false_positive', { eventType: undefined }),
+  ]);
+  const legacyResolved = resolveEffectiveFeedbackEvents([
+    feedback('FB-2', 'AL-H1', 'mark_false_positive', { eventType: undefined }),
+  ], { inferMissingSubmittedEventType: true });
+
+  assert.equal(resolved.integrityErrors.some((error) => error.code === 'invalid_event_type'), true);
+  assert.equal(resolved.effectiveEvents.length, 0);
+  assert.equal(legacyResolved.integrityErrors.length, 0);
+  assert.equal(legacyResolved.effectiveEvents[0].eventType, 'feedback_submitted');
+});
+
 test('feedback event validation rejects missing required fields and invalid enums', () => {
   const resolved = resolveEffectiveFeedbackEvents([
     {
@@ -416,6 +430,35 @@ test('held-out evaluation uses frozen calibration feedback and excludes held-out
   assert.equal(evaluation.ignoredHeldOutFeedbackCount, 3);
   assert.equal(target.dominantHistoricalFeedback, 'mark_false_positive');
   assert.equal(target.operationalPriorityScore, 55);
+});
+
+test('invalid calibration feedback does not remove its alert from the held-out evaluation set', () => {
+  const fusedAlerts = [
+    alert('AL-X'),
+    alert('AL-H1'),
+    alert('AL-H2'),
+    alert('AL-H3'),
+  ];
+  const calibrationFeedback = [
+    feedback('FB-BAD', 'AL-X', 'mark_false_positive', { eventType: undefined }),
+    feedback('FB-1', 'AL-H1', 'mark_false_positive'),
+    feedback('FB-2', 'AL-H2', 'mark_false_positive'),
+    feedback('FB-3', 'AL-H3', 'mark_false_positive'),
+  ];
+
+  const evaluation = buildFrozenCalibrationHeldOutEvaluation({
+    fusedAlerts,
+    calibrationFeedback,
+    exceptionMemory: [],
+    adaptationConfig,
+  });
+
+  assert.equal(evaluation.calibrationAlertIds.includes('AL-X'), false);
+  assert.equal(evaluation.heldOutAlerts.some((item) => item.id === 'AL-X'), true);
+  assert.equal(
+    evaluation.calibrationFeedbackResolution.integrityErrors.some((error) => error.feedbackId === 'FB-BAD'),
+    true
+  );
 });
 
 test('analyst-facing output contains no ground-truth fields while evaluator records may contain them', () => {

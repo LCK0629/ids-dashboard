@@ -28,10 +28,11 @@ const ALLOWED_FEEDBACK_TYPES = [
 
 function normalizeFeedbackEvent(event, index = 0, options = {}) {
   const allowGeneratedIds = options.allowGeneratedIds === true;
+  const inferMissingSubmittedEventType = options.inferMissingSubmittedEventType === true;
   return {
     ...event,
     feedbackId: event.feedbackId || (allowGeneratedIds ? `FB-GENERATED-${index + 1}` : null),
-    eventType: event.eventType || 'feedback_submitted',
+    eventType: event.eventType || (inferMissingSubmittedEventType ? 'feedback_submitted' : null),
     appliesToFutureSimilarAlerts: event.appliesToFutureSimilarAlerts !== false,
   };
 }

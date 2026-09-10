@@ -8,6 +8,9 @@ const {
   stripGroundTruthFields,
   summariseFeedbackResults,
 } = require('../core/feedback-engine');
+const {
+  resolveEffectiveFeedbackEvents,
+} = require('../core/feedback-aggregation-engine');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const fusedAlertsPath = path.join(repoRoot, 'stage-4', 'outputs', 'fusion-alerts.sample.json');
@@ -146,8 +149,9 @@ function buildFrozenCalibrationHeldOutEvaluation({
   const frozenCalibrationFeedback = calibrationFeedback || analystFeedback || [];
   const ignoredHeldOutFeedback = heldOutFeedback || [];
   const fusedAlertIds = new Set(fusedAlerts.map((alert) => String(alert.id)));
+  const calibrationFeedbackResolution = resolveEffectiveFeedbackEvents(frozenCalibrationFeedback);
   const calibrationAlertIds = new Set(
-    frozenCalibrationFeedback
+    calibrationFeedbackResolution.effectiveEvents
       .filter((feedback) => feedback.alertId && fusedAlertIds.has(String(feedback.alertId)))
       .map((feedback) => String(feedback.alertId))
   );
@@ -176,6 +180,7 @@ function buildFrozenCalibrationHeldOutEvaluation({
     generatedHistoricalMemory,
     feedbackResolution,
     useManualExceptionMemory,
+    calibrationFeedbackResolution,
     calibrationAlertIds: [...calibrationAlertIds].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
     heldOutAlerts,
     ignoredHeldOutFeedbackCount: ignoredHeldOutFeedback.length,

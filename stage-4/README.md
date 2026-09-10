@@ -33,6 +33,14 @@ stage-1/data/processed/ground-truth.json
 
 Ground truth is not used when calculating fusion decisions or risk scores.
 
+Stage 4 can also run against an explicit Stage 3 prediction artifact, for example the local regenerated full-schema output:
+
+```powershell
+node stage-4/scripts/run-fusion-demo.js --ml-predictions stage-3/outputs/ml-predictions.regenerated.json
+```
+
+This allows Stage 4 to consume the newer Stage 3 schema with `predictionStatus`, class probabilities, model provenance, and TreeSHAP explanation evidence without replacing the committed legacy Stage 3 sample input.
+
 ## Stage-2-Scoped Fusion Mode
 
 Stage 4 currently uses Stage-2-scoped fusion mode. The fused dashboard alert queue is based on Stage 2 / Stage 1 alert IDs.
@@ -69,7 +77,23 @@ High -> 80
 Critical -> 95
 ```
 
-ML `baseRiskScore` is used when available. If it is missing, the score is derived from model confidence.
+Stage 3 `modelConfidence` is a classifier confidence / softprob score. It is not threat risk.
+
+Stage 4 derives a separate class-aware ML threat evidence score:
+
+```txt
+Non-Benign prediction -> round(modelConfidence * 100)
+Benign prediction -> 100 - round(modelConfidence * 100)
+Unavailable prediction -> no valid ML threat evidence
+```
+
+The canonical Stage 4 field is:
+
+```txt
+mlThreatEvidenceScore
+```
+
+For backward compatibility with downstream prototype consumers, Stage 4 still writes `baseRiskScore`, but it is now a compatibility alias of the corrected Stage 4 ML threat-evidence semantics. Any legacy Stage 3 confidence-derived score is preserved separately as `mlLegacyBaseRiskScore` for provenance/debugging and must not drive fusion.
 
 ML-only high-confidence alerts remain high priority, but they are slightly discounted because no signature evidence supports the prediction. This keeps Signature + ML agreement as the strongest evidence case.
 
@@ -85,6 +109,26 @@ High: 70-89
 Medium: 40-69
 Low: 0-39
 ```
+
+Canonical score semantics:
+
+```txt
+Stage 3 modelConfidence = classifier softprob score
+Stage 4 mlThreatEvidenceScore = class-aware ML threat evidence derived from confidence
+Stage 4 fusionRiskScore = rule-based automated Detection Score from Signature + ML
+Stage 3 TreeSHAP = predicted-class raw-margin explanation only
+Stage 5 currentRiskScore / Operational Priority = feedback-adjusted prioritisation after HITL logic
+```
+
+Important:
+
+```txt
+modelConfidence != fusionRiskScore
+SHAP != risk
+fusionRiskScore != Operational Priority
+```
+
+TreeSHAP evidence is passed through unchanged when present. It is not recalculated in JavaScript and is never used as a fusion scoring input.
 
 ## Infiltration ML Limitation Handling
 
@@ -120,11 +164,21 @@ Evaluation joins ground truth only after fusion is completed.
 
 The summary includes:
 
-- ID alignment metrics: Stage 2 record count, Stage 3 prediction count, matched ID count, Stage 2-only count, Stage 3 out-of-scope count, overlap rates, alignment status, warnings, and capped ID samples.
+- ID alignment metrics: Stage 2 record count, Stage 3 record count, Stage 3 available/unavailable prediction count, matched record count, matched available/unavailable prediction count, Stage 2-only count, Stage 3 out-of-scope count, overlap rates, alignment status, warnings, and capped ID samples.
 - Classification metrics: accuracy, macro F1, weighted F1, binary TP/TN/FP/FN, per-class precision / recall / F1, and a confusion matrix.
 - Fusion behaviour metrics: decision counts, confidence counts, attack type counts, signature/ML agreement and disagreement counts, ML-only count, signature-only count, and Infiltration ML limitation count.
 - Risk prioritisation metrics: benign/malicious average risk score, top-k precision, high-risk threshold precision, high-risk benign count, and low-risk malicious count.
 - Analyst review metrics: review count, review rate, reviewed malicious/benign counts, review precision, malicious records not requiring review, and benign records requiring review.
+
+Stage 4 also writes a compact ML evidence integration summary:
+
+```txt
+stage-4/evaluation/ml-evidence-integration-summary.json
+```
+
+This records ML schema coverage, valid/unavailable prediction counts, TreeSHAP explanation pass-through counts, Infiltration limitation count, and intentional score/decision changes compared with the previous legacy confidence-risk semantics.
+
+The full TreeSHAP-expanded fused output can be regenerated locally with `--ml-predictions`, but it is not used as the primary committed evidence because it is much larger than the compact summary.
 
 The older simple fusion accuracy is kept as a quick readable indicator, but it is not enough by itself because Stage 4 is also a prioritisation and review-decision layer.
 

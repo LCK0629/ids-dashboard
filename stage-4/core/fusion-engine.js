@@ -47,7 +47,99 @@ function getFusionConfidenceLevel(score) {
   return 'Low';
 }
 
-function calculateBaseRiskScore(mlPrediction) {
+function isFiniteNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number);
+}
+
+function isValidConfidence(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 && number <= 1;
+}
+
+function hasUsableAttackType(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function getMlEvidenceState(mlPrediction) {
+  if (!mlPrediction) {
+    return {
+      mlRecordPresent: false,
+      mlPredictionStatus: 'missing_record',
+      mlEvidenceAvailable: false,
+      mlFailureReason: null,
+      mlSchemaMode: 'no_record',
+    };
+  }
+
+  const hasPredictionStatus = Object.prototype.hasOwnProperty.call(mlPrediction, 'predictionStatus');
+  const structurallyValid = hasUsableAttackType(mlPrediction.predictedAttackType)
+    && isValidConfidence(mlPrediction.modelConfidence);
+
+  if (hasPredictionStatus) {
+    if (mlPrediction.predictionStatus === 'available' && structurallyValid) {
+      return {
+        mlRecordPresent: true,
+        mlPredictionStatus: 'available',
+        mlEvidenceAvailable: true,
+        mlFailureReason: null,
+        mlSchemaMode: 'new',
+      };
+    }
+
+    if (mlPrediction.predictionStatus === 'unavailable') {
+      return {
+        mlRecordPresent: true,
+        mlPredictionStatus: 'unavailable',
+        mlEvidenceAvailable: false,
+        mlFailureReason: mlPrediction.failureReason || 'prediction_unavailable',
+        mlSchemaMode: 'new_unavailable',
+      };
+    }
+
+    return {
+      mlRecordPresent: true,
+      mlPredictionStatus: String(mlPrediction.predictionStatus || 'malformed'),
+      mlEvidenceAvailable: false,
+      mlFailureReason: 'malformed_ml_prediction_record',
+      mlSchemaMode: 'malformed',
+    };
+  }
+
+  if (structurallyValid) {
+    return {
+      mlRecordPresent: true,
+      mlPredictionStatus: 'legacy_available',
+      mlEvidenceAvailable: true,
+      mlFailureReason: null,
+      mlSchemaMode: 'legacy',
+    };
+  }
+
+  return {
+    mlRecordPresent: true,
+    mlPredictionStatus: 'malformed',
+    mlEvidenceAvailable: false,
+    mlFailureReason: 'malformed_ml_prediction_record',
+    mlSchemaMode: 'malformed',
+  };
+}
+
+function calculateMlThreatEvidenceScore(mlPrediction) {
+  const mlState = getMlEvidenceState(mlPrediction);
+  if (!mlState.mlEvidenceAvailable) {
+    return null;
+  }
+
+  const confidenceScore = Math.round(Number(mlPrediction.modelConfidence) * 100);
+  if (mlPrediction.predictedAttackType === 'Benign') {
+    return clampScore(100 - confidenceScore);
+  }
+
+  return clampScore(confidenceScore);
+}
+
+function calculateLegacyConfidenceRiskScore(mlPrediction) {
   if (!mlPrediction) {
     return 0;
   }
@@ -62,6 +154,11 @@ function calculateBaseRiskScore(mlPrediction) {
   }
 
   return clampScore(confidenceScore);
+}
+
+function calculateBaseRiskScore(mlPrediction) {
+  const threatScore = calculateMlThreatEvidenceScore(mlPrediction);
+  return threatScore === null ? 0 : threatScore;
 }
 
 function buildFlowFeatureSummary(signatureRecord) {
@@ -91,7 +188,13 @@ function buildFlowFeatureSummary(signatureRecord) {
   };
 }
 
-function buildBaseAlert(id, signatureRecord, mlPrediction) {
+function buildBaseAlert(id, signatureRecord, mlPrediction, options = {}) {
+  const mlState = getMlEvidenceState(mlPrediction);
+  const mlThreatEvidenceScore = calculateMlThreatEvidenceScore(mlPrediction);
+  const baseRiskScore = options.riskMode === 'legacyConfidenceRisk'
+    ? calculateLegacyConfidenceRiskScore(mlPrediction)
+    : (mlThreatEvidenceScore === null ? 0 : mlThreatEvidenceScore);
+
   return {
     id,
     flowFeatureSummary: buildFlowFeatureSummary(signatureRecord),
@@ -104,9 +207,27 @@ function buildBaseAlert(id, signatureRecord, mlPrediction) {
     matchedConditionsReadable: signatureRecord ? signatureRecord.matchedConditionsReadable || [] : [],
     signatureTechnicalDetails: signatureRecord ? signatureRecord.signatureTechnicalDetails || null : null,
     signatureEvidence: signatureRecord ? signatureRecord.signatureEvidence || 'No signature evidence available.' : 'No signature record was available for this ID.',
-    mlPredictedAttackType: mlPrediction ? mlPrediction.predictedAttackType || null : null,
-    modelConfidence: mlPrediction && mlPrediction.modelConfidence !== undefined ? Number(mlPrediction.modelConfidence) : null,
-    baseRiskScore: calculateBaseRiskScore(mlPrediction),
+    mlRecordPresent: mlState.mlRecordPresent,
+    mlPredictionStatus: mlState.mlPredictionStatus,
+    mlEvidenceAvailable: mlState.mlEvidenceAvailable,
+    mlFailureReason: mlState.mlFailureReason,
+    mlSchemaMode: mlState.mlSchemaMode,
+    mlPredictedClassIndex: mlState.mlEvidenceAvailable && mlPrediction.predictedClassIndex !== undefined
+      ? Number(mlPrediction.predictedClassIndex)
+      : null,
+    mlPredictedAttackType: mlState.mlEvidenceAvailable ? mlPrediction.predictedAttackType : null,
+    modelConfidence: mlState.mlEvidenceAvailable ? Number(mlPrediction.modelConfidence) : null,
+    classProbabilities: mlState.mlEvidenceAvailable ? mlPrediction.classProbabilities || null : null,
+    secondBestClass: mlState.mlEvidenceAvailable ? mlPrediction.secondBestClass || null : null,
+    predictionMargin: mlState.mlEvidenceAvailable && mlPrediction.predictionMargin !== undefined
+      ? Number(mlPrediction.predictionMargin)
+      : null,
+    modelProvenance: mlState.mlEvidenceAvailable ? mlPrediction.modelProvenance || null : null,
+    mlExplanation: mlPrediction ? mlPrediction.mlExplanation || null : null,
+    mlThreatEvidenceScore,
+    mlLegacyBaseRiskScore: mlPrediction && mlPrediction.baseRiskScore !== undefined ? clampScore(mlPrediction.baseRiskScore) : null,
+    baseRiskScore,
+    baseRiskScoreStatus: 'stage4_ml_threat_evidence_score_compatibility_alias',
   };
 }
 
@@ -114,11 +235,21 @@ function evidenceText(parts) {
   return parts.filter(Boolean).join(' ');
 }
 
-function fuseAlert(signatureRecord = null, mlPrediction = null) {
+function mlEvidenceAvailabilityText(baseAlert) {
+  if (baseAlert.mlEvidenceAvailable) {
+    return `Stage 3 predicted ${baseAlert.mlPredictedAttackType || 'no class'} with confidence ${(baseAlert.modelConfidence || 0).toFixed(3)}.`;
+  }
+  if (baseAlert.mlRecordPresent) {
+    return `Stage 3 ML prediction was unavailable because ${baseAlert.mlFailureReason || 'the record was not usable'}.`;
+  }
+  return 'No Stage 3 ML record was available for this ID.';
+}
+
+function fuseAlert(signatureRecord = null, mlPrediction = null, options = {}) {
   const id = (signatureRecord && signatureRecord.id) || (mlPrediction && mlPrediction.id);
-  const baseAlert = buildBaseAlert(id, signatureRecord, mlPrediction);
+  const baseAlert = buildBaseAlert(id, signatureRecord, mlPrediction, options);
   const signatureSeverityScore = severityToScore(baseAlert.signatureSeverity, baseAlert.signatureHit);
-  const hasMlPrediction = Boolean(mlPrediction);
+  const hasMlPrediction = baseAlert.mlEvidenceAvailable;
   const mlAttackType = baseAlert.mlPredictedAttackType;
   const signatureAttackType = baseAlert.signatureAttackType;
   const modelConfidence = baseAlert.modelConfidence === null ? 0 : baseAlert.modelConfidence;
@@ -136,9 +267,7 @@ function fuseAlert(signatureRecord = null, mlPrediction = null) {
     requiresAnalystReview = true;
     fusionEvidence = evidenceText([
       'Stage 2 signature evidence indicates Infiltration.',
-      hasMlPrediction
-        ? `Stage 3 predicted ${mlAttackType || 'no class'} with confidence ${modelConfidence.toFixed(3)}.`
-        : 'No Stage 3 ML prediction was available for this ID.',
+      mlEvidenceAvailabilityText(baseAlert),
       'The current Stage 3 ML artifacts do not include Infiltration, so the signature evidence is retained instead of downgrading the alert.',
     ]);
   } else if (baseAlert.signatureHit && hasMlPrediction && signatureAttackType === mlAttackType) {
@@ -173,12 +302,12 @@ function fuseAlert(signatureRecord = null, mlPrediction = null) {
     ]);
   } else if (baseAlert.signatureHit && !hasMlPrediction) {
     fusionAttackType = signatureAttackType;
-    fusionDecision = 'SIGNATURE_ONLY_NO_ML';
+    fusionDecision = baseAlert.mlRecordPresent ? 'SIGNATURE_ONLY_ML_UNAVAILABLE' : 'SIGNATURE_ONLY_NO_ML';
     fusionRiskScore = clampScore(signatureSeverityScore);
     requiresAnalystReview = true;
     fusionEvidence = evidenceText([
       'Signature evidence exists.',
-      'No ML prediction was available for this ID.',
+      mlEvidenceAvailabilityText(baseAlert),
       'Risk is based on signature severity.',
     ]);
   } else if (!signatureRecord && hasMlPrediction) {
@@ -193,7 +322,7 @@ function fuseAlert(signatureRecord = null, mlPrediction = null) {
     fusionEvidence = evidenceText([
       'ML prediction exists.',
       'No signature record was available for this ID.',
-      'Risk is based on ML confidence.',
+      'Risk is based on class-aware ML threat evidence derived from confidence.',
     ]);
   } else if (!baseAlert.signatureHit && hasMlPrediction && mlAttackType !== 'Benign' && modelConfidence >= 0.8) {
     fusionAttackType = mlAttackType;
@@ -225,10 +354,14 @@ function fuseAlert(signatureRecord = null, mlPrediction = null) {
     ]);
   } else {
     fusionAttackType = 'Benign';
-    fusionDecision = 'LOW_RISK_NO_DETECTION_INPUT';
+    fusionDecision = baseAlert.mlRecordPresent ? 'LOW_RISK_ML_UNAVAILABLE' : 'LOW_RISK_NO_DETECTION_INPUT';
     fusionRiskScore = 0;
     requiresAnalystReview = false;
-    fusionEvidence = 'No signature rule matched and no ML prediction was available for this ID. Alert is kept as low priority.';
+    fusionEvidence = evidenceText([
+      'No signature rule matched.',
+      mlEvidenceAvailabilityText(baseAlert),
+      'Alert is kept as low priority.',
+    ]);
   }
 
   return {
@@ -280,6 +413,10 @@ function buildIdAlignmentSummary(signatureById, mlById) {
   const stage2Ids = [...signatureById.keys()];
   const stage3Ids = [...mlById.keys()];
   const matchedIds = stage2Ids.filter((id) => mlById.has(id));
+  const stage3AvailablePredictionIds = stage3Ids.filter((id) => getMlEvidenceState(mlById.get(id)).mlEvidenceAvailable);
+  const stage3UnavailablePredictionIds = stage3Ids.filter((id) => !getMlEvidenceState(mlById.get(id)).mlEvidenceAvailable);
+  const matchedAvailablePredictionIds = matchedIds.filter((id) => getMlEvidenceState(mlById.get(id)).mlEvidenceAvailable);
+  const matchedUnavailablePredictionIds = matchedIds.filter((id) => !getMlEvidenceState(mlById.get(id)).mlEvidenceAvailable);
   const stage2OnlyIds = sortIds(stage2Ids.filter((id) => !mlById.has(id)));
   const outOfScopeMlPredictionIds = sortIds(stage3Ids.filter((id) => !signatureById.has(id)));
   const overlapRateAgainstStage2 = safeDivide(matchedIds.length, stage2Ids.length);
@@ -288,7 +425,13 @@ function buildIdAlignmentSummary(signatureById, mlById) {
 
   return {
     stage2RecordCount: stage2Ids.length,
+    stage3RecordCount: stage3Ids.length,
     stage3PredictionCount: stage3Ids.length,
+    stage3AvailablePredictionCount: stage3AvailablePredictionIds.length,
+    stage3UnavailablePredictionCount: stage3UnavailablePredictionIds.length,
+    matchedStage3RecordCount: matchedIds.length,
+    matchedAvailablePredictionCount: matchedAvailablePredictionIds.length,
+    matchedUnavailablePredictionCount: matchedUnavailablePredictionIds.length,
     matchedIdCount: matchedIds.length,
     stage2OnlyCount: stage2OnlyIds.length,
     stage3OutOfScopeCount: outOfScopeMlPredictionIds.length,
@@ -302,7 +445,7 @@ function buildIdAlignmentSummary(signatureById, mlById) {
   };
 }
 
-function fuseAlerts(signatureRecords, mlPredictions) {
+function fuseAlerts(signatureRecords, mlPredictions, options = {}) {
   const signatureById = indexById(signatureRecords);
   const mlById = indexById(mlPredictions);
   const idAlignmentSummary = buildIdAlignmentSummary(signatureById, mlById);
@@ -313,7 +456,7 @@ function fuseAlerts(signatureRecords, mlPredictions) {
   // different Stage 3 test set and are not the same flows, so they must not
   // be unioned into the fused alert count.
   const fusedAlerts = [...signatureById.keys()]
-    .map((id) => fuseAlert(signatureById.get(id), mlById.get(id) || null))
+    .map((id) => fuseAlert(signatureById.get(id), mlById.get(id) || null, options))
     .sort((a, b) => {
       if (b.fusionRiskScore !== a.fusionRiskScore) {
         return b.fusionRiskScore - a.fusionRiskScore;
@@ -511,8 +654,14 @@ function calculateAnalystReviewMetrics(evaluatedAlerts) {
 function summariseFusionResults(fusedAlerts, groundTruth = null, idAlignmentSummary = null) {
   const safeAlignmentSummary = idAlignmentSummary
     ? {
-      stage2RecordCount: idAlignmentSummary.stage2RecordCount,
+    stage2RecordCount: idAlignmentSummary.stage2RecordCount,
+      stage3RecordCount: idAlignmentSummary.stage3RecordCount,
       stage3PredictionCount: idAlignmentSummary.stage3PredictionCount,
+      stage3AvailablePredictionCount: idAlignmentSummary.stage3AvailablePredictionCount,
+      stage3UnavailablePredictionCount: idAlignmentSummary.stage3UnavailablePredictionCount,
+      matchedStage3RecordCount: idAlignmentSummary.matchedStage3RecordCount,
+      matchedAvailablePredictionCount: idAlignmentSummary.matchedAvailablePredictionCount,
+      matchedUnavailablePredictionCount: idAlignmentSummary.matchedUnavailablePredictionCount,
       matchedIdCount: idAlignmentSummary.matchedIdCount,
       stage2OnlyCount: idAlignmentSummary.stage2OnlyCount,
       stage3OutOfScopeCount: idAlignmentSummary.stage3OutOfScopeCount,
@@ -525,7 +674,13 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, idAlignmentSumm
     }
     : {
       stage2RecordCount: fusedAlerts.length,
+      stage3RecordCount: 0,
       stage3PredictionCount: 0,
+      stage3AvailablePredictionCount: 0,
+      stage3UnavailablePredictionCount: 0,
+      matchedStage3RecordCount: 0,
+      matchedAvailablePredictionCount: 0,
+      matchedUnavailablePredictionCount: 0,
       matchedIdCount: 0,
       stage2OnlyCount: 0,
       stage3OutOfScopeCount: 0,
@@ -558,6 +713,8 @@ function summariseFusionResults(fusedAlerts, groundTruth = null, idAlignmentSumm
       'Ground truth is joined only after fusion for evaluation.',
       'Current Stage 3 ML artifacts do not include Infiltration; Stage 4 retains Infiltration signature alerts.',
       'Fusion scope is defined by Stage 2 signature records (the Stage 1 sample). Stage 3 predictions whose id is outside that scope come from a different Stage 3 test set and are excluded from fusion rather than unioned in.',
+      'Stage 3 modelConfidence is a classifier softprob score. Stage 4 derives class-aware mlThreatEvidenceScore separately; modelConfidence is not treated as threat risk.',
+      'Stage 3 TreeSHAP evidence is passed through as explanation data only. SHAP values are not used for fusion scoring, risk, or priority.',
     ],
   };
 
@@ -660,6 +817,9 @@ module.exports = {
   clampScore,
   severityToScore,
   getFusionConfidenceLevel,
+  getMlEvidenceState,
+  calculateMlThreatEvidenceScore,
+  calculateLegacyConfidenceRiskScore,
   calculateBaseRiskScore,
   fuseAlert,
   fuseAlerts,

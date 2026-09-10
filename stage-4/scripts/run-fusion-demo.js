@@ -16,6 +16,33 @@ const evaluationDir = path.join(repoRoot, 'stage-4', 'evaluation');
 const fusionOutputPath = path.join(outputDir, 'fusion-alerts.sample.json');
 const evaluationJsonPath = path.join(evaluationDir, 'fusion-evaluation-summary.json');
 const evaluationMarkdownPath = path.join(evaluationDir, 'fusion-evaluation-summary.md');
+const mlEvidenceIntegrationSummaryPath = path.join(evaluationDir, 'ml-evidence-integration-summary.json');
+
+function parseArgs(argv) {
+  const args = {
+    mlPredictionsPath,
+  };
+
+  for (let index = 2; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === '--ml-predictions') {
+      args.mlPredictionsPath = path.resolve(argv[index + 1]);
+      index += 1;
+    } else {
+      throw new Error(`Unknown argument: ${argument}`);
+    }
+  }
+
+  return args;
+}
+
+function repoRelativePath(filePath) {
+  const relativePath = path.relative(repoRoot, filePath);
+  if (!relativePath.startsWith('..') && !path.isAbsolute(relativePath)) {
+    return relativePath.split(path.sep).join('/');
+  }
+  return filePath.split(path.sep).join('/');
+}
 
 function renderCounter(counter) {
   const entries = Object.entries(counter || {}).sort((a, b) => b[1] - a[1]);
@@ -90,8 +117,12 @@ function renderEvaluationMarkdown(summary) {
     'Fusion is Stage-2-scoped. ML predictions are used only when IDs match Stage 2 records. Out-of-scope ML predictions are reported for debugging but are not inserted into the dashboard fusion queue.',
     '',
     `- Stage 2 record count: ${summary.idAlignmentSummary.stage2RecordCount}`,
-    `- Stage 3 prediction count: ${summary.idAlignmentSummary.stage3PredictionCount}`,
+    `- Stage 3 record count: ${summary.idAlignmentSummary.stage3RecordCount}`,
+    `- Stage 3 available prediction count: ${summary.idAlignmentSummary.stage3AvailablePredictionCount}`,
+    `- Stage 3 unavailable prediction count: ${summary.idAlignmentSummary.stage3UnavailablePredictionCount}`,
     `- Matched ID count: ${summary.idAlignmentSummary.matchedIdCount}`,
+    `- Matched available prediction count: ${summary.idAlignmentSummary.matchedAvailablePredictionCount}`,
+    `- Matched unavailable prediction count: ${summary.idAlignmentSummary.matchedUnavailablePredictionCount}`,
     `- Stage 2 only count: ${summary.idAlignmentSummary.stage2OnlyCount}`,
     `- Stage 3 out-of-scope count: ${summary.idAlignmentSummary.stage3OutOfScopeCount}`,
     `- Overlap rate against Stage 2: ${renderPercent(summary.idAlignmentSummary.overlapRateAgainstStage2)}`,
@@ -195,18 +226,182 @@ function renderEvaluationMarkdown(summary) {
   return `${lines.join('\n')}\n`;
 }
 
+function categorizeScoreChange(beforeAlert, afterAlert) {
+  if (afterAlert.mlRecordPresent && !afterAlert.mlEvidenceAvailable) {
+    return 'unavailable_ml_prediction_not_valid_evidence';
+  }
+  if (
+    afterAlert.mlEvidenceAvailable
+    && afterAlert.mlPredictedAttackType === 'Benign'
+    && Number(beforeAlert.baseRiskScore || 0) > Number(afterAlert.mlThreatEvidenceScore || 0)
+  ) {
+    return 'benign_confidence_no_longer_treated_as_threat_risk';
+  }
+  return 'other_requires_investigation';
+}
+
+function compareFusionScores(beforeAlerts, afterAlerts) {
+  const beforeById = new Map(beforeAlerts.map((alert) => [String(alert.id), alert]));
+  const changedRecords = [];
+  const categories = {};
+  let unchangedFusionRiskScoreCount = 0;
+  let changedFusionRiskScoreCount = 0;
+  let changedFusionDecisionCount = 0;
+
+  for (const afterAlert of afterAlerts) {
+    const beforeAlert = beforeById.get(String(afterAlert.id));
+    if (!beforeAlert) {
+      continue;
+    }
+    const scoreChanged = beforeAlert.fusionRiskScore !== afterAlert.fusionRiskScore;
+    const decisionChanged = beforeAlert.fusionDecision !== afterAlert.fusionDecision;
+
+    if (!scoreChanged) {
+      unchangedFusionRiskScoreCount += 1;
+    } else {
+      changedFusionRiskScoreCount += 1;
+    }
+
+    if (decisionChanged) {
+      changedFusionDecisionCount += 1;
+    }
+
+    if (!scoreChanged && !decisionChanged) {
+      continue;
+    }
+
+    const reason = categorizeScoreChange(beforeAlert, afterAlert);
+    categories[reason] = (categories[reason] || 0) + 1;
+    changedRecords.push({
+      id: afterAlert.id,
+      beforeFusionRiskScore: beforeAlert.fusionRiskScore,
+      afterFusionRiskScore: afterAlert.fusionRiskScore,
+      beforeFusionDecision: beforeAlert.fusionDecision,
+      afterFusionDecision: afterAlert.fusionDecision,
+      reason,
+    });
+  }
+
+  return {
+    unchangedFusionRiskScoreCount,
+    changedFusionRiskScoreCount,
+    changedFusionDecisionCount,
+    changedFusionRiskScoreOrDecisionCount: changedRecords.length,
+    categorizedIntentionalChanges: categories,
+    changedRecords,
+  };
+}
+
+function countMlExplanations(fusedAlerts) {
+  const counts = {
+    available: 0,
+    unavailable: 0,
+    unavailableReasons: {
+      predictionUnavailable: 0,
+      treeShapGenerationFailure: 0,
+      additivityFailure: 0,
+      other: 0,
+    },
+  };
+
+  for (const alert of fusedAlerts) {
+    if (!alert.mlExplanation) {
+      continue;
+    }
+    if (alert.mlExplanation.status === 'available') {
+      counts.available += 1;
+    } else {
+      counts.unavailable += 1;
+      const reason = alert.mlExplanation.reason || 'unknown';
+      if (reason === 'prediction_unavailable') {
+        counts.unavailableReasons.predictionUnavailable += 1;
+      } else if (String(reason).startsWith('treeshap_generation_failed')) {
+        counts.unavailableReasons.treeShapGenerationFailure += 1;
+      } else if (reason === 'additivity_check_failed') {
+        counts.unavailableReasons.additivityFailure += 1;
+      } else {
+        counts.unavailableReasons.other += 1;
+      }
+    }
+  }
+
+  return counts;
+}
+
+function buildMlEvidenceIntegrationSummary({
+  signatureOutput,
+  mlPredictions,
+  fusedAlerts,
+  legacyBaselineAlerts,
+  idAlignmentSummary,
+  selectedMlPredictionsPath,
+}) {
+  const explanationCounts = countMlExplanations(fusedAlerts);
+  const scoreRegression = compareFusionScores(legacyBaselineAlerts, fusedAlerts);
+  const firstModelProvenance = mlPredictions.find((record) => record && record.modelProvenance)?.modelProvenance || {};
+
+  return {
+    runMode: selectedMlPredictionsPath === mlPredictionsPath ? 'default_legacy_sample' : 'explicit_ml_prediction_file',
+    sourceArtifactSemantics: selectedMlPredictionsPath === mlPredictionsPath
+      ? 'committed legacy Stage 3 sample without predictionStatus'
+      : 'explicit Stage 3 prediction artifact supplied by --ml-predictions',
+    signatureInputPath: repoRelativePath(signatureOutputPath),
+    mlPredictionInputPath: repoRelativePath(selectedMlPredictionsPath),
+    fusionOutputPath: repoRelativePath(fusionOutputPath),
+    inputStage2RecordCount: signatureOutput.length,
+    stage3RecordCount: idAlignmentSummary.stage3RecordCount,
+    stage3AvailablePredictionCount: idAlignmentSummary.stage3AvailablePredictionCount,
+    stage3UnavailablePredictionCount: idAlignmentSummary.stage3UnavailablePredictionCount,
+    matchedRecordCount: idAlignmentSummary.matchedStage3RecordCount,
+    matchedValidMlPredictionCount: idAlignmentSummary.matchedAvailablePredictionCount,
+    matchedUnavailablePredictionCount: idAlignmentSummary.matchedUnavailablePredictionCount,
+    explanationAvailableCountPropagated: explanationCounts.available,
+    explanationUnavailableCountPropagated: explanationCounts.unavailable,
+    explanationUnavailableReasonsPropagated: explanationCounts.unavailableReasons,
+    fusionScoreChangedCount: scoreRegression.changedFusionRiskScoreCount,
+    fusionScoreUnchangedCount: scoreRegression.unchangedFusionRiskScoreCount,
+    fusionDecisionChangedCount: scoreRegression.changedFusionDecisionCount,
+    fusionScoreOrDecisionChangedCount: scoreRegression.changedFusionRiskScoreOrDecisionCount,
+    categorizedIntentionalChanges: scoreRegression.categorizedIntentionalChanges,
+    changedRecords: scoreRegression.changedRecords,
+    infiltrationLimitationCount: fusedAlerts.filter((alert) => alert.fusionDecision === 'SIGNATURE_ONLY_ML_LIMITATION').length,
+    modelSha256: firstModelProvenance.modelSha256 || null,
+    notes: [
+      'Ground truth is not loaded until after fusion output is produced.',
+      'modelConfidence is classifier confidence, not threat risk.',
+      'mlThreatEvidenceScore is the Stage 4 class-aware threat evidence derived from modelConfidence.',
+      'TreeSHAP evidence is passed through only and is not used in fusion scoring.',
+    ],
+  };
+}
+
 function main() {
+  const args = parseArgs(process.argv);
   const signatureOutput = loadJsonFile(signatureOutputPath);
-  const mlPredictions = loadJsonFile(mlPredictionsPath);
+  const mlPredictions = loadJsonFile(args.mlPredictionsPath);
   const { fusedAlerts, outOfScopeMlPredictionIds, idAlignmentSummary } = fuseAlerts(signatureOutput, mlPredictions);
+  const legacyBaseline = fuseAlerts(signatureOutput, mlPredictions, { riskMode: 'legacyConfidenceRisk' });
   const groundTruth = loadJsonFile(groundTruthPath, null);
   const evaluationSummary = summariseFusionResults(fusedAlerts, groundTruth, idAlignmentSummary);
+  const mlEvidenceIntegrationSummary = buildMlEvidenceIntegrationSummary({
+    signatureOutput,
+    mlPredictions,
+    fusedAlerts,
+    legacyBaselineAlerts: legacyBaseline.fusedAlerts,
+    idAlignmentSummary,
+    selectedMlPredictionsPath: args.mlPredictionsPath,
+  });
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
   fs.writeFileSync(fusionOutputPath, `${JSON.stringify(fusedAlerts, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationMarkdownPath, renderEvaluationMarkdown(evaluationSummary), 'utf8');
+  fs.writeFileSync(
+    mlEvidenceIntegrationSummaryPath,
+    `${JSON.stringify(mlEvidenceIntegrationSummary, null, 2)}\n`,
+    'utf8'
+  );
 
   console.log(`Signature records loaded: ${signatureOutput.length}`);
   console.log(`ML predictions loaded: ${mlPredictions.length}`);
@@ -224,8 +419,13 @@ function main() {
     console.log(`Alignment warning: ${idAlignmentSummary.alignmentWarning}`);
   }
   console.log(`Requires analyst review: ${evaluationSummary.countRequiringAnalystReview}`);
+  console.log(`ML evidence available: ${idAlignmentSummary.stage3AvailablePredictionCount}`);
+  console.log(`ML evidence unavailable: ${idAlignmentSummary.stage3UnavailablePredictionCount}`);
+  console.log(`TreeSHAP explanations propagated: ${mlEvidenceIntegrationSummary.explanationAvailableCountPropagated}`);
+  console.log(`Fusion score/decision changes vs legacy confidence-risk semantics: ${mlEvidenceIntegrationSummary.fusionScoreChangedCount}`);
   console.log(`Fusion output: ${fusionOutputPath}`);
   console.log(`Evaluation summary: ${evaluationMarkdownPath}`);
+  console.log(`ML evidence integration summary: ${mlEvidenceIntegrationSummaryPath}`);
 }
 
 main();

@@ -4,7 +4,8 @@ const path = require('path');
 const {
   loadJsonFile,
   adjustAlertsWithFeedback,
-  attachGroundTruthFields,
+  buildEvaluatorRecords,
+  stripGroundTruthFields,
   summariseFeedbackResults,
 } = require('../core/feedback-engine');
 
@@ -18,6 +19,7 @@ const outputDir = path.join(repoRoot, 'stage-5', 'outputs');
 const evaluationDir = path.join(repoRoot, 'stage-5', 'evaluation');
 const adjustedAlertsPath = path.join(outputDir, 'feedback-adjusted-alerts.sample.json');
 const generatedHistoricalMemoryPath = path.join(outputDir, 'historical-feedback-memory.generated.json');
+const evaluatorRecordsPath = path.join(evaluationDir, 'feedback-evaluation-records.json');
 const evaluationJsonPath = path.join(evaluationDir, 'feedback-evaluation-summary.json');
 const evaluationMarkdownPath = path.join(evaluationDir, 'feedback-evaluation-summary.md');
 
@@ -35,7 +37,7 @@ function renderSummaryMarkdown(summary) {
     '',
     'Stage 5 applies append-only analyst feedback events to Stage 4 fused alerts through deterministic similarity matching, historical aggregation, eligibility gates, and guardrails.',
     '',
-    'Ground truth is joined only after detection, fusion, and feedback for evaluation and dashboard explanation. It is not used as input to signature matching, ML prediction, fusion scoring, or feedback adjustment.',
+    'Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.',
     '',
     'This is a prototype workload and priority evaluation, not production IDS performance.',
     '',
@@ -75,6 +77,8 @@ function renderSummaryMarkdown(summary) {
     `- Actual adaptation count: ${summary.actualAdaptationCount}`,
     `- Actual adaptation coverage: ${summary.actualAdaptationCoverage}`,
     `- Generated historical memory count: ${summary.generatedHistoricalMemoryCount}`,
+    `- Low evidence coverage rejection count: ${summary.lowEvidenceCoverageRejectionCount}`,
+    `- Low similarity rejection count: ${summary.lowSimilarityRejectionCount}`,
     '',
     '## Risk Before And After Feedback',
     '',
@@ -113,6 +117,10 @@ function renderSummaryMarkdown(summary) {
     '',
     renderCounter(summary.countByAdaptationSource),
     '',
+    '## Count By Feedback Recorded',
+    '',
+    renderCounter(summary.countByFeedbackRecorded),
+    '',
     '## Notes',
     '',
     ...summary.notes.map((note) => `- ${note}`),
@@ -131,6 +139,13 @@ function main() {
   const exceptionMemory = loadJsonFile(exceptionMemoryPath);
   const adaptationConfig = loadJsonFile(adaptationConfigPath);
   const groundTruth = loadJsonFile(groundTruthPath, null);
+  const fusedAlertIds = new Set(fusedAlerts.map((alert) => String(alert.id)));
+  const calibrationAlertIds = new Set(
+    analystFeedback
+      .filter((feedback) => feedback.alertId && fusedAlertIds.has(String(feedback.alertId)))
+      .map((feedback) => String(feedback.alertId))
+  );
+  const futureAlerts = fusedAlerts.filter((alert) => !calibrationAlertIds.has(String(alert.id)));
   const {
     adjustedAlerts,
     unmatchedFeedback,
@@ -138,33 +153,40 @@ function main() {
     feedbackResolution,
     useManualExceptionMemory,
   } = adjustAlertsWithFeedback(
-    fusedAlerts,
-    analystFeedback,
+    futureAlerts,
+    [],
     exceptionMemory,
     adaptationConfig,
     {
+      historicalFeedbackEvents: analystFeedback,
+      similarityReferenceAlerts: fusedAlerts,
       useManualExceptionMemory: false,
     }
   );
-  const adjustedAlertsWithGroundTruth = attachGroundTruthFields(adjustedAlerts, groundTruth);
-  const evaluationSummary = summariseFeedbackResults(adjustedAlertsWithGroundTruth, unmatchedFeedback, groundTruth, {
+  const analystFacingAdjustedAlerts = stripGroundTruthFields(adjustedAlerts);
+  const evaluatorRecords = buildEvaluatorRecords(adjustedAlerts, groundTruth);
+  const evaluationSummary = summariseFeedbackResults(evaluatorRecords, unmatchedFeedback, groundTruth, {
     feedbackResolution,
     generatedHistoricalMemoryCount: generatedHistoricalMemory.length,
     useManualExceptionMemory,
+    config: adaptationConfig,
   });
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(evaluationDir, { recursive: true });
-  fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(adjustedAlertsWithGroundTruth, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(adjustedAlertsPath, `${JSON.stringify(analystFacingAdjustedAlerts, null, 2)}\n`, 'utf8');
   fs.writeFileSync(generatedHistoricalMemoryPath, `${JSON.stringify(generatedHistoricalMemory, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(evaluatorRecordsPath, `${JSON.stringify(evaluatorRecords, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationJsonPath, `${JSON.stringify(evaluationSummary, null, 2)}\n`, 'utf8');
   fs.writeFileSync(evaluationMarkdownPath, renderSummaryMarkdown(evaluationSummary), 'utf8');
 
   console.log(`Fused alerts loaded: ${fusedAlerts.length}`);
   console.log(`Analyst feedback records loaded: ${analystFeedback.length}`);
+  console.log(`Calibration alert ids: ${calibrationAlertIds.size}`);
+  console.log(`Future alerts ranked: ${futureAlerts.length}`);
   console.log(`Exception memory records loaded: ${exceptionMemory.length}`);
   console.log(`Manual exception memory enabled: ${useManualExceptionMemory}`);
-  console.log(`Feedback-adjusted alerts written: ${adjustedAlertsWithGroundTruth.length}`);
+  console.log(`Analyst-facing adjusted alerts written: ${analystFacingAdjustedAlerts.length}`);
   console.log(`Generated historical memory records written: ${generatedHistoricalMemory.length}`);
   console.log(`Alerts adjusted: ${evaluationSummary.alertsAdjusted}`);
   console.log(`Direct feedback applied: ${evaluationSummary.directFeedbackAppliedCount}`);
@@ -178,6 +200,7 @@ function main() {
   console.log(`Review queue before: ${evaluationSummary.reviewQueueBefore}`);
   console.log(`Review queue after: ${evaluationSummary.reviewQueueAfter}`);
   console.log(`Feedback output: ${adjustedAlertsPath}`);
+  console.log(`Evaluator-only records: ${evaluatorRecordsPath}`);
   console.log(`Generated historical memory: ${generatedHistoricalMemoryPath}`);
   console.log(`Evaluation summary: ${evaluationMarkdownPath}`);
 }

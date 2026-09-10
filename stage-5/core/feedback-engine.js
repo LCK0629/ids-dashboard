@@ -58,20 +58,45 @@ function findMatchingException(alert, exceptionMemory = []) {
 function applyGuardrails(alert, proposedAdjustment, guardrailConfig = {}) {
   const detectionScore = clampScore(alert.detectionScore ?? alert.fusionRiskScore);
   const guardrailsApplied = [];
+  const guardrailInterventions = [];
   let requiresReviewDueToGuardrail = false;
   let cappedAdjustment = Number(proposedAdjustment || 0);
   const maximumNegativeAdjustment = Number(guardrailConfig.maximumNegativeAdjustment ?? -30);
   const maximumPositiveAdjustment = Number(guardrailConfig.maximumPositiveAdjustment ?? 20);
 
+  if (!Number.isFinite(cappedAdjustment)) {
+    guardrailsApplied.push('non_finite_adjustment_rejected');
+    guardrailInterventions.push({
+      code: 'non_finite_adjustment_rejected',
+      configuredValue: 0,
+      originalValue: proposedAdjustment,
+    });
+    cappedAdjustment = 0;
+  }
+
   if (cappedAdjustment < maximumNegativeAdjustment) {
+    const originalValue = cappedAdjustment;
     cappedAdjustment = maximumNegativeAdjustment;
-    guardrailsApplied.push('maximum_reduction_capped_at_30');
+    guardrailsApplied.push('maximum_negative_adjustment_capped');
+    guardrailInterventions.push({
+      code: 'maximum_negative_adjustment_capped',
+      configuredValue: maximumNegativeAdjustment,
+      originalValue,
+      appliedValue: cappedAdjustment,
+    });
     requiresReviewDueToGuardrail = true;
   }
 
   if (cappedAdjustment > maximumPositiveAdjustment) {
+    const originalValue = cappedAdjustment;
     cappedAdjustment = maximumPositiveAdjustment;
     guardrailsApplied.push('maximum_increase_capped');
+    guardrailInterventions.push({
+      code: 'maximum_increase_capped',
+      configuredValue: maximumPositiveAdjustment,
+      originalValue,
+      appliedValue: cappedAdjustment,
+    });
   }
 
   let operationalPriorityScore = clampScore(detectionScore + cappedAdjustment);
@@ -81,8 +106,15 @@ function applyGuardrails(alert, proposedAdjustment, guardrailConfig = {}) {
     && (alert.fusionConfidenceLevel === 'Critical' || alert.signatureSeverity === 'Critical')
     && operationalPriorityScore < Number(guardrailConfig.criticalFloor ?? 70)
   ) {
-    operationalPriorityScore = Number(guardrailConfig.criticalFloor ?? 70);
-    guardrailsApplied.push('critical_alert_floor_70');
+    const configuredFloor = Number(guardrailConfig.criticalFloor ?? 70);
+    operationalPriorityScore = configuredFloor;
+    guardrailsApplied.push('critical_alert_floor');
+    guardrailInterventions.push({
+      code: 'critical_alert_floor',
+      configuredValue: configuredFloor,
+      originalValue: clampScore(detectionScore + cappedAdjustment),
+      appliedValue: operationalPriorityScore,
+    });
     requiresReviewDueToGuardrail = true;
   }
 
@@ -91,13 +123,24 @@ function applyGuardrails(alert, proposedAdjustment, guardrailConfig = {}) {
     && alert.fusionAttackType === 'Infiltration'
     && operationalPriorityScore < Number(guardrailConfig.infiltrationFloor ?? 75)
   ) {
-    operationalPriorityScore = Number(guardrailConfig.infiltrationFloor ?? 75);
-    guardrailsApplied.push('infiltration_floor_75');
+    const configuredFloor = Number(guardrailConfig.infiltrationFloor ?? 75);
+    operationalPriorityScore = configuredFloor;
+    guardrailsApplied.push('infiltration_alert_floor');
+    guardrailInterventions.push({
+      code: 'infiltration_alert_floor',
+      configuredValue: configuredFloor,
+      originalValue: clampScore(detectionScore + cappedAdjustment),
+      appliedValue: operationalPriorityScore,
+    });
     requiresReviewDueToGuardrail = true;
   }
 
   if (alert.fusionDecision === 'SIGNATURE_ML_DISAGREE') {
     guardrailsApplied.push('signature_ml_disagreement_review_preserved');
+    guardrailInterventions.push({
+      code: 'signature_ml_disagreement_review_preserved',
+      configuredValue: true,
+    });
     requiresReviewDueToGuardrail = true;
   }
 
@@ -109,6 +152,7 @@ function applyGuardrails(alert, proposedAdjustment, guardrailConfig = {}) {
     cappedAdjustment,
     feedbackAdjustment: operationalPriorityScore - detectionScore,
     feedbackGuardrailsApplied: [...new Set(guardrailsApplied)],
+    guardrailInterventions,
     requiresReviewDueToGuardrail,
   };
 }
@@ -166,13 +210,15 @@ function applyDirectFeedback(alert, feedback, guardrailConfig = {}) {
 
   const guarded = applyGuardrails(alert, feedbackEffect.adjustment, guardrailConfig);
   const guardrailLimited = guarded.feedbackGuardrailsApplied.some((code) => (
-    code === 'maximum_reduction_capped_at_30'
-    || code === 'critical_alert_floor_70'
-    || code === 'infiltration_floor_75'
+    code === 'maximum_negative_adjustment_capped'
+    || code === 'critical_alert_floor'
+    || code === 'infiltration_alert_floor'
   ));
 
   return {
     ...guarded,
+    feedbackRecorded: true,
+    priorityAdjusted: guarded.feedbackAdjustment !== 0,
     feedbackApplied: guarded.feedbackAdjustment !== 0,
     proposedFeedbackAdjustment: guarded.proposedAdjustment,
     cappedFeedbackAdjustment: guarded.cappedAdjustment,
@@ -197,6 +243,8 @@ function applyExceptionMemory(alert, exception, guardrailConfig = {}) {
       operationalPriorityScore: detectionScore,
       currentRiskScore: detectionScore,
       feedbackApplied: false,
+      feedbackRecorded: false,
+      priorityAdjusted: false,
       feedbackAdjustment: 0,
       proposedFeedbackAdjustment: 0,
       cappedFeedbackAdjustment: 0,
@@ -217,6 +265,8 @@ function applyExceptionMemory(alert, exception, guardrailConfig = {}) {
       operationalPriorityScore: detectionScore,
       currentRiskScore: detectionScore,
       feedbackApplied: false,
+      feedbackRecorded: false,
+      priorityAdjusted: false,
       feedbackAdjustment: 0,
       proposedFeedbackAdjustment: 0,
       cappedFeedbackAdjustment: 0,
@@ -237,6 +287,8 @@ function applyExceptionMemory(alert, exception, guardrailConfig = {}) {
 
   return {
     ...guarded,
+    feedbackRecorded: false,
+    priorityAdjusted: scoreChanged,
     feedbackApplied: scoreChanged,
     proposedFeedbackAdjustment: guarded.proposedAdjustment,
     cappedFeedbackAdjustment: guarded.cappedAdjustment,
@@ -386,7 +438,7 @@ function setReviewFlag(alert, operationalPriorityScore, forceReview) {
   if (forceReview) {
     return true;
   }
-  return operationalPriorityScore >= 70;
+  return operationalPriorityScore >= Number(alert.reviewThreshold ?? 70);
 }
 
 function buildDefaultResult(alert, reason = 'No direct feedback or trusted historical feedback matched this alert.') {
@@ -396,6 +448,8 @@ function buildDefaultResult(alert, reason = 'No direct feedback or trusted histo
     operationalPriorityScore: detectionScore,
     currentRiskScore: detectionScore,
     feedbackApplied: false,
+    feedbackRecorded: false,
+    priorityAdjusted: false,
     feedbackAdjustment: 0,
     proposedFeedbackAdjustment: 0,
     cappedFeedbackAdjustment: 0,
@@ -404,6 +458,7 @@ function buildDefaultResult(alert, reason = 'No direct feedback or trusted histo
     matchedFeedbackId: null,
     feedbackReason: reason,
     feedbackGuardrailsApplied: [],
+    guardrailInterventions: [],
     analystFeedbackStatus: 'unchanged',
     forceReview: false,
     ignoredException: false,
@@ -481,7 +536,11 @@ function adjustAlertWithFeedback(alert, context = {}) {
       similarityMatched: aggregation.matchedFeedbackCount > 0,
       similarityReason: aggregation.matchedFeedbackCount > 0
         ? `Matched ${aggregation.matchedFeedbackCount} similar effective historical feedback event(s).`
-        : 'No sufficiently similar historical learning feedback passed the similarity gate.',
+        : aggregation.lowEvidenceCoverageCount > 0
+          ? 'Historical feedback was found, but similarity evidence coverage was too low.'
+          : 'No sufficiently similar historical learning feedback passed the similarity gate.',
+      lowEvidenceCoverageCount: aggregation.lowEvidenceCoverageCount,
+      lowSimilarityCount: aggregation.lowSimilarityCount,
       adaptationEligible: eligibility.eligible,
       adaptationEligibilityReason: eligibility.reason,
     };
@@ -495,6 +554,8 @@ function adjustAlertWithFeedback(alert, context = {}) {
       result = {
         ...result,
         ...guarded,
+        feedbackRecorded: false,
+        priorityAdjusted: guarded.feedbackAdjustment !== 0,
         feedbackApplied: guarded.feedbackAdjustment !== 0,
         proposedFeedbackAdjustment: proposal.proposedAdjustment,
         cappedFeedbackAdjustment: guarded.cappedAdjustment,
@@ -518,7 +579,11 @@ function adjustAlertWithFeedback(alert, context = {}) {
   }
 
   const requiresAnalystReviewBeforeFeedback = Boolean(alert.requiresAnalystReview);
-  const updatedReviewFlag = setReviewFlag(alertWithDetectionScore, result.operationalPriorityScore, result.forceReview);
+  const updatedReviewFlag = setReviewFlag(
+    { ...alertWithDetectionScore, reviewThreshold: config.guardrails?.reviewThreshold },
+    result.operationalPriorityScore,
+    result.forceReview
+  );
 
   return {
     ...alert,
@@ -528,6 +593,8 @@ function adjustAlertWithFeedback(alert, context = {}) {
     operationalPriorityScore: result.operationalPriorityScore,
     currentRiskScore: result.currentRiskScore,
     feedbackApplied: result.feedbackApplied,
+    feedbackRecorded: result.feedbackRecorded,
+    priorityAdjusted: result.priorityAdjusted,
     feedbackAdjustment: result.feedbackAdjustment,
     proposedFeedbackAdjustment: result.proposedFeedbackAdjustment ?? result.proposedAdjustment ?? 0,
     cappedFeedbackAdjustment: result.cappedFeedbackAdjustment ?? result.cappedAdjustment ?? 0,
@@ -536,6 +603,7 @@ function adjustAlertWithFeedback(alert, context = {}) {
     matchedFeedbackId: result.matchedFeedbackId || null,
     feedbackReason: result.feedbackReason,
     feedbackGuardrailsApplied: result.feedbackGuardrailsApplied || [],
+    guardrailInterventions: result.guardrailInterventions || [],
     analystFeedbackStatus: result.analystFeedbackStatus,
     adaptationSource: result.adaptationSource,
     adaptationEligible: result.adaptationEligible,
@@ -548,11 +616,13 @@ function adjustAlertWithFeedback(alert, context = {}) {
     dominantHistoricalFeedback: result.dominantHistoricalFeedback,
     historicalAgreementRatio: result.historicalAgreementRatio,
     conflictDetected: result.conflictDetected,
+    lowEvidenceCoverageCount: result.lowEvidenceCoverageCount || 0,
+    lowSimilarityCount: result.lowSimilarityCount || 0,
   };
 }
 
 function adjustAlertsWithFeedback(alerts, analystFeedback = [], exceptionMemory = [], config = {}, options = {}) {
-  const alertsById = indexById(alerts || []);
+  const alertsById = indexById(options.similarityReferenceAlerts || alerts || []);
   const feedbackResolution = resolveEffectiveFeedbackEvents(analystFeedback || []);
   const historicalFeedbackResolution = resolveEffectiveFeedbackEvents(
     options.historicalFeedbackEvents || analystFeedback || []
@@ -595,10 +665,43 @@ function adjustAlertsWithFeedback(alerts, analystFeedback = [], exceptionMemory 
       effectiveFeedbackCount: feedbackResolution.effectiveEvents.length,
       revertedFeedbackIds: feedbackResolution.revertedFeedbackIds,
       supersededFeedbackIds: feedbackResolution.supersededFeedbackIds,
+      integrityErrors: feedbackResolution.integrityErrors,
+      duplicateFeedbackIds: feedbackResolution.duplicateFeedbackIds,
       historicalSnapshotEffectiveFeedbackCount: historicalFeedbackResolution.effectiveEvents.length,
+      historicalSnapshotIntegrityErrors: historicalFeedbackResolution.integrityErrors,
     },
     useManualExceptionMemory,
   };
+}
+
+function stripGroundTruthFields(alerts = []) {
+  return alerts.map((alert) => {
+    const {
+      groundTruth,
+      trueAttackType,
+      mappedAttackType,
+      rawLabel,
+      groundTruthLabel,
+      ...analystSafeAlert
+    } = alert;
+    return analystSafeAlert;
+  });
+}
+
+function buildEvaluatorRecords(adjustedAlerts, groundTruth = null) {
+  if (!groundTruth) {
+    return adjustedAlerts.map((alert) => ({ ...alert }));
+  }
+  return adjustedAlerts.map((alert) => {
+    const truth = groundTruth[String(alert.id)] || {};
+    return {
+      ...alert,
+      groundTruth: truth.groundTruth || null,
+      trueAttackType: truth.mappedAttackType || null,
+      mappedAttackType: truth.mappedAttackType || null,
+      rawLabel: truth.rawLabel || null,
+    };
+  });
 }
 
 function attachGroundTruthFields(adjustedAlerts, groundTruth = null) {
@@ -638,9 +741,15 @@ function averageScore(alerts, field) {
 }
 
 function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], groundTruth = null, metadata = {}) {
-  const scoreAdjustmentGuardrailCount = adjustedAlerts.filter(
-    (alert) => alert.analystFeedbackStatus === 'guardrail_limited_adjustment'
-  ).length;
+  const scoreAdjustmentGuardrailCount = adjustedAlerts.filter((alert) => (
+    (alert.guardrailInterventions || []).some((intervention) => [
+      'maximum_negative_adjustment_capped',
+      'maximum_increase_capped',
+      'critical_alert_floor',
+      'infiltration_alert_floor',
+      'non_finite_adjustment_rejected',
+    ].includes(intervention.code))
+  )).length;
   const lowConfidenceExceptionIgnoredCount = adjustedAlerts.filter(
     (alert) => alert.analystFeedbackStatus === 'ignored_low_confidence_exception'
   ).length;
@@ -689,9 +798,13 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
     averageRiskChange: 0,
     averageDetectionScore: averageScore(adjustedAlerts, 'detectionScore'),
     averageOperationalPriorityScore: averageScore(adjustedAlerts, 'operationalPriorityScore'),
-    highRiskThreshold: 70,
-    highRiskAlertsBefore: adjustedAlerts.filter((alert) => alert.detectionScore >= 70).length,
-    highRiskAlertsAfter: adjustedAlerts.filter((alert) => alert.operationalPriorityScore >= 70).length,
+    highRiskThreshold: Number(metadata.config?.guardrails?.highRiskThreshold ?? 70),
+    highRiskAlertsBefore: adjustedAlerts.filter((alert) => (
+      alert.detectionScore >= Number(metadata.config?.guardrails?.highRiskThreshold ?? 70)
+    )).length,
+    highRiskAlertsAfter: adjustedAlerts.filter((alert) => (
+      alert.operationalPriorityScore >= Number(metadata.config?.guardrails?.highRiskThreshold ?? 70)
+    )).length,
     reviewQueueBefore: adjustedAlerts.filter((alert) => alert.requiresAnalystReviewBeforeFeedback).length,
     reviewQueueAfter: adjustedAlerts.filter((alert) => alert.requiresAnalystReview).length,
     similarityMatchCount,
@@ -702,6 +815,8 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
     actualAdaptationCoverage: adjustedAlerts.length ? Number((actualAdaptationCount / adjustedAlerts.length).toFixed(4)) : 0,
     feedbackResolution: metadata.feedbackResolution || null,
     generatedHistoricalMemoryCount: metadata.generatedHistoricalMemoryCount || 0,
+    lowEvidenceCoverageRejectionCount: adjustedAlerts.filter((alert) => alert.lowEvidenceCoverageCount > 0).length,
+    lowSimilarityRejectionCount: adjustedAlerts.filter((alert) => alert.lowSimilarityCount > 0).length,
     benignHighRiskBefore: null,
     benignHighRiskAfter: null,
     maliciousHighRiskBefore: null,
@@ -719,9 +834,10 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
     ).length,
     countByAnalystFeedbackStatus: {},
     countByAdaptationSource: {},
+    countByFeedbackRecorded: {},
     notes: [
       'Analyst feedback events are the source of truth. Generated historical feedback memory is derived data and should not be manually authored.',
-      'Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluation and dashboard explanation. It is not used as adaptation input.',
+      'Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.',
       'Detection score is preserved as detectionScore/fusionRiskScore. Historical feedback affects operationalPriorityScore for ranking.',
       'Manual exception memory is disabled for formal adaptive evaluation so improvements can be attributed to analyst feedback events.',
       'This is a prototype feedback evaluation, not production IDS performance.',
@@ -733,6 +849,7 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
   for (const alert of adjustedAlerts) {
     incrementCounter(summary.countByAnalystFeedbackStatus, alert.analystFeedbackStatus);
     incrementCounter(summary.countByAdaptationSource, alert.adaptationSource);
+    incrementCounter(summary.countByFeedbackRecorded, alert.feedbackRecorded ? 'recorded' : 'not_recorded');
   }
 
   if (groundTruth) {
@@ -754,10 +871,10 @@ function summariseFeedbackResults(adjustedAlerts, unmatchedFeedback = [], ground
     const maliciousAlerts = evaluatedAlerts.filter((alert) => alert.groundTruthLabel === 'malicious');
 
     summary.evaluatedWithGroundTruthCount = evaluatedAlerts.length;
-    summary.benignHighRiskBefore = benignAlerts.filter((alert) => alert.detectionScore >= 70).length;
-    summary.benignHighRiskAfter = benignAlerts.filter((alert) => alert.operationalPriorityScore >= 70).length;
-    summary.maliciousHighRiskBefore = maliciousAlerts.filter((alert) => alert.detectionScore >= 70).length;
-    summary.maliciousHighRiskAfter = maliciousAlerts.filter((alert) => alert.operationalPriorityScore >= 70).length;
+    summary.benignHighRiskBefore = benignAlerts.filter((alert) => alert.detectionScore >= summary.highRiskThreshold).length;
+    summary.benignHighRiskAfter = benignAlerts.filter((alert) => alert.operationalPriorityScore >= summary.highRiskThreshold).length;
+    summary.maliciousHighRiskBefore = maliciousAlerts.filter((alert) => alert.detectionScore >= summary.highRiskThreshold).length;
+    summary.maliciousHighRiskAfter = maliciousAlerts.filter((alert) => alert.operationalPriorityScore >= summary.highRiskThreshold).length;
     summary.reviewedBenignBefore = benignAlerts.filter((alert) => alert.requiresAnalystReviewBeforeFeedback).length;
     summary.reviewedBenignAfter = benignAlerts.filter((alert) => alert.requiresAnalystReview).length;
     summary.reviewedMaliciousBefore = maliciousAlerts.filter((alert) => alert.requiresAnalystReviewBeforeFeedback).length;
@@ -788,5 +905,7 @@ module.exports = {
   adjustAlertWithFeedback,
   adjustAlertsWithFeedback,
   attachGroundTruthFields,
+  stripGroundTruthFields,
+  buildEvaluatorRecords,
   summariseFeedbackResults,
 };

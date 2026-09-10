@@ -1,4 +1,9 @@
-const { calculateSimilarity, getValueByPath, isAvailable } = require('./similarity-engine');
+const {
+  calculateSimilarity,
+  canonicalize,
+  getValueByPath,
+  isAvailable,
+} = require('./similarity-engine');
 
 const DEFAULT_LEARNING_TYPES = [
   'mark_false_positive',
@@ -13,10 +18,11 @@ const WORKFLOW_TYPES = [
   'uncertain',
 ];
 
-function normalizeFeedbackEvent(event, index = 0) {
+function normalizeFeedbackEvent(event, index = 0, options = {}) {
+  const allowGeneratedIds = options.allowGeneratedIds === true;
   return {
     ...event,
-    feedbackId: event.feedbackId || `FB-GENERATED-${index + 1}`,
+    feedbackId: event.feedbackId || (allowGeneratedIds ? `FB-GENERATED-${index + 1}` : null),
     eventType: event.eventType || 'feedback_submitted',
     appliesToFutureSimilarAlerts: event.appliesToFutureSimilarAlerts !== false,
   };
@@ -27,40 +33,135 @@ function timestampValue(event) {
   return Number.isNaN(value) ? 0 : value;
 }
 
-function resolveEffectiveFeedbackEvents(events = []) {
-  const normalizedEvents = events.map(normalizeFeedbackEvent);
-  const reverted = new Set();
-  const superseded = new Set();
+function validateFeedbackEvents(events = []) {
+  const errors = [];
+  const byId = new Map();
+  const duplicateIds = new Set();
 
-  for (const event of normalizedEvents) {
-    if (event.revertsFeedbackId) {
-      reverted.add(String(event.revertsFeedbackId));
+  for (const event of events) {
+    if (!event.feedbackId) {
+      errors.push({
+        code: 'missing_feedback_id',
+        message: 'Formal feedback events must include a stable feedbackId.',
+        event,
+      });
+      continue;
     }
-    if (event.supersedesFeedbackId) {
-      superseded.add(String(event.supersedesFeedbackId));
+    const id = String(event.feedbackId);
+    if (byId.has(id)) {
+      duplicateIds.add(id);
+      errors.push({
+        code: 'duplicate_feedback_id',
+        feedbackId: id,
+        message: `Duplicate feedbackId detected: ${id}.`,
+      });
+    } else {
+      byId.set(id, event);
     }
   }
 
-  const submittedEvents = normalizedEvents
-    .filter((event) => event.eventType === 'feedback_submitted')
-    .filter((event) => !reverted.has(String(event.feedbackId)))
-    .filter((event) => !superseded.has(String(event.feedbackId)))
+  for (const event of events) {
+    const references = [
+      ['supersedesFeedbackId', event.supersedesFeedbackId],
+      ['revertsFeedbackId', event.revertsFeedbackId],
+    ].filter(([, value]) => value);
+
+    for (const [field, value] of references) {
+      const referenced = byId.get(String(value));
+      if (!referenced) {
+        errors.push({
+          code: `invalid_${field}`,
+          feedbackId: event.feedbackId || null,
+          referencedFeedbackId: String(value),
+          message: `${field} references a missing feedback event.`,
+        });
+        continue;
+      }
+      if (referenced.alertId && event.alertId && String(referenced.alertId) !== String(event.alertId)) {
+        errors.push({
+          code: `cross_alert_${field}`,
+          feedbackId: event.feedbackId || null,
+          referencedFeedbackId: String(value),
+          message: `${field} must reference a feedback event for the same alert.`,
+        });
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    duplicateIds: [...duplicateIds],
+  };
+}
+
+function activeEventForAlert(event, eventById, revertedIds) {
+  if (!event || revertedIds.has(String(event.feedbackId))) {
+    return null;
+  }
+  return event;
+}
+
+function resolveEffectiveFeedbackEvents(events = [], options = {}) {
+  const normalizedEvents = events.map((event, index) => normalizeFeedbackEvent(event, index, options));
+  const integrity = validateFeedbackEvents(normalizedEvents);
+  const invalidFeedbackIds = new Set(integrity.errors.map((error) => String(error.feedbackId)).filter((id) => id !== 'null'));
+  const eventById = new Map(
+    normalizedEvents
+      .filter((event) => event.feedbackId && !invalidFeedbackIds.has(String(event.feedbackId)))
+      .map((event) => [String(event.feedbackId), event])
+  );
+  const reverted = new Set();
+  const superseded = new Set();
+  const currentByAlert = new Map();
+
+  const sortedEvents = normalizedEvents
+    .filter((event) => event.feedbackId && !invalidFeedbackIds.has(String(event.feedbackId)))
     .sort((a, b) => timestampValue(a) - timestampValue(b));
 
-  const effectiveByAlert = new Map();
-  for (const event of submittedEvents) {
+  for (const event of sortedEvents) {
     if (!event.alertId) {
       continue;
     }
-    effectiveByAlert.set(String(event.alertId), event);
+    const alertKey = String(event.alertId);
+    if (event.eventType === 'feedback_reverted') {
+      const target = eventById.get(String(event.revertsFeedbackId || ''));
+      if (!target) {
+        continue;
+      }
+      reverted.add(String(target.feedbackId));
+      if (currentByAlert.get(alertKey)?.feedbackId === target.feedbackId) {
+        const previous = target.supersedesFeedbackId
+          ? eventById.get(String(target.supersedesFeedbackId))
+          : null;
+        const restored = activeEventForAlert(previous, eventById, reverted);
+        if (restored) {
+          currentByAlert.set(alertKey, restored);
+        } else {
+          currentByAlert.delete(alertKey);
+        }
+      }
+      continue;
+    }
+
+    if (event.eventType !== 'feedback_submitted') {
+      continue;
+    }
+
+    if (event.supersedesFeedbackId) {
+      superseded.add(String(event.supersedesFeedbackId));
+    }
+    currentByAlert.set(alertKey, event);
   }
 
   return {
     allEvents: normalizedEvents,
-    effectiveEvents: [...effectiveByAlert.values()],
-    effectiveByAlert,
+    effectiveEvents: [...currentByAlert.values()],
+    effectiveByAlert: currentByAlert,
     revertedFeedbackIds: [...reverted],
     supersededFeedbackIds: [...superseded],
+    integrityErrors: integrity.errors,
+    duplicateFeedbackIds: integrity.duplicateIds,
     auditEventCount: normalizedEvents.length,
   };
 }
@@ -84,7 +185,7 @@ function hasExactContext(currentAlert, historicalAlert, fields = []) {
       unavailable.push(field);
       continue;
     }
-    if (String(currentValue).trim().toLowerCase() !== String(historicalValue).trim().toLowerCase()) {
+    if (canonicalize(currentValue) !== canonicalize(historicalValue)) {
       differed.push(field);
     }
   }
@@ -186,6 +287,12 @@ function aggregateHistoricalFeedback(currentAlert, alertsById, effectiveEvents =
   const averageSimilarity = matchedFeedbackCount
     ? Number((matchedFeedback.reduce((sum, item) => sum + item.similarityScore, 0) / matchedFeedbackCount).toFixed(4))
     : 0;
+  const lowEvidenceCoverageCount = similarityAttempts.filter((attempt) => (
+    attempt.similarity && attempt.similarity.failureReason === 'below_evidence_coverage_threshold'
+  )).length;
+  const lowSimilarityCount = similarityAttempts.filter((attempt) => (
+    attempt.similarity && attempt.similarity.failureReason === 'below_similarity_threshold'
+  )).length;
 
   return {
     matchedFeedbackCount,
@@ -198,6 +305,8 @@ function aggregateHistoricalFeedback(currentAlert, alertsById, effectiveEvents =
     agreementRatio: dominant.agreementRatio,
     conflictDetected: dominant.conflictDetected,
     averageSimilarity,
+    lowEvidenceCoverageCount,
+    lowSimilarityCount,
     matchedFeedback,
     sourceFeedbackIds: matchedFeedback.map((item) => item.feedbackId),
     similarityAttempts,

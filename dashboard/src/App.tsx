@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import feedbackAdjustedAlerts from './data/feedback-adjusted-alerts.sample.json';
-import feedbackEvaluationSummary from './data/feedback-evaluation-summary.json';
-import fusionEvaluationSummary from './data/fusion-evaluation-summary.json';
+import analystAlertsData from './data/analyst-alerts.v1.json';
+import evaluatorSummaryData from './data/evaluator-summary.v1.json';
 import { AlertDetailPanel } from './components/AlertDetailPanel';
 import { AlertQueue } from './components/AlertQueue';
 import { FeedbackSummaryPanel } from './components/FeedbackSummaryPanel';
@@ -22,10 +21,13 @@ import type {
   FusionEvaluationSummary,
 } from './types/alerts';
 import type { AnalystFeedbackAction, LocalFeedbackMap, ReplaySpeed } from './types/feedback';
+import type { AnalystArtifactV1, EvaluatorSummaryArtifactV1 } from './types/dashboardData';
+import { validateAnalystArtifact } from './data-contract/analystDashboardContract.js';
+import { adaptAnalystAlertsForLegacyComponents } from './utils/dashboardAdapter';
 import {
-  applyLocalFeedbackOverrides,
+  applySessionPreviewOverrides,
   calculateSessionKpis,
-  createLocalFeedbackOverride,
+  createSessionPreviewOverride,
 } from './utils/feedback';
 import {
   attackTypeOptions,
@@ -36,9 +38,16 @@ import {
 } from './utils/alertFilters';
 import { replayIntervalMs } from './utils/replay';
 
-const alerts = feedbackAdjustedAlerts as FeedbackAdjustedAlert[];
-const feedbackSummary = feedbackEvaluationSummary as FeedbackEvaluationSummary;
-const fusionSummary = fusionEvaluationSummary as FusionEvaluationSummary;
+const analystArtifactValidation = validateAnalystArtifact(analystAlertsData);
+const analystArtifact = analystArtifactValidation.valid
+  ? analystAlertsData as AnalystArtifactV1
+  : null;
+const evaluatorArtifact = evaluatorSummaryData as EvaluatorSummaryArtifactV1;
+const alerts = analystArtifact
+  ? adaptAnalystAlertsForLegacyComponents(analystArtifact.alerts)
+  : [];
+const feedbackSummary = evaluatorArtifact.feedbackSummary as unknown as FeedbackEvaluationSummary;
+const fusionSummary = evaluatorArtifact.fusionSummary as unknown as FusionEvaluationSummary;
 
 const viewLabels: Record<DashboardView, string> = {
   operations: 'Operations',
@@ -60,8 +69,6 @@ const filterTitles: Record<FilterKey, string> = {
   'signature-ml-disagree': 'Signature / ML Disagreement Records',
   'guardrail-applied': 'Score Guardrail Applied Records',
   'exception-trust-gate': 'Exception Trust Gate Rejected Records',
-  benign: 'Benign Detection Records',
-  malicious: 'Malicious Detection Records',
 };
 
 export default function App() {
@@ -75,7 +82,7 @@ export default function App() {
   const [localFeedbackMap, setLocalFeedbackMap] = useState<LocalFeedbackMap>({});
 
   const locallyAdjustedAlerts = useMemo(
-    () => applyLocalFeedbackOverrides(alerts, localFeedbackMap),
+    () => applySessionPreviewOverrides(alerts, localFeedbackMap),
     [localFeedbackMap]
   );
   const replayVisibleAlerts = useMemo(
@@ -134,7 +141,7 @@ export default function App() {
   function applyFeedback(alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) {
     setLocalFeedbackMap((currentMap) => ({
       ...currentMap,
-      [alert.id]: createLocalFeedbackOverride(alert, action),
+      [alert.id]: createSessionPreviewOverride(alert, action),
     }));
     setSelectedAlertId(alert.id);
   }
@@ -154,6 +161,22 @@ export default function App() {
     setIsReplayRunning(false);
     setLocalFeedbackMap({});
     setSelectedAlertId(undefined);
+  }
+
+  if (!analystArtifact) {
+    return (
+      <main className="dashboard artifact-error" role="alert">
+        <section className="panel full-panel">
+          <div className="panel-header">
+            <h1>Dashboard data unavailable</h1>
+          </div>
+          <p>The analyst data artifact failed schema validation. No alert records were loaded.</p>
+          <ul>
+            {analystArtifactValidation.errors.map((error) => <li key={error}>{error}</li>)}
+          </ul>
+        </section>
+      </main>
+    );
   }
 
   return (

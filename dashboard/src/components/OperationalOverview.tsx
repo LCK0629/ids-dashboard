@@ -26,12 +26,12 @@ export function OperationalOverview({ alerts, feedbackSummary, flowAlertCounts }
     ['Detection records', flowAlertCounts.allDetectionRecords, 'Flow Processing'],
     ['Active alerts', flowAlertCounts.activeAlerts, 'Alert Promotion'],
     ['Requires review', flowAlertCounts.reviewRequiredAlerts, 'Alert Promotion'],
-    ['High-risk records', flowAlertCounts.highRiskRecords, 'Alert Promotion'],
+    ['High-priority records', flowAlertCounts.highRiskRecords, 'Alert Promotion'],
     ['Suppressed / resolved', flowAlertCounts.suppressedOrResolvedRecords, 'Suppression / Feedback'],
     ['Feedback adjusted', flowAlertCounts.feedbackAdjustedRecords, 'Suppression / Feedback'],
     ['Score guardrail-limited', flowAlertCounts.guardrailLimitedRecords, 'Suppression / Feedback'],
     ['Exception trust gate', flowAlertCounts.exceptionTrustGateRejectedRecords, 'Exception Memory'],
-    ['After avg risk', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Current pipeline score average'],
+    ['Avg Operational Priority', Number(feedbackSummary.averageRiskAfterFeedback ?? 0), 'Stage 5 ranking score average'],
   ] as const;
 
   return (
@@ -50,9 +50,9 @@ export function OperationalOverview({ alerts, feedbackSummary, flowAlertCounts }
               <strong>{label}</strong>
               <span>{note}</span>
             </div>
-            <b>{label === 'After avg risk' ? formatScore(value) : metric(value)}</b>
+            <b>{label === 'Avg Operational Priority' ? formatScore(value) : metric(value)}</b>
             <div className="bar-track">
-              <span style={{ width: barWidth(value, label === 'After avg risk' ? 100 : maxCount) }} />
+              <span style={{ width: barWidth(value, label === 'Avg Operational Priority' ? 100 : maxCount) }} />
             </div>
           </div>
         ))}

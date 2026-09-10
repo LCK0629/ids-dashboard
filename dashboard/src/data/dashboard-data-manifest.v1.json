@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "ids-dashboard-analyst-v1",
+  "artifactType": "dashboard_data_manifest",
+  "generatedAtPolicy": "omitted_for_deterministic_artifact",
+  "generationMode": "reproducible_stage3_stage4_stage5_export",
+  "artifacts": {
+    "analystOperationalData": {
+      "path": "dashboard/src/data/analyst-alerts.v1.json",
+      "sha256": "3aec3fc321fd190dbec29d6cd1397c1087d652019a0eacb3b83f552664d52197",
+      "recordCount": 995
+    },
+    "evaluatorSummary": {
+      "path": "dashboard/src/data/evaluator-summary.v1.json",
+      "sha256": "c872a92c601f7cbf06a373bdec347611ac1a138666e398641fc3a8f3f308004a"
+    },
+    "demonstrationScenarios": {
+      "path": "dashboard/src/data/adaptation-demo-scenarios.v1.json",
+      "sha256": "85f6454ff42fb54013830717b619b15de2335f2adc718f86765f9bd493d6eb7d",
+      "scenarioCount": 6
+    }
+  },
+  "sources": {
+    "paths": {
+      "analystInput": ".tmp-stage-3-artifacts/stage5b/stage5/outputs/feedback-adjusted-alerts.sample.json",
+      "feedbackSummary": ".tmp-stage-3-artifacts/stage5b/stage5/evaluation/feedback-evaluation-summary.json",
+      "fusionSummary": ".tmp-stage-3-artifacts/stage5b/stage4/evaluation/fusion-evaluation-summary.json",
+      "adaptationConfig": "stage-5/config/adaptation-config.json"
+    },
+    "hashes": {
+      "analystInputSha256": "5baba7dd7013aa1b88fb58158ed9343a4430ec6e21d36224a14bab67fc7f3336",
+      "feedbackSummarySha256": "9ee2a5eb4f823a025ff312b49de981591b06bf78d927e30d00e38cf2c79bd422",
+      "fusionSummarySha256": "6716eba7aa4d872b32c0953e1afacef350f5d272cbc42b95563bdd9e0d7fb0d3"
+    },
+    "modelSha256": "0a002d41d20f9b8ae1c7d1231f4c47b010f6bea2c34537c4fbb0554594e4af4d",
+    "adaptationConfigSha256": "64c3201cfabbdd497b1a0cd02663d32a1801ea5b40f0c040d617d7c78d6dbe7a"
+  },
+  "privacy": {
+    "groundTruthFieldCountInAnalystArtifact": 0,
+    "localPathOrCredentialFindingCount": 0,
+    "networkIdentifierInventory": [
+      "protocol",
+      "sourcePort",
+      "destinationPort",
+      "No source or destination IP address is exported by analyst schema v1."
+    ],
+    "publicationContext": "offline_research_data_prototype"
+  }
+}

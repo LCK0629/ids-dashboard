@@ -67,8 +67,8 @@ export function InvestigationsPanel({ alert, onApplyFeedback, onResetFeedback }:
             <strong>{evidenceSource(alert)}</strong>
           </article>
           <article className="metric-card">
-            <span>Current risk</span>
-            <strong>{formatScore(alert.currentRiskScore)}</strong>
+            <span>Operational Priority</span>
+            <strong>{formatScore(alert.operationalPriorityScore)}</strong>
           </article>
           <article className="metric-card">
             <span>Review status</span>
@@ -127,8 +127,8 @@ export function InvestigationsPanel({ alert, onApplyFeedback, onResetFeedback }:
         <div className="explain-panel">
           <h3>Fusion Decision</h3>
           <p>
-            Fusion decision: {value(alert.fusionDecision)}. Fusion risk score: {formatScore(alert.fusionRiskScore)}.
-            Current risk score: {formatScore(alert.currentRiskScore)}. Evidence source: {evidenceSource(alert)}.
+            Fusion decision: {value(alert.fusionDecision)}. Detection Score: {formatScore(alert.detectionScore)}.
+            Operational Priority: {formatScore(alert.operationalPriorityScore)}. Evidence source: {evidenceSource(alert)}.
           </p>
         </div>
         <div className="explain-panel">

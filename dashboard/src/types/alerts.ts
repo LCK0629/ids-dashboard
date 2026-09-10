@@ -10,9 +10,7 @@ export type FilterKey =
   | 'signature-hit'
   | 'signature-ml-disagree'
   | 'guardrail-applied'
-  | 'exception-trust-gate'
-  | 'benign'
-  | 'malicious';
+  | 'exception-trust-gate';
 
 export type AttackTypeFilter = 'all' | string;
 
@@ -31,6 +29,8 @@ export interface FlowAlertCounts {
 
 export interface FeedbackAdjustedAlert {
   id: string;
+  detectionScore: number;
+  operationalPriorityScore: number;
   flowFeatureSummary?: {
     protocol?: string | number;
     sourcePort?: number;
@@ -61,6 +61,12 @@ export interface FeedbackAdjustedAlert {
   fusionDecision?: string;
   fusionEvidence?: string;
   fusionConfidenceLevel?: string;
+  mlRecordPresent?: boolean;
+  mlPredictionStatus?: string;
+  mlEvidenceAvailable?: boolean;
+  mlFailureReason?: string | null;
+  mlSchemaMode?: string;
+  mlPredictedClassIndex?: number | null;
   signatureHit?: boolean;
   signatureId?: string | null;
   signatureName?: string | null;
@@ -81,17 +87,36 @@ export interface FeedbackAdjustedAlert {
   signatureEvidence?: string;
   mlPredictedAttackType?: string | null;
   modelConfidence?: number | null;
-  baseRiskScore?: number;
+  classProbabilities?: Record<string, number> | null;
+  secondBestClass?: string | null;
+  predictionMargin?: number | null;
+  modelProvenance?: Record<string, string | null> | null;
+  mlThreatEvidenceScore?: number | null;
+  mlExplanation?: Record<string, unknown> | null;
   matchedFeedbackId?: string | null;
   matchedExceptionId?: string | null;
   matchedExceptionType?: string | null;
   feedbackReason?: string;
   feedbackGuardrailsApplied?: string[];
+  guardrailInterventions?: Array<Record<string, unknown>>;
   analystFeedbackStatus?: string;
-  groundTruth?: string;
-  trueAttackType?: string;
-  mappedAttackType?: string;
-  rawLabel?: string;
+  feedbackRecorded?: boolean;
+  priorityAdjusted?: boolean;
+  proposedFeedbackAdjustment?: number;
+  cappedFeedbackAdjustment?: number;
+  adaptationSource?: string;
+  adaptationEligible?: boolean;
+  adaptationEligibilityReason?: string;
+  adaptationExplanation?: string;
+  similarityMatched?: boolean;
+  similarityReason?: string;
+  matchedHistoricalFeedbackCount?: number;
+  matchedHistoricalFeedbackIds?: string[];
+  dominantHistoricalFeedback?: string | null;
+  historicalAgreementRatio?: number;
+  conflictDetected?: boolean;
+  lowEvidenceCoverageCount?: number;
+  lowSimilarityCount?: number;
   stage5CurrentRiskScore?: number;
   stage5RequiresAnalystReview?: boolean;
   localFeedbackAction?: string;

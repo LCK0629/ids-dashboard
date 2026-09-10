@@ -1,0 +1,330 @@
+{
+  "schemaVersion": "ids-dashboard-analyst-v1",
+  "artifactType": "evaluator_summary",
+  "generationMetadata": {
+    "generatedAtPolicy": "omitted_for_deterministic_artifact",
+    "sourcePaths": {
+      "feedbackSummary": ".tmp-stage-3-artifacts/stage5b/stage5/evaluation/feedback-evaluation-summary.json",
+      "fusionSummary": ".tmp-stage-3-artifacts/stage5b/stage4/evaluation/fusion-evaluation-summary.json"
+    },
+    "sourceHashes": {
+      "feedbackSummarySha256": "9ee2a5eb4f823a025ff312b49de981591b06bf78d927e30d00e38cf2c79bd422",
+      "fusionSummarySha256": "6716eba7aa4d872b32c0953e1afacef350f5d272cbc42b95563bdd9e0d7fb0d3"
+    },
+    "groundTruthBoundary": "aggregate_evaluator_metrics_only"
+  },
+  "fusionSummary": {
+    "totalFusedAlerts": 1000,
+    "outOfScopeMlPredictionCount": 0,
+    "idAlignmentSummary": {
+      "stage2RecordCount": 1000,
+      "stage3RecordCount": 1000,
+      "stage3PredictionCount": 1000,
+      "stage3AvailablePredictionCount": 996,
+      "stage3UnavailablePredictionCount": 4,
+      "matchedStage3RecordCount": 1000,
+      "matchedAvailablePredictionCount": 996,
+      "matchedUnavailablePredictionCount": 4,
+      "matchedIdCount": 1000,
+      "stage2OnlyCount": 0,
+      "stage3OutOfScopeCount": 0,
+      "overlapRateAgainstStage2": 1,
+      "overlapRateAgainstStage3": 1,
+      "alignmentStatus": "OK",
+      "alignmentWarning": null,
+      "stage2OnlyIdsSample": [],
+      "outOfScopeMlPredictionIdsSample": []
+    },
+    "countByFusionDecision": {
+      "SIGNATURE_ONLY_ML_BENIGN": 15,
+      "ML_ONLY_HIGH_CONFIDENCE": 409,
+      "ML_ONLY_MEDIUM_CONFIDENCE": 96,
+      "LOW_RISK_BENIGN": 476,
+      "LOW_RISK_ML_UNAVAILABLE": 4
+    },
+    "countByFusionConfidenceLevel": {
+      "Critical": 317,
+      "High": 107,
+      "Medium": 105,
+      "Low": 471
+    },
+    "countRequiringAnalystReview": 424,
+    "averageFusionRiskScore": 43.56,
+    "maxFusionRiskScore": 90,
+    "minFusionRiskScore": 0,
+    "countByFusionAttackType": {
+      "Web Attack": 155,
+      "DoS": 127,
+      "Botnet": 84,
+      "DDoS": 76,
+      "Brute Force": 78,
+      "Benign": 480
+    },
+    "signatureMlAgreementCount": 0,
+    "signatureMlDisagreementCount": 15,
+    "mlOnlyAlertCount": 505,
+    "signatureOnlyAlertCount": 15,
+    "infiltrationMlLimitationCount": 0,
+    "notes": [
+      "Stage 4 is a prototype fusion evaluation, not final IDS performance.",
+      "Ground truth is joined only after fusion for evaluation.",
+      "Current Stage 3 ML artifacts do not include Infiltration; Stage 4 retains Infiltration signature alerts.",
+      "Fusion scope is defined by Stage 2 signature records (the Stage 1 sample). Stage 3 predictions whose id is outside that scope come from a different Stage 3 test set and are excluded from fusion rather than unioned in.",
+      "Stage 3 modelConfidence is a classifier softprob score. Stage 4 derives class-aware mlThreatEvidenceScore separately; modelConfidence is not treated as threat risk.",
+      "Stage 3 TreeSHAP evidence is passed through as explanation data only. SHAP values are not used for fusion scoring, risk, or priority."
+    ],
+    "groundTruthEvaluation": {
+      "countByTrueAttackType": {
+        "Benign": 500,
+        "Botnet": 84,
+        "DoS": 83,
+        "DDoS": 83,
+        "Web Attack": 83,
+        "Brute Force": 84,
+        "Infiltration": 83
+      },
+      "countByFusionAttackType": {
+        "Web Attack": 155,
+        "DoS": 127,
+        "Botnet": 84,
+        "DDoS": 76,
+        "Brute Force": 78,
+        "Benign": 480
+      },
+      "matchingFusionAttackTypeCount": 792,
+      "evaluatedAlertCount": 1000,
+      "simpleFusionAccuracy": 0.792,
+      "falsePositiveStyleCount": 109,
+      "falseNegativeStyleCount": 89,
+      "classificationMetrics": {
+        "accuracy": 0.792,
+        "macroF1": 0.7383,
+        "weightedF1": 0.7636,
+        "perClass": {
+          "Benign": {
+            "precision": 0.8146,
+            "recall": 0.782,
+            "f1": 0.798,
+            "support": 500
+          },
+          "Botnet": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 84
+          },
+          "Brute Force": {
+            "precision": 0.9615,
+            "recall": 0.8929,
+            "f1": 0.9259,
+            "support": 84
+          },
+          "DDoS": {
+            "precision": 1,
+            "recall": 0.9157,
+            "f1": 0.956,
+            "support": 83
+          },
+          "DoS": {
+            "precision": 0.6535,
+            "recall": 1,
+            "f1": 0.7904,
+            "support": 83
+          },
+          "Infiltration": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "support": 83
+          },
+          "Web Attack": {
+            "precision": 0.5355,
+            "recall": 1,
+            "f1": 0.6975,
+            "support": 83
+          }
+        },
+        "confusionMatrix": {
+          "Benign": {
+            "Benign": 391,
+            "Botnet": 0,
+            "Brute Force": 3,
+            "DDoS": 0,
+            "DoS": 35,
+            "Infiltration": 0,
+            "Web Attack": 71
+          },
+          "Botnet": {
+            "Benign": 0,
+            "Botnet": 84,
+            "Brute Force": 0,
+            "DDoS": 0,
+            "DoS": 0,
+            "Infiltration": 0,
+            "Web Attack": 0
+          },
+          "Brute Force": {
+            "Benign": 0,
+            "Botnet": 0,
+            "Brute Force": 75,
+            "DDoS": 0,
+            "DoS": 9,
+            "Infiltration": 0,
+            "Web Attack": 0
+          },
+          "DDoS": {
+            "Benign": 6,
+            "Botnet": 0,
+            "Brute Force": 0,
+            "DDoS": 76,
+            "DoS": 0,
+            "Infiltration": 0,
+            "Web Attack": 1
+          },
+          "DoS": {
+            "Benign": 0,
+            "Botnet": 0,
+            "Brute Force": 0,
+            "DDoS": 0,
+            "DoS": 83,
+            "Infiltration": 0,
+            "Web Attack": 0
+          },
+          "Infiltration": {
+            "Benign": 83,
+            "Botnet": 0,
+            "Brute Force": 0,
+            "DDoS": 0,
+            "DoS": 0,
+            "Infiltration": 0,
+            "Web Attack": 0
+          },
+          "Web Attack": {
+            "Benign": 0,
+            "Botnet": 0,
+            "Brute Force": 0,
+            "DDoS": 0,
+            "DoS": 0,
+            "Infiltration": 0,
+            "Web Attack": 83
+          }
+        }
+      },
+      "binaryDetectionMetrics": {
+        "positiveClass": "malicious",
+        "negativeClass": "benign",
+        "truePositive": 411,
+        "trueNegative": 391,
+        "falsePositive": 109,
+        "falseNegative": 89,
+        "precision": 0.7904,
+        "recall": 0.822,
+        "specificity": 0.782,
+        "f1": 0.8059
+      },
+      "riskPrioritisationMetrics": {
+        "averageFusionRiskScoreBenign": 17.66,
+        "averageFusionRiskScoreMalicious": 69.47,
+        "top50Precision": 0.9,
+        "top100Precision": 0.95,
+        "top200Precision": 0.975,
+        "highRiskThreshold": 70,
+        "highRiskThresholdPrecision": 0.8467,
+        "highRiskAlertCount": 424,
+        "benignRecordsWithHighFusionRiskScore": 65,
+        "maliciousRecordsWithLowFusionRiskScore": 89,
+        "lowRiskThresholdForMalicious": 40
+      },
+      "analystReviewMetrics": {
+        "requiresAnalystReviewCount": 424,
+        "reviewRate": 0.424,
+        "reviewedMaliciousCount": 359,
+        "reviewedBenignCount": 65,
+        "reviewPrecision": 0.8467,
+        "maliciousRecordsNotRequiringReview": 141,
+        "benignRecordsRequiringReview": 65
+      }
+    }
+  },
+  "feedbackSummary": {
+    "totalAlerts": 995,
+    "evaluationSplit": "frozen_calibration_held_out",
+    "calibrationAlertCount": 5,
+    "heldOutAlertCount": 995,
+    "ignoredHeldOutFeedbackCount": 0,
+    "detectionScoreField": "detectionScore",
+    "operationalPriorityScoreField": "operationalPriorityScore",
+    "manualExceptionMemoryEnabled": false,
+    "alertsAdjusted": 0,
+    "alertsUnchanged": 995,
+    "directFeedbackAppliedCount": 0,
+    "unmatchedDirectFeedbackCount": 0,
+    "historicalFeedbackAdaptationCount": 0,
+    "exceptionMemoryAppliedCount": 0,
+    "ignoredExceptionCount": 0,
+    "guardrailAppliedCount": 0,
+    "scoreAdjustmentGuardrailCount": 0,
+    "exceptionRejectedByTrustGateCount": 0,
+    "lowConfidenceExceptionIgnoredCount": 0,
+    "insufficientFeedbackExceptionIgnoredCount": 0,
+    "averageRiskBeforeFeedback": 43.4,
+    "averageRiskAfterFeedback": 43.4,
+    "averageRiskChange": 0,
+    "averageDetectionScore": 43.4,
+    "averageOperationalPriorityScore": 43.4,
+    "highRiskThreshold": 70,
+    "highRiskAlertsBefore": 421,
+    "highRiskAlertsAfter": 421,
+    "reviewQueueBefore": 421,
+    "reviewQueueAfter": 421,
+    "similarityMatchCount": 204,
+    "similarityMatchCoverage": 0.205,
+    "adaptationEligibleCount": 0,
+    "adaptationEligibilityCoverage": 0,
+    "actualAdaptationCount": 0,
+    "actualAdaptationCoverage": 0,
+    "feedbackResolution": {
+      "auditEventCount": 0,
+      "effectiveFeedbackCount": 0,
+      "revertedFeedbackIds": [],
+      "supersededFeedbackIds": [],
+      "integrityErrors": [],
+      "duplicateFeedbackIds": [],
+      "historicalSnapshotEffectiveFeedbackCount": 6,
+      "historicalSnapshotIntegrityErrors": []
+    },
+    "generatedHistoricalMemoryCount": 3,
+    "lowEvidenceCoverageRejectionCount": 0,
+    "lowSimilarityRejectionCount": 995,
+    "benignHighRiskBefore": 63,
+    "benignHighRiskAfter": 63,
+    "maliciousHighRiskBefore": 358,
+    "maliciousHighRiskAfter": 358,
+    "reviewedBenignBefore": 63,
+    "reviewedBenignAfter": 63,
+    "reviewedMaliciousBefore": 358,
+    "reviewedMaliciousAfter": 358,
+    "truePositiveSuppressionCount": 0,
+    "infiltrationAdjustedCount": 0,
+    "infiltrationGuardrailCount": 0,
+    "countByAnalystFeedbackStatus": {
+      "unchanged": 995
+    },
+    "countByAdaptationSource": {
+      "none": 995
+    },
+    "countByFeedbackRecorded": {
+      "not_recorded": 995
+    },
+    "notes": [
+      "Analyst feedback events are the source of truth. Generated historical feedback memory is derived data and should not be manually authored.",
+      "This evaluation uses a frozen calibration / held-out split. It should not be described as temporal evaluation until reliable chronological ordering metadata is used.",
+      "Ground truth is joined only after detection, fusion, feedback aggregation, and priority adaptation for evaluator-only records. It is not written to the analyst-facing alert artifact and is not used as adaptation input.",
+      "Full evaluator-only records are reproducible from the runner and are not required as the primary committed evidence.",
+      "Detection score is preserved as detectionScore/fusionRiskScore. Historical feedback affects operationalPriorityScore for ranking.",
+      "Manual exception memory is disabled for formal adaptive evaluation so improvements can be attributed to analyst feedback events.",
+      "This is a prototype feedback evaluation, not production IDS performance."
+    ],
+    "evaluatedWithGroundTruthCount": 995
+  }
+}

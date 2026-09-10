@@ -58,7 +58,7 @@ export function LatestActivityPanel({
               <span>{alert.fusionAttackType || alert.signatureAttackType || 'Unknown'}</span>
             </span>
             <span className="latest-activity-meta">
-              <b>{formatScore(alert.currentRiskScore)}</b>
+              <b>{formatScore(alert.operationalPriorityScore)}</b>
               <small>{alert.localFeedbackLabel || alert.fusionDecision || 'No decision'}</small>
             </span>
           </button>

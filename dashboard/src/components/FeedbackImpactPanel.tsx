@@ -44,7 +44,7 @@ export function FeedbackImpactPanel({ alert }: FeedbackImpactPanelProps) {
       <div className="detail-grid">
         <DetailItem label="Before feedback">{formatScore(originalPipelineRisk)}</DetailItem>
         <DetailItem label="After feedback">{formatScore(interactiveCurrentRisk)}</DetailItem>
-        <DetailItem label="Fusion risk score">{formatScore(alert.fusionRiskScore)}</DetailItem>
+        <DetailItem label="Detection Score">{formatScore(alert.detectionScore)}</DetailItem>
         <DetailItem label="Score adjustment">
           {interactiveAdjustment > 0 ? `+${interactiveAdjustment}` : interactiveAdjustment}
         </DetailItem>

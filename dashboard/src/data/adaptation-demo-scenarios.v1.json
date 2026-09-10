@@ -1,0 +1,706 @@
+{
+  "schemaVersion": "ids-dashboard-analyst-v1",
+  "artifactType": "demonstration_scenarios",
+  "generationMetadata": {
+    "generationMode": "deterministic_stage5_core_demonstration",
+    "generatedAtPolicy": "omitted_for_deterministic_artifact",
+    "formalEvaluationResult": false,
+    "scoringAuthority": "stage-5/core/feedback-engine.js",
+    "manualExceptionMemoryEnabled": false
+  },
+  "summary": {
+    "scenarioCount": 6,
+    "successfulDownwardAdaptationCount": 2,
+    "successfulUpwardAdaptationCount": 1,
+    "noAdaptationCount": 3,
+    "conflictNoAdaptationCount": 1,
+    "guardrailInterventionCount": 1,
+    "mlUnavailableScenarioCount": 1,
+    "groundTruthFieldCount": 0
+  },
+  "scenarios": [
+    {
+      "scenarioId": "cold_start",
+      "title": "Cold Start",
+      "purpose": "No historical learning feedback is available, so priority remains equal to Detection Score.",
+      "alert": {
+        "identity": {
+          "id": "DEMO-COLD-1"
+        },
+        "flowFeatures": {
+          "protocol": "TCP",
+          "sourcePort": null,
+          "destinationPort": 443,
+          "flowDuration": 1200,
+          "totalFwdPackets": 24,
+          "totalBackwardPackets": 8,
+          "totalLengthFwdPackets": null,
+          "totalLengthBwdPackets": null,
+          "flowPacketsPerSecond": 26.7,
+          "flowBytesPerSecond": 4800,
+          "packetLengthMean": 180,
+          "packetLengthMax": null,
+          "fwdPacketLengthMean": null,
+          "flowIatMean": null,
+          "flowIatStd": null,
+          "synFlagCount": 2,
+          "ackFlagCount": 8,
+          "pshFlagCount": null
+        },
+        "automatedDetection": {
+          "detectionScore": 72,
+          "attackType": "DoS",
+          "requiresAnalystReview": true,
+          "detectorState": "ml_only",
+          "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
+          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "confidenceLevel": "High"
+        },
+        "signatureEvidence": {
+          "available": true,
+          "hit": false,
+          "ruleId": null,
+          "ruleName": null,
+          "attackType": null,
+          "severity": null,
+          "explanation": null,
+          "matchedConditions": [],
+          "technicalDetail": null
+        },
+        "mlEvidence": {
+          "recordPresent": true,
+          "predictionStatus": "available",
+          "evidenceAvailable": true,
+          "failureReason": null,
+          "schemaMode": "new",
+          "predictedClassIndex": 4,
+          "predictedAttackType": "DoS",
+          "modelConfidence": 0.9,
+          "classProbabilities": {
+            "Benign": 0.1,
+            "DoS": 0.9
+          },
+          "secondBestClass": "Benign",
+          "predictionMargin": 0.8,
+          "threatEvidenceScore": 90,
+          "modelProvenance": null,
+          "explanation": {
+            "status": "unavailable",
+            "reason": "demonstration_scenario_has_no_model_run",
+            "method": null,
+            "outputSpace": null,
+            "explainedClass": null,
+            "explainedClassIndex": null,
+            "baseValue": null,
+            "rawModelMargin": null,
+            "topSupportingFeatures": [],
+            "topOpposingFeatures": [],
+            "additivityCheck": null
+          }
+        },
+        "adaptation": {
+          "similarityMatched": false,
+          "similarityReason": "No sufficiently similar historical learning feedback passed the similarity gate.",
+          "matchedHistoricalFeedbackCount": 0,
+          "matchedHistoricalFeedbackIds": [],
+          "lowEvidenceCoverageRejectionCount": 0,
+          "lowSimilarityRejectionCount": 0,
+          "dominantHistoricalFeedback": null,
+          "historicalAgreementRatio": 0,
+          "conflictDetected": false,
+          "eligible": false,
+          "eligibilityReason": "Cold start: no sufficiently similar historical feedback was found.",
+          "proposedAdjustment": 0,
+          "cappedAdjustment": 0,
+          "appliedAdjustment": 0,
+          "feedbackRecorded": false,
+          "priorityAdjusted": false,
+          "guardrailsApplied": [],
+          "guardrailInterventions": [],
+          "operationalPriorityScore": 72,
+          "source": "none",
+          "explanation": "No direct feedback or trusted historical feedback matched this alert."
+        },
+        "workflow": {
+          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReview": true,
+          "analystFeedbackStatus": "unchanged",
+          "matchedFeedbackId": null
+        }
+      }
+    },
+    {
+      "scenarioId": "repeated_false_positive",
+      "title": "Repeated False Positive",
+      "purpose": "Three consistent similar false-positive events produce an eligible downward adjustment.",
+      "alert": {
+        "identity": {
+          "id": "DEMO-FP-CURRENT"
+        },
+        "flowFeatures": {
+          "protocol": "TCP",
+          "sourcePort": null,
+          "destinationPort": 443,
+          "flowDuration": 1200,
+          "totalFwdPackets": 24,
+          "totalBackwardPackets": 8,
+          "totalLengthFwdPackets": null,
+          "totalLengthBwdPackets": null,
+          "flowPacketsPerSecond": 26.7,
+          "flowBytesPerSecond": 4800,
+          "packetLengthMean": 180,
+          "packetLengthMax": null,
+          "fwdPacketLengthMean": null,
+          "flowIatMean": null,
+          "flowIatStd": null,
+          "synFlagCount": 2,
+          "ackFlagCount": 8,
+          "pshFlagCount": null
+        },
+        "automatedDetection": {
+          "detectionScore": 80,
+          "attackType": "DoS",
+          "requiresAnalystReview": true,
+          "detectorState": "ml_only",
+          "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
+          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "confidenceLevel": "High"
+        },
+        "signatureEvidence": {
+          "available": true,
+          "hit": false,
+          "ruleId": null,
+          "ruleName": null,
+          "attackType": null,
+          "severity": null,
+          "explanation": null,
+          "matchedConditions": [],
+          "technicalDetail": null
+        },
+        "mlEvidence": {
+          "recordPresent": true,
+          "predictionStatus": "available",
+          "evidenceAvailable": true,
+          "failureReason": null,
+          "schemaMode": "new",
+          "predictedClassIndex": 4,
+          "predictedAttackType": "DoS",
+          "modelConfidence": 0.9,
+          "classProbabilities": {
+            "Benign": 0.1,
+            "DoS": 0.9
+          },
+          "secondBestClass": "Benign",
+          "predictionMargin": 0.8,
+          "threatEvidenceScore": 90,
+          "modelProvenance": null,
+          "explanation": {
+            "status": "unavailable",
+            "reason": "demonstration_scenario_has_no_model_run",
+            "method": null,
+            "outputSpace": null,
+            "explainedClass": null,
+            "explainedClassIndex": null,
+            "baseValue": null,
+            "rawModelMargin": null,
+            "topSupportingFeatures": [],
+            "topOpposingFeatures": [],
+            "additivityCheck": null
+          }
+        },
+        "adaptation": {
+          "similarityMatched": true,
+          "similarityReason": "Matched 3 similar effective historical feedback event(s).",
+          "matchedHistoricalFeedbackCount": 3,
+          "matchedHistoricalFeedbackIds": [
+            "DEMO-FP-FB1",
+            "DEMO-FP-FB2",
+            "DEMO-FP-FB3"
+          ],
+          "lowEvidenceCoverageRejectionCount": 0,
+          "lowSimilarityRejectionCount": 0,
+          "dominantHistoricalFeedback": "mark_false_positive",
+          "historicalAgreementRatio": 1,
+          "conflictDetected": false,
+          "eligible": true,
+          "eligibilityReason": "Similarity and historical-feedback agreement gates passed.",
+          "proposedAdjustment": -25,
+          "cappedAdjustment": -25,
+          "appliedAdjustment": -25,
+          "feedbackRecorded": false,
+          "priorityAdjusted": true,
+          "guardrailsApplied": [],
+          "guardrailInterventions": [],
+          "operationalPriorityScore": 55,
+          "source": "historical_feedback",
+          "explanation": "Detection score 80 became operational priority 55. Similar historical feedback strongly indicates repeated false positives."
+        },
+        "workflow": {
+          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReview": false,
+          "analystFeedbackStatus": "adjusted_by_historical_feedback",
+          "matchedFeedbackId": null
+        }
+      }
+    },
+    {
+      "scenarioId": "confirmed_threat",
+      "title": "Confirmed Threat",
+      "purpose": "Three consistent similar confirmed-threat events produce an eligible upward adjustment.",
+      "alert": {
+        "identity": {
+          "id": "DEMO-TP-CURRENT"
+        },
+        "flowFeatures": {
+          "protocol": "TCP",
+          "sourcePort": null,
+          "destinationPort": 443,
+          "flowDuration": 1200,
+          "totalFwdPackets": 24,
+          "totalBackwardPackets": 8,
+          "totalLengthFwdPackets": null,
+          "totalLengthBwdPackets": null,
+          "flowPacketsPerSecond": 26.7,
+          "flowBytesPerSecond": 4800,
+          "packetLengthMean": 180,
+          "packetLengthMax": null,
+          "fwdPacketLengthMean": null,
+          "flowIatMean": null,
+          "flowIatStd": null,
+          "synFlagCount": 2,
+          "ackFlagCount": 8,
+          "pshFlagCount": null
+        },
+        "automatedDetection": {
+          "detectionScore": 60,
+          "attackType": "DoS",
+          "requiresAnalystReview": true,
+          "detectorState": "ml_only",
+          "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
+          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "confidenceLevel": "High"
+        },
+        "signatureEvidence": {
+          "available": true,
+          "hit": false,
+          "ruleId": null,
+          "ruleName": null,
+          "attackType": null,
+          "severity": null,
+          "explanation": null,
+          "matchedConditions": [],
+          "technicalDetail": null
+        },
+        "mlEvidence": {
+          "recordPresent": true,
+          "predictionStatus": "available",
+          "evidenceAvailable": true,
+          "failureReason": null,
+          "schemaMode": "new",
+          "predictedClassIndex": 4,
+          "predictedAttackType": "DoS",
+          "modelConfidence": 0.9,
+          "classProbabilities": {
+            "Benign": 0.1,
+            "DoS": 0.9
+          },
+          "secondBestClass": "Benign",
+          "predictionMargin": 0.8,
+          "threatEvidenceScore": 90,
+          "modelProvenance": null,
+          "explanation": {
+            "status": "unavailable",
+            "reason": "demonstration_scenario_has_no_model_run",
+            "method": null,
+            "outputSpace": null,
+            "explainedClass": null,
+            "explainedClassIndex": null,
+            "baseValue": null,
+            "rawModelMargin": null,
+            "topSupportingFeatures": [],
+            "topOpposingFeatures": [],
+            "additivityCheck": null
+          }
+        },
+        "adaptation": {
+          "similarityMatched": true,
+          "similarityReason": "Matched 3 similar effective historical feedback event(s).",
+          "matchedHistoricalFeedbackCount": 3,
+          "matchedHistoricalFeedbackIds": [
+            "DEMO-TP-FB1",
+            "DEMO-TP-FB2",
+            "DEMO-TP-FB3"
+          ],
+          "lowEvidenceCoverageRejectionCount": 0,
+          "lowSimilarityRejectionCount": 0,
+          "dominantHistoricalFeedback": "confirm_true_positive",
+          "historicalAgreementRatio": 1,
+          "conflictDetected": false,
+          "eligible": true,
+          "eligibilityReason": "Similarity and historical-feedback agreement gates passed.",
+          "proposedAdjustment": 15,
+          "cappedAdjustment": 15,
+          "appliedAdjustment": 15,
+          "feedbackRecorded": false,
+          "priorityAdjusted": true,
+          "guardrailsApplied": [],
+          "guardrailInterventions": [],
+          "operationalPriorityScore": 75,
+          "source": "historical_feedback",
+          "explanation": "Detection score 60 became operational priority 75. Similar historical feedback strongly confirms threat priority."
+        },
+        "workflow": {
+          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReview": true,
+          "analystFeedbackStatus": "adjusted_by_historical_feedback",
+          "matchedFeedbackId": null
+        }
+      }
+    },
+    {
+      "scenarioId": "conflicting_history",
+      "title": "Conflicting Historical Feedback",
+      "purpose": "A tie between false-positive and confirmed-threat outcomes blocks adaptation.",
+      "alert": {
+        "identity": {
+          "id": "DEMO-CONFLICT-CURRENT"
+        },
+        "flowFeatures": {
+          "protocol": "TCP",
+          "sourcePort": null,
+          "destinationPort": 443,
+          "flowDuration": 1200,
+          "totalFwdPackets": 24,
+          "totalBackwardPackets": 8,
+          "totalLengthFwdPackets": null,
+          "totalLengthBwdPackets": null,
+          "flowPacketsPerSecond": 26.7,
+          "flowBytesPerSecond": 4800,
+          "packetLengthMean": 180,
+          "packetLengthMax": null,
+          "fwdPacketLengthMean": null,
+          "flowIatMean": null,
+          "flowIatStd": null,
+          "synFlagCount": 2,
+          "ackFlagCount": 8,
+          "pshFlagCount": null
+        },
+        "automatedDetection": {
+          "detectionScore": 70,
+          "attackType": "DoS",
+          "requiresAnalystReview": true,
+          "detectorState": "ml_only",
+          "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
+          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "confidenceLevel": "High"
+        },
+        "signatureEvidence": {
+          "available": true,
+          "hit": false,
+          "ruleId": null,
+          "ruleName": null,
+          "attackType": null,
+          "severity": null,
+          "explanation": null,
+          "matchedConditions": [],
+          "technicalDetail": null
+        },
+        "mlEvidence": {
+          "recordPresent": true,
+          "predictionStatus": "available",
+          "evidenceAvailable": true,
+          "failureReason": null,
+          "schemaMode": "new",
+          "predictedClassIndex": 4,
+          "predictedAttackType": "DoS",
+          "modelConfidence": 0.9,
+          "classProbabilities": {
+            "Benign": 0.1,
+            "DoS": 0.9
+          },
+          "secondBestClass": "Benign",
+          "predictionMargin": 0.8,
+          "threatEvidenceScore": 90,
+          "modelProvenance": null,
+          "explanation": {
+            "status": "unavailable",
+            "reason": "demonstration_scenario_has_no_model_run",
+            "method": null,
+            "outputSpace": null,
+            "explainedClass": null,
+            "explainedClassIndex": null,
+            "baseValue": null,
+            "rawModelMargin": null,
+            "topSupportingFeatures": [],
+            "topOpposingFeatures": [],
+            "additivityCheck": null
+          }
+        },
+        "adaptation": {
+          "similarityMatched": true,
+          "similarityReason": "Matched 4 similar effective historical feedback event(s).",
+          "matchedHistoricalFeedbackCount": 4,
+          "matchedHistoricalFeedbackIds": [
+            "DEMO-CONFLICT-FB1",
+            "DEMO-CONFLICT-FB2",
+            "DEMO-CONFLICT-FB3",
+            "DEMO-CONFLICT-FB4"
+          ],
+          "lowEvidenceCoverageRejectionCount": 0,
+          "lowSimilarityRejectionCount": 0,
+          "dominantHistoricalFeedback": null,
+          "historicalAgreementRatio": 0.5,
+          "conflictDetected": true,
+          "eligible": false,
+          "eligibilityReason": "Historical feedback conflict detected; no dominant feedback type was trusted.",
+          "proposedAdjustment": 0,
+          "cappedAdjustment": 0,
+          "appliedAdjustment": 0,
+          "feedbackRecorded": false,
+          "priorityAdjusted": false,
+          "guardrailsApplied": [],
+          "guardrailInterventions": [],
+          "operationalPriorityScore": 70,
+          "source": "none",
+          "explanation": "No direct feedback or trusted historical feedback matched this alert."
+        },
+        "workflow": {
+          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReview": true,
+          "analystFeedbackStatus": "unchanged",
+          "matchedFeedbackId": null
+        }
+      }
+    },
+    {
+      "scenarioId": "guardrail_protection",
+      "title": "Guardrail Protection",
+      "purpose": "A proposed reduction is constrained by Critical signature/evidence protection.",
+      "alert": {
+        "identity": {
+          "id": "DEMO-GUARDRAIL-CURRENT"
+        },
+        "flowFeatures": {
+          "protocol": "TCP",
+          "sourcePort": null,
+          "destinationPort": 443,
+          "flowDuration": 1200,
+          "totalFwdPackets": 24,
+          "totalBackwardPackets": 8,
+          "totalLengthFwdPackets": null,
+          "totalLengthBwdPackets": null,
+          "flowPacketsPerSecond": 26.7,
+          "flowBytesPerSecond": 4800,
+          "packetLengthMean": 180,
+          "packetLengthMax": null,
+          "fwdPacketLengthMean": null,
+          "flowIatMean": null,
+          "flowIatStd": null,
+          "synFlagCount": 2,
+          "ackFlagCount": 8,
+          "pshFlagCount": null
+        },
+        "automatedDetection": {
+          "detectionScore": 85,
+          "attackType": "DoS",
+          "requiresAnalystReview": true,
+          "detectorState": "agreement",
+          "fusionDecision": "SIGNATURE_ML_AGREE",
+          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "confidenceLevel": "Critical"
+        },
+        "signatureEvidence": {
+          "available": true,
+          "hit": true,
+          "ruleId": "SIG-DEMO-CRITICAL-DOS",
+          "ruleName": null,
+          "attackType": "DoS",
+          "severity": "Critical",
+          "explanation": null,
+          "matchedConditions": [],
+          "technicalDetail": null
+        },
+        "mlEvidence": {
+          "recordPresent": true,
+          "predictionStatus": "available",
+          "evidenceAvailable": true,
+          "failureReason": null,
+          "schemaMode": "new",
+          "predictedClassIndex": 4,
+          "predictedAttackType": "DoS",
+          "modelConfidence": 0.9,
+          "classProbabilities": {
+            "Benign": 0.1,
+            "DoS": 0.9
+          },
+          "secondBestClass": "Benign",
+          "predictionMargin": 0.8,
+          "threatEvidenceScore": 90,
+          "modelProvenance": null,
+          "explanation": {
+            "status": "unavailable",
+            "reason": "demonstration_scenario_has_no_model_run",
+            "method": null,
+            "outputSpace": null,
+            "explainedClass": null,
+            "explainedClassIndex": null,
+            "baseValue": null,
+            "rawModelMargin": null,
+            "topSupportingFeatures": [],
+            "topOpposingFeatures": [],
+            "additivityCheck": null
+          }
+        },
+        "adaptation": {
+          "similarityMatched": true,
+          "similarityReason": "Matched 3 similar effective historical feedback event(s).",
+          "matchedHistoricalFeedbackCount": 3,
+          "matchedHistoricalFeedbackIds": [
+            "DEMO-GUARDRAIL-FB1",
+            "DEMO-GUARDRAIL-FB2",
+            "DEMO-GUARDRAIL-FB3"
+          ],
+          "lowEvidenceCoverageRejectionCount": 0,
+          "lowSimilarityRejectionCount": 0,
+          "dominantHistoricalFeedback": "mark_false_positive",
+          "historicalAgreementRatio": 1,
+          "conflictDetected": false,
+          "eligible": true,
+          "eligibilityReason": "Similarity and historical-feedback agreement gates passed.",
+          "proposedAdjustment": -25,
+          "cappedAdjustment": -25,
+          "appliedAdjustment": -15,
+          "feedbackRecorded": false,
+          "priorityAdjusted": true,
+          "guardrailsApplied": [
+            "critical_alert_floor"
+          ],
+          "guardrailInterventions": [
+            {
+              "code": "critical_alert_floor",
+              "configuredValue": 70,
+              "originalValue": 60,
+              "appliedValue": 70
+            }
+          ],
+          "operationalPriorityScore": 70,
+          "source": "historical_feedback",
+          "explanation": "Detection score 85 became operational priority 70. Similar historical feedback strongly indicates repeated false positives."
+        },
+        "workflow": {
+          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReview": true,
+          "analystFeedbackStatus": "adjusted_by_historical_feedback",
+          "matchedFeedbackId": null
+        }
+      }
+    },
+    {
+      "scenarioId": "ml_unavailable",
+      "title": "ML Unavailable",
+      "purpose": "Unavailable ML evidence remains explicit and is not interpreted as a Benign prediction.",
+      "alert": {
+        "identity": {
+          "id": "DEMO-ML-UNAVAILABLE"
+        },
+        "flowFeatures": {
+          "protocol": "TCP",
+          "sourcePort": null,
+          "destinationPort": 443,
+          "flowDuration": 1200,
+          "totalFwdPackets": 24,
+          "totalBackwardPackets": 8,
+          "totalLengthFwdPackets": null,
+          "totalLengthBwdPackets": null,
+          "flowPacketsPerSecond": 26.7,
+          "flowBytesPerSecond": 4800,
+          "packetLengthMean": 180,
+          "packetLengthMax": null,
+          "fwdPacketLengthMean": null,
+          "flowIatMean": null,
+          "flowIatStd": null,
+          "synFlagCount": 2,
+          "ackFlagCount": 8,
+          "pshFlagCount": null
+        },
+        "automatedDetection": {
+          "detectionScore": 80,
+          "attackType": "DoS",
+          "requiresAnalystReview": true,
+          "detectorState": "signature_only",
+          "fusionDecision": "SIGNATURE_ONLY_ML_UNAVAILABLE",
+          "fusionExplanation": "Deterministic demonstration input for Stage 5 adaptation behaviour.",
+          "confidenceLevel": "High"
+        },
+        "signatureEvidence": {
+          "available": true,
+          "hit": true,
+          "ruleId": "SIG-DEMO-DOS",
+          "ruleName": null,
+          "attackType": "DoS",
+          "severity": "High",
+          "explanation": null,
+          "matchedConditions": [],
+          "technicalDetail": null
+        },
+        "mlEvidence": {
+          "recordPresent": true,
+          "predictionStatus": "unavailable",
+          "evidenceAvailable": false,
+          "failureReason": "invalid_numeric_feature_values",
+          "schemaMode": "new_unavailable",
+          "predictedClassIndex": null,
+          "predictedAttackType": null,
+          "modelConfidence": null,
+          "classProbabilities": null,
+          "secondBestClass": null,
+          "predictionMargin": null,
+          "threatEvidenceScore": null,
+          "modelProvenance": null,
+          "explanation": {
+            "status": "unavailable",
+            "reason": "prediction_unavailable",
+            "method": "xgboost_native_treeshap_pred_contribs",
+            "outputSpace": null,
+            "explainedClass": null,
+            "explainedClassIndex": null,
+            "baseValue": null,
+            "rawModelMargin": null,
+            "topSupportingFeatures": [],
+            "topOpposingFeatures": [],
+            "additivityCheck": null
+          }
+        },
+        "adaptation": {
+          "similarityMatched": false,
+          "similarityReason": "No sufficiently similar historical learning feedback passed the similarity gate.",
+          "matchedHistoricalFeedbackCount": 0,
+          "matchedHistoricalFeedbackIds": [],
+          "lowEvidenceCoverageRejectionCount": 0,
+          "lowSimilarityRejectionCount": 0,
+          "dominantHistoricalFeedback": null,
+          "historicalAgreementRatio": 0,
+          "conflictDetected": false,
+          "eligible": false,
+          "eligibilityReason": "Cold start: no sufficiently similar historical feedback was found.",
+          "proposedAdjustment": 0,
+          "cappedAdjustment": 0,
+          "appliedAdjustment": 0,
+          "feedbackRecorded": false,
+          "priorityAdjusted": false,
+          "guardrailsApplied": [],
+          "guardrailInterventions": [],
+          "operationalPriorityScore": 80,
+          "source": "none",
+          "explanation": "No direct feedback or trusted historical feedback matched this alert."
+        },
+        "workflow": {
+          "requiresAnalystReviewBeforeFeedback": true,
+          "requiresAnalystReview": true,
+          "analystFeedbackStatus": "unchanged",
+          "matchedFeedbackId": null
+        }
+      }
+    }
+  ]
+}

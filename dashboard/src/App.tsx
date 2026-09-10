@@ -49,6 +49,9 @@ const evaluatorArtifact = evaluatorArtifactValidation.valid
 const alerts = analystArtifact
   ? adaptAnalystAlertsForLegacyComponents(analystArtifact.alerts)
   : [];
+const analystAlertsById = new Map(
+  (analystArtifact?.alerts || []).map((alert) => [alert.identity.id, alert])
+);
 const feedbackSummary = (evaluatorArtifact?.feedbackSummary || {}) as unknown as FeedbackEvaluationSummary;
 const fusionSummary = (evaluatorArtifact?.fusionSummary || {}) as unknown as FusionEvaluationSummary;
 
@@ -106,6 +109,7 @@ export default function App() {
   const selectedAlert = filteredAlerts.find((alert) => alert.id === selectedAlertId)
     || filteredAlerts[0]
     || sortedAlerts[0];
+  const selectedAnalystAlert = selectedAlert ? analystAlertsById.get(selectedAlert.id) : undefined;
   const sessionKpis = useMemo(
     () => calculateSessionKpis(filteredAlerts, sortedAlerts, localFeedbackMap, isReplayMode ? replayIndex : alerts.length, alerts.length),
     [filteredAlerts, isReplayMode, localFeedbackMap, replayIndex, sortedAlerts]
@@ -284,6 +288,7 @@ export default function App() {
               </div>
               <AlertDetailPanel
                 alert={selectedAlert}
+                analystAlert={selectedAnalystAlert}
                 onApplyFeedback={applyFeedback}
                 onResetFeedback={resetFeedback}
               />
@@ -294,6 +299,7 @@ export default function App() {
         {activeView === 'investigations' && (
           <InvestigationsPanel
             alert={selectedAlert}
+            analystAlert={selectedAnalystAlert}
             onApplyFeedback={applyFeedback}
             onResetFeedback={resetFeedback}
           />

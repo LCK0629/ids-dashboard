@@ -95,6 +95,7 @@
 - Replaced dashboard data copies with a reproducible full Stage 3 to Stage 5 evidence path that preserves ML availability, provenance, and TreeSHAP evidence while excluding per-alert ground truth and local machine paths.
 - Added runtime dashboard artifact validation, explicit Detection Score and Operational Priority semantics, and 32 data-integration tests without changing Stage 3, Stage 4, or Stage 5 scoring behaviour.
 - Hardened the Stage 5B boundary to reject stale Stage 5 sources before export, normalize forbidden ground-truth key variants, enforce consistent ML/TreeSHAP states, validate evaluator envelopes, verify generated summary counts, and expand the integration suite to 49 tests.
+- Added shared Stage 5C automated-evidence components for friendly detector states, signature evidence, distinct ML availability states, predicted-class TreeSHAP contributions, and collapsible model provenance in Operations and Investigations without changing scoring.
 
 ## Notes
 

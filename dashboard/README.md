@@ -75,9 +75,26 @@ Deployment is rebuilt from `main` using GitHub Actions. Local development contin
 
 ## Current UI Scope
 
-The existing interface includes Operations, Investigations, Feedback Model, and Reports views; priority-sorted alert triage; attack-type filters; signature evidence; ML prediction evidence; feedback/guardrail context; and replay controls. The canonical artifact now carries TreeSHAP evidence, but a dedicated SHAP visualisation is intentionally deferred.
+The interface includes Operations, Investigations, Feedback Model, and Reports views; priority-sorted alert triage; attack-type filters; feedback/guardrail context; and replay controls.
+
+Operations and Investigations share one canonical automated-evidence implementation. It presents:
+
+- Detection Score, automated attack type, review state, and a friendly detector-state explanation.
+- Signature rule evidence with cautious wording and technical details behind a disclosure.
+- Distinct available, unavailable, and missing ML states.
+- XGBoost predicted class, uncalibrated confidence score, second-best class, and prediction margin.
+- Predicted-class TreeSHAP supporting and opposing features using signed raw-margin contributions.
+- Class probabilities, model provenance, fusion decision code, and SHAP diagnostics behind an Advanced disclosure.
+
+TreeSHAP bars use relative visual widths within one explanation only. The displayed signed values remain the original raw-margin contributions. They are not probability changes, risk points, causal effects, or inputs to fusion and priority scoring.
 
 The local feedback scorer remains isolated as a session preview for the existing prototype interaction. It never overwrites `detectionScore`, is not written back, and is not the authority for the initial queue ordering.
+
+Run the automated-evidence display tests with:
+
+```powershell
+npm run test:evidence
+```
 
 ## Deferred Hardening
 

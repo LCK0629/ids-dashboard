@@ -28,7 +28,11 @@ export function AutomatedDetectionEvidence({ alert, density = 'compact' }: Autom
       <div className="automated-summary-grid">
         <div><span>Detection Score</span><strong>{Math.round(automated.detectionScore)}</strong></div>
         <div><span>Automated attack type</span><strong>{automated.attackType}</strong></div>
-        <div><span>Confidence level</span><strong>{automated.confidenceLevel || 'N/A'}</strong></div>
+        <div>
+          <span>Detection score band</span>
+          <strong>{automated.confidenceLevel || 'N/A'}</strong>
+          <small>Score-derived category; not model confidence.</small>
+        </div>
       </div>
       <p className="helper-text">Detection Score is the automated Signature + ML result before human-feedback adaptation.</p>
 

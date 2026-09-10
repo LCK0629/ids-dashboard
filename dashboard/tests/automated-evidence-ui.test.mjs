@@ -5,7 +5,11 @@ import test from 'node:test';
 
 import analystArtifact from '../src/data/analyst-alerts.v1.json' with { type: 'json' };
 import demoArtifact from '../src/data/adaptation-demo-scenarios.v1.json' with { type: 'json' };
-import { findForbiddenGroundTruthPaths, validateAnalystArtifact } from '../src/data-contract/analystDashboardContract.js';
+import {
+  findForbiddenGroundTruthPaths,
+  validateAnalystAlert,
+  validateAnalystArtifact,
+} from '../src/data-contract/analystDashboardContract.js';
 import {
   ML_CONFIDENCE_HELPER_TEXT,
   PREDICTION_MARGIN_HELPER_TEXT,
@@ -126,6 +130,12 @@ function clone(value) {
   return structuredClone(value);
 }
 
+function analystAlertWithAvailableExplanation() {
+  const alert = analystArtifact.alerts.find((item) => item.mlEvidence.explanation.status === 'available');
+  assert.ok(alert, 'Expected the analyst artifact to contain an available TreeSHAP explanation.');
+  return clone(alert);
+}
+
 test('agreement has a friendly detector state', () => {
   assert.equal(getDetectorStatePresentation(baseAlert()).label, 'Signature + ML agree');
 });
@@ -187,7 +197,56 @@ test('Infiltration ML limitation is explicit', () => {
   const alert = baseAlert();
   alert.signatureEvidence.attackType = 'Infiltration';
   alert.mlEvidence.predictedAttackType = 'Benign';
-  assert.equal(getDetectorStatePresentation(alert).key, 'infiltration_ml_limitation');
+  const state = getDetectorStatePresentation(alert);
+  assert.equal(state.key, 'infiltration_ml_limitation');
+  assert.match(state.explanation, /signature evidence is retained/i);
+  assert.match(state.explanation, /analyst review is required/i);
+  assert.doesNotMatch(state.explanation, /authoritative|correct|ground truth/i);
+});
+
+test('score-derived fusion band is not presented as generic confidence', () => {
+  const source = fs.readFileSync(
+    path.join(dashboardRoot, 'src', 'components', 'automated-evidence', 'AutomatedDetectionEvidence.tsx'),
+    'utf8'
+  );
+  assert.match(source, /Detection score band/);
+  assert.match(source, /Score-derived category; not model confidence\./);
+  assert.doesNotMatch(source, />Confidence level</);
+});
+
+test('generic investigation guidance is explicitly separate from TreeSHAP attribution', () => {
+  const source = fs.readFileSync(
+    path.join(dashboardRoot, 'src', 'components', 'InvestigationsPanel.tsx'),
+    'utf8'
+  );
+  assert.match(source, /General Investigation Context/);
+  assert.match(source, /General domain context only; not model attribution/);
+  assert.match(source, /TreeSHAP above shows the feature-level model explanation/);
+  assert.doesNotMatch(source, /<h3>Feature Interpretation<\/h3>/);
+});
+
+test('supporting SHAP array rejects opposing direction', () => {
+  const alert = analystAlertWithAvailableExplanation();
+  alert.mlEvidence.explanation.topSupportingFeatures[0].direction = 'opposes_prediction';
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('opposing SHAP array rejects supporting direction', () => {
+  const alert = analystAlertWithAvailableExplanation();
+  alert.mlEvidence.explanation.topOpposingFeatures[0].direction = 'supports_prediction';
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('supporting SHAP array rejects negative contribution', () => {
+  const alert = analystAlertWithAvailableExplanation();
+  alert.mlEvidence.explanation.topSupportingFeatures[0].shapContribution = -0.1;
+  assert.equal(validateAnalystAlert(alert).valid, false);
+});
+
+test('opposing SHAP array rejects positive contribution', () => {
+  const alert = analystAlertWithAvailableExplanation();
+  alert.mlEvidence.explanation.topOpposingFeatures[0].shapContribution = 0.1;
+  assert.equal(validateAnalystAlert(alert).valid, false);
 });
 
 test('no-evidence state does not claim ground truth', () => {

@@ -22,7 +22,7 @@ export function getDetectorStatePresentation(alert) {
     return {
       key: 'infiltration_ml_limitation',
       label: 'Infiltration signature / ML coverage limitation',
-      explanation: 'The signature layer indicates Infiltration. The current six-class ML model cannot predict Infiltration, so the signature evidence remains authoritative for this coverage gap.',
+      explanation: 'The current ML model does not cover Infiltration, so the available signature evidence is retained and analyst review is required.',
       tone: 'warning',
     };
   }

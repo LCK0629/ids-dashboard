@@ -48,7 +48,7 @@ function normalizedKey(key) {
   return key.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function validateFeatureContributions(features, path, errors) {
+function validateFeatureContributions(features, path, errors, expectedDirection, contributionIsValid) {
   if (!Array.isArray(features)) {
     errors.push(`${path} must be an array.`);
     return;
@@ -66,8 +66,11 @@ function validateFeatureContributions(features, path, errors) {
     if (typeof feature.shapContribution !== 'number' || !Number.isFinite(feature.shapContribution)) {
       errors.push(`${featurePath}.shapContribution must be finite.`);
     }
-    if (!['supports_prediction', 'opposes_prediction'].includes(feature.direction)) {
-      errors.push(`${featurePath}.direction must preserve the Stage 3 predicted-class direction.`);
+    if (feature.direction !== expectedDirection) {
+      errors.push(`${featurePath}.direction must be ${expectedDirection}.`);
+    }
+    if (isFiniteNumber(feature.shapContribution) && !contributionIsValid(feature.shapContribution)) {
+      errors.push(`${featurePath}.shapContribution has the wrong sign for ${expectedDirection}.`);
     }
   });
 }
@@ -97,8 +100,20 @@ function validateMlExplanation(explanation, path, errors) {
   if (typeof explanation.rawModelMargin !== 'number' || !Number.isFinite(explanation.rawModelMargin)) {
     errors.push(`${path}.rawModelMargin must be finite.`);
   }
-  validateFeatureContributions(explanation.topSupportingFeatures, `${path}.topSupportingFeatures`, errors);
-  validateFeatureContributions(explanation.topOpposingFeatures, `${path}.topOpposingFeatures`, errors);
+  validateFeatureContributions(
+    explanation.topSupportingFeatures,
+    `${path}.topSupportingFeatures`,
+    errors,
+    'supports_prediction',
+    (value) => value > 0
+  );
+  validateFeatureContributions(
+    explanation.topOpposingFeatures,
+    `${path}.topOpposingFeatures`,
+    errors,
+    'opposes_prediction',
+    (value) => value < 0
+  );
   if (!isObject(explanation.additivityCheck) || explanation.additivityCheck.passed !== true) {
     errors.push(`${path}.additivityCheck must be present and passed.`);
   }

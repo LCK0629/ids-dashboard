@@ -54,7 +54,10 @@ export function InvestigationsPanel({ alert, analystAlert, onApplyFeedback, onRe
       </div>
 
       <div className="investigation-section">
-        <h3>Feature Interpretation</h3>
+        <h3>General Investigation Context</h3>
+        <p className="helper-text">
+          General domain context only; not model attribution. TreeSHAP above shows the feature-level model explanation for this prediction.
+        </p>
         <div className="insight-list">
           {interpretations.map((item) => <p key={item}>{item}</p>)}
         </div>

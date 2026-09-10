@@ -117,15 +117,21 @@ def summarize_explainability(
     available_predictions = [record for record in predictions if record.get("predictionStatus") == "available"]
     unavailable_predictions = [record for record in predictions if record.get("predictionStatus") != "available"]
     available_explanations = [
-        record for record in available_predictions if record.get("mlExplanation", {}).get("status") == "available"
+        record for record in predictions if record.get("mlExplanation", {}).get("status") == "available"
     ]
     unavailable_explanations = [
-        record for record in available_predictions if record.get("mlExplanation", {}).get("status") != "available"
+        record for record in predictions if record.get("mlExplanation", {}).get("status") != "available"
     ]
 
     additivity_differences: list[float] = []
     additivity_passed_count = 0
     additivity_failed_count = 0
+    unavailable_reason_counts = {
+        "predictionUnavailable": 0,
+        "treeShapGenerationFailure": 0,
+        "additivityFailure": 0,
+        "other": 0,
+    }
     per_class: dict[str, dict[str, int]] = {
         label: {
             "predictions": 0,
@@ -165,6 +171,25 @@ def summarize_explainability(
                 per_class[predicted_class]["additivityFailed"] += 1
         else:
             per_class[predicted_class]["explanationsUnavailable"] += 1
+            additivity_check = explanation.get("additivityCheck", {})
+            difference = additivity_check.get("difference")
+            if difference is not None:
+                additivity_differences.append(float(difference))
+            if additivity_check.get("passed") is False:
+                additivity_failed_count += 1
+                per_class[predicted_class]["additivityFailed"] += 1
+
+    for record in unavailable_explanations:
+        explanation = record.get("mlExplanation", {})
+        reason = str(explanation.get("reason", ""))
+        if reason == "prediction_unavailable":
+            unavailable_reason_counts["predictionUnavailable"] += 1
+        elif reason.startswith("treeshap_generation_failed"):
+            unavailable_reason_counts["treeShapGenerationFailure"] += 1
+        elif reason == "additivity_check_failed":
+            unavailable_reason_counts["additivityFailure"] += 1
+        else:
+            unavailable_reason_counts["other"] += 1
 
     return {
         "method": TREESHAP_METHOD,
@@ -176,6 +201,9 @@ def summarize_explainability(
         "unavailablePredictionCount": len(unavailable_predictions),
         "availableExplanationCount": len(available_explanations),
         "unavailableExplanationCount": len(unavailable_explanations),
+        "unavailableExplanationReasons": unavailable_reason_counts,
+        "validTreeShapExplanationCount": len(available_explanations),
+        "treeShapGenerationFailureCount": unavailable_reason_counts["treeShapGenerationFailure"],
         "additivityPassedCount": additivity_passed_count,
         "additivityFailedCount": additivity_failed_count,
         "additivityTolerance": TREESHAP_ADDITIVITY_TOLERANCE,

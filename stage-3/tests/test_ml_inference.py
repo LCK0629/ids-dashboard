@@ -34,7 +34,7 @@ from ml_inference import (  # noqa: E402
     predict_dataframe,
     sha256_file,
 )
-from run_ml_prediction_demo import compare_predictions, repo_relative_path  # noqa: E402
+from run_ml_prediction_demo import compare_predictions, repo_relative_path, summarize_explainability  # noqa: E402
 
 
 def load_feature_rows(limit: int = 3) -> pd.DataFrame:
@@ -407,6 +407,30 @@ def test_treeshap_failure_leaves_prediction_fields_unchanged() -> None:
         assert "treeshap_generation_failed" in new_record["mlExplanation"]["reason"]
 
 
+def test_additivity_failure_marks_explanation_unavailable_without_changing_prediction() -> None:
+    class AdditivityMismatchModel:
+        def __init__(self, wrapped_model):
+            self.wrapped_model = wrapped_model
+
+        def predict(self, dmatrix, **kwargs):
+            if kwargs.get("output_margin"):
+                return self.wrapped_model.predict(dmatrix, **kwargs) + 1.0
+            return self.wrapped_model.predict(dmatrix, **kwargs)
+
+    artifacts = load_model_artifacts()
+    baseline = predict_dataframe(load_feature_rows(3), artifacts, include_explanations=False)
+    broken_artifacts = replace(artifacts, model=AdditivityMismatchModel(artifacts.model))
+    with_mismatch = predict_dataframe(load_feature_rows(3), broken_artifacts, include_explanations=True)
+
+    for old_record, new_record in zip(baseline, with_mismatch):
+        for field in PREDICTION_INVARIANT_FIELDS:
+            assert old_record[field] == new_record[field]
+        assert new_record["predictionStatus"] == "available"
+        assert new_record["mlExplanation"]["status"] == "unavailable"
+        assert new_record["mlExplanation"]["reason"] == "additivity_check_failed"
+        assert new_record["mlExplanation"]["additivityCheck"]["passed"] is False
+
+
 def test_invalid_prediction_record_does_not_attempt_treeshap() -> None:
     artifacts = load_model_artifacts()
     dataframe = load_feature_rows(1).drop(columns=["id"])
@@ -439,6 +463,48 @@ def test_explanations_do_not_change_prediction_outputs() -> None:
         for field in PREDICTION_INVARIANT_FIELDS:
             assert plain_record[field] == explained_record[field]
         assert explained_record["mlExplanation"]["status"] == "available"
+
+
+def test_explainability_summary_counts_unavailable_reasons_across_all_rows() -> None:
+    artifacts = load_model_artifacts()
+    dataframe = mutable_feature_rows(3)
+    dataframe.loc[dataframe.index[1], "id"] = ""
+    predictions = predict_dataframe(dataframe, artifacts, include_explanations=True)
+    summary = summarize_explainability(predictions, artifacts)
+
+    assert summary["inputCount"] == 3
+    assert summary["availablePredictionCount"] == 2
+    assert summary["unavailablePredictionCount"] == 1
+    assert summary["availableExplanationCount"] == 2
+    assert summary["unavailableExplanationCount"] == 1
+    assert summary["unavailableExplanationReasons"]["predictionUnavailable"] == 1
+    assert summary["unavailableExplanationReasons"]["treeShapGenerationFailure"] == 0
+    assert summary["unavailableExplanationReasons"]["additivityFailure"] == 0
+
+
+def test_explainability_summary_counts_additivity_failures_separately() -> None:
+    class AdditivityMismatchModel:
+        def __init__(self, wrapped_model):
+            self.wrapped_model = wrapped_model
+
+        def predict(self, dmatrix, **kwargs):
+            if kwargs.get("output_margin"):
+                return self.wrapped_model.predict(dmatrix, **kwargs) + 1.0
+            return self.wrapped_model.predict(dmatrix, **kwargs)
+
+    artifacts = load_model_artifacts()
+    broken_artifacts = replace(artifacts, model=AdditivityMismatchModel(artifacts.model))
+    predictions = predict_dataframe(load_feature_rows(2), broken_artifacts, include_explanations=True)
+    summary = summarize_explainability(predictions, broken_artifacts)
+
+    assert summary["availablePredictionCount"] == 2
+    assert summary["availableExplanationCount"] == 0
+    assert summary["unavailableExplanationCount"] == 2
+    assert summary["unavailableExplanationReasons"]["predictionUnavailable"] == 0
+    assert summary["unavailableExplanationReasons"]["treeShapGenerationFailure"] == 0
+    assert summary["unavailableExplanationReasons"]["additivityFailure"] == 2
+    assert summary["additivityPassedCount"] == 0
+    assert summary["additivityFailedCount"] == 2
 
 
 def copy_artifacts_to_temp(temp_dir: Path) -> dict[str, Path]:

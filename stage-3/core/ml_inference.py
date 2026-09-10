@@ -472,10 +472,12 @@ def predicted_class_explanation(
 
     reconstructed_margin = base_value + float(np.sum(feature_contributions))
     difference = abs(reconstructed_margin - float(raw_margin))
+    additivity_passed = difference <= tolerance
     supporting, opposing = top_feature_contributions(feature_values, feature_contributions, feature_columns)
 
     return {
-        "status": "available",
+        "status": "available" if additivity_passed else "unavailable",
+        **({} if additivity_passed else {"reason": "additivity_check_failed"}),
         "method": TREESHAP_METHOD,
         "outputSpace": TREESHAP_OUTPUT_SPACE,
         "explainedClass": predicted_attack_type,
@@ -485,7 +487,7 @@ def predicted_class_explanation(
         "topSupportingFeatures": supporting,
         "topOpposingFeatures": opposing,
         "additivityCheck": {
-            "passed": difference <= tolerance,
+            "passed": additivity_passed,
             "difference": difference,
             "tolerance": tolerance,
         },

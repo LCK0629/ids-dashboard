@@ -181,6 +181,8 @@ The compact explainability summary is written to:
 stage-3/evaluation/ml-explainability-summary.json
 ```
 
+Explanation coverage is reported across all input rows. Rows rejected before ML prediction are counted as unavailable explanations with `predictionUnavailable`, while valid predictions can separately report `treeShapGenerationFailure` or `additivityFailure`. An explanation is analyst-usable only when its TreeSHAP additivity check passes.
+
 The full regenerated prediction output remains local/regenerable and should not be treated as the primary committed evidence.
 
 ## Expected Model Artifacts

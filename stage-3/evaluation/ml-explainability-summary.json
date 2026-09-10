@@ -7,7 +7,15 @@
   "availablePredictionCount": 996,
   "unavailablePredictionCount": 4,
   "availableExplanationCount": 996,
-  "unavailableExplanationCount": 0,
+  "unavailableExplanationCount": 4,
+  "unavailableExplanationReasons": {
+    "predictionUnavailable": 4,
+    "treeShapGenerationFailure": 0,
+    "additivityFailure": 0,
+    "other": 0
+  },
+  "validTreeShapExplanationCount": 996,
+  "treeShapGenerationFailureCount": 0,
   "additivityPassedCount": 996,
   "additivityFailedCount": 0,
   "additivityTolerance": 0.0001,

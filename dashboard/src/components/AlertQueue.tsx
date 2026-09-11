@@ -64,6 +64,11 @@ export function AlertQueue({
             </tr>
           </thead>
           <tbody>
+            {alerts.length === 0 && (
+              <tr className="queue-empty-row">
+                <td colSpan={7}>No detection records match the current filters.</td>
+              </tr>
+            )}
             {alerts.map((alert) => {
               const badges = recordStatusBadges(alert);
               const analystAlert = analystAlertsById.get(alert.id);

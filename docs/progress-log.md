@@ -100,6 +100,7 @@
 - Rebuilt the six controlled adaptation demonstrations so synthetic detector inputs pass through the real Stage 4 fusion engine and real Stage 5 adaptation engine, while remaining separate from formal held-out evaluation and browser session preview.
 - Extended the analyst-safe dashboard contract with bounded Stage 5 diagnostics and validation without changing Detection Scores, Operational Priorities, queue ordering, or ground-truth separation.
 - Hardened Stage 5D explanation semantics by distinguishing true cold start, rejected historical candidates, applicable matches, and non-evaluated adaptation; also made formal/demo counts data-driven and labelled demo detector inputs as synthetic.
+- Completed Stage 5F dashboard hardening by externalising the validated analyst artifact from the main JavaScript bundle, adding explicit loading and failure states, correcting replay terminology, and locking data, workflow, accessibility, responsive, and GitHub Pages invariants with final regression tests.
 
 ## Notes
 

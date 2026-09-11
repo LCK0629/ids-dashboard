@@ -57,6 +57,7 @@ export function FilterBar({
       <div className="filter-buttons">
         {filters.map((filter) => (
           <button
+            aria-pressed={activeFilter === filter.key}
             className={activeFilter === filter.key ? 'active' : ''}
             key={filter.key}
             onClick={() => onFilterChange(filter.key)}

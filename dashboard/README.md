@@ -30,6 +30,12 @@ See [ANALYST_DATA_CONTRACT.md](ANALYST_DATA_CONTRACT.md) for field definitions, 
 
 The formal evaluator summary can be displayed in Reports, but it remains a distinct aggregate-only artifact. Ground truth is never copied into operational alert records or used for adaptation.
 
+## Production Data Loading
+
+The large analyst artifact remains the single canonical file at `dashboard/src/data/analyst-alerts.v1.json`. Vite emits it as a separate hashed production asset and the browser loads it asynchronously using the configured base path. The dashboard validates the fetched JSON before rendering operational records. Request, JSON parsing, or schema-validation failures show an analyst-safe unavailable state and never fall back to invented alerts.
+
+Evaluator and demonstration artifacts remain separate. An invalid evaluator summary does not block validated operational records, and an invalid demonstration artifact disables only the controlled demonstration section.
+
 ## Run Locally
 
 ```powershell
@@ -119,8 +125,15 @@ Run the HITL adaptation explanation tests with:
 npm run test:adaptation
 ```
 
-## Deferred Hardening
+Run the final loading, terminology, integrity, and deployment checks with:
 
-- The approximately 6.46 MB analyst artifact is currently bundled by Vite. Loading and bundle performance are deferred to a later dashboard increment.
-- Browser feedback remains a preview-only compatibility feature; Stage 5 remains authoritative.
-- Detector-state and queue presentation refinements are outside this data-contract patch.
+```powershell
+npm run test:hardening
+```
+
+## Known Limitations
+
+- The analyst artifact is static and still requires a network request when served from GitHub Pages; it is not a live IDS feed.
+- Browser feedback remains a session preview and is not written to persistent historical memory.
+- The current replay follows artifact sequence. It does not prove chronological network arrival order.
+- The current XGBoost model does not predict Infiltration; the UI retains available signature evidence and requires analyst review.

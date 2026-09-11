@@ -1,57 +1,18 @@
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import type { AnalystFeedbackAction, LocalFeedbackMap, LocalFeedbackOverride, SessionKpis } from '../types/feedback';
 import { isActionableAlert, isSuppressedOrResolved } from './alertFilters';
-
-const actionConfig: Record<AnalystFeedbackAction, { delta: number; review: boolean; reason: string }> = {
-  CONFIRMED_THREAT: {
-    delta: 10,
-    review: true,
-    reason: 'Analyst confirmed this alert as a likely true positive.',
-  },
-  FALSE_POSITIVE: {
-    delta: -30,
-    review: false,
-    reason: 'Analyst marked this alert as a false positive.',
-  },
-  EXPECTED_ACTIVITY: {
-    delta: -30,
-    review: false,
-    reason: 'Analyst marked the behaviour as expected activity.',
-  },
-  NEEDS_INVESTIGATION: {
-    delta: 0,
-    review: true,
-    reason: 'Analyst requested further investigation.',
-  },
-  ESCALATED: {
-    delta: 15,
-    review: true,
-    reason: 'Analyst escalated this alert for urgent review.',
-  },
-};
-
-function clampScore(score: number): number {
-  return Math.max(0, Math.min(100, Math.round(score)));
-}
-
-function labelForAction(action: AnalystFeedbackAction): string {
-  return action
-    .toLowerCase()
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
+import { calculateSessionPreview, SESSION_PREVIEW_ACTION_POLICY } from './sessionPreview.js';
 
 export function createSessionPreviewOverride(
   alert: FeedbackAdjustedAlert,
   action: AnalystFeedbackAction
 ): LocalFeedbackOverride {
-  const config = actionConfig[action];
+  const config = SESSION_PREVIEW_ACTION_POLICY[action];
   return {
     alertId: alert.id,
     action,
     scoreDelta: config.delta,
-    reviewRequired: config.review,
+    reviewRequired: config.forceReview,
     reason: config.reason,
     timestamp: new Date().toISOString(),
   };
@@ -70,48 +31,29 @@ export function applySessionPreviewOverride(
     stage5CurrentRiskScore,
     stage5RequiresAnalystReview,
     operationalPriorityScore: stage5CurrentRiskScore,
+    currentRiskScore: stage5CurrentRiskScore,
+    pipelineOperationalPriorityScore: stage5CurrentRiskScore,
+    sessionPreviewPriorityScore: undefined,
+    localFeedbackScoreDelta: undefined,
   };
 
   if (!override) {
     return baseAlert;
   }
 
-  let nextScore = clampScore(stage5CurrentRiskScore + override.scoreDelta);
-  let reviewRequired = override.reviewRequired;
-  const guardrailMessages: string[] = [];
-  const isReduction = override.scoreDelta < 0;
-
-  if (isReduction && alert.fusionConfidenceLevel === 'Critical' && nextScore < 70) {
-    nextScore = 70;
-    reviewRequired = true;
-    guardrailMessages.push('critical evidence');
-  }
-
-  if (isReduction && alert.fusionAttackType === 'Infiltration' && nextScore < 75) {
-    nextScore = 75;
-    reviewRequired = true;
-    guardrailMessages.push('Infiltration evidence');
-  }
-
-  if (alert.fusionDecision === 'SIGNATURE_ML_DISAGREE') {
-    reviewRequired = true;
-    guardrailMessages.push('signature/ML disagreement');
-  }
-
-  const guardrailMessage = guardrailMessages.length
-    ? `Guardrail applied: risk score floor or review status preserved due to ${guardrailMessages.join('; ')}.`
-    : undefined;
+  const preview = calculateSessionPreview(baseAlert, override.action);
 
   return {
     ...baseAlert,
-    operationalPriorityScore: nextScore,
-    currentRiskScore: nextScore,
-    requiresAnalystReview: reviewRequired || nextScore >= 70,
+    currentRiskScore: preview.sessionPreviewPriorityScore,
+    sessionPreviewPriorityScore: preview.sessionPreviewPriorityScore,
+    localFeedbackScoreDelta: preview.appliedDelta,
+    requiresAnalystReview: preview.reviewRequired,
     localFeedbackAction: override.action,
-    localFeedbackLabel: labelForAction(override.action),
+    localFeedbackLabel: SESSION_PREVIEW_ACTION_POLICY[override.action].label,
     localFeedbackReason: override.reason,
     localFeedbackTimestamp: override.timestamp,
-    localGuardrailMessage: guardrailMessage,
+    localGuardrailMessage: preview.guardrailMessage,
   };
 }
 
@@ -129,13 +71,16 @@ export function calculateSessionKpis(
   replayIndex: number,
   totalRecords: number
 ): SessionKpis {
-  const totalRisk = visibleRecords.reduce((sum, alert) => sum + Number(alert.currentRiskScore ?? 0), 0);
+  const totalRisk = visibleRecords.reduce(
+    (sum, alert) => sum + Number(alert.sessionPreviewPriorityScore ?? alert.operationalPriorityScore ?? 0),
+    0,
+  );
   const beforeRiskTotal = allDetectionRecords.reduce(
     (sum, alert) => sum + Number(alert.stage5CurrentRiskScore ?? alert.currentRiskScore ?? 0),
     0
   );
   const afterRiskTotal = allDetectionRecords.reduce(
-    (sum, alert) => sum + Number(alert.currentRiskScore ?? 0),
+    (sum, alert) => sum + Number(alert.sessionPreviewPriorityScore ?? alert.operationalPriorityScore ?? 0),
     0
   );
   const feedbackValues = Object.values(feedbackMap);
@@ -153,7 +98,9 @@ export function calculateSessionKpis(
     reviewedInSession: feedbackValues.length,
     localFeedbackApplied: feedbackValues.length,
     averageCurrentRisk: visibleRecords.length ? Number((totalRisk / visibleRecords.length).toFixed(2)) : 0,
-    highRiskRecords: visibleRecords.filter((alert) => Number(alert.currentRiskScore ?? 0) >= 70).length,
+    highRiskRecords: visibleRecords.filter(
+      (alert) => Number(alert.sessionPreviewPriorityScore ?? alert.operationalPriorityScore ?? 0) >= 70,
+    ).length,
     requiresReview: visibleRecords.filter((alert) => alert.requiresAnalystReview).length,
     falsePositivesMarked: feedbackValues.filter((feedback) => feedback.action === 'FALSE_POSITIVE').length,
     expectedActivityMarked: feedbackValues.filter((feedback) => feedback.action === 'EXPECTED_ACTIVITY').length,

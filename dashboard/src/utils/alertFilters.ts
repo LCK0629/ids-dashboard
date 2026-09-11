@@ -47,11 +47,9 @@ export function isSignatureMlDisagree(alert: FeedbackAdjustedAlert): boolean {
 
 export function isActionableAlert(alert: FeedbackAdjustedAlert): boolean {
   const riskScore = Number(alert.operationalPriorityScore ?? alert.currentRiskScore ?? 0);
-  const decision = String(alert.fusionDecision || '');
   return Boolean(alert.requiresAnalystReview)
     || riskScore >= 40
-    || alert.signatureHit === true
-    || (decision !== '' && decision !== 'LOW_RISK_BENIGN');
+    || alert.signatureHit === true;
 }
 
 export function isSuppressedOrResolved(alert: FeedbackAdjustedAlert): boolean {
@@ -151,6 +149,9 @@ export function filterAlerts(alerts: FeedbackAdjustedAlert[], filter: FilterKey)
         return alert.signatureHit === true;
       case 'signature-ml-disagree':
         return isSignatureMlDisagree(alert);
+      case 'ml-unavailable':
+        return alert.mlRecordPresent === true
+          && (alert.mlEvidenceAvailable === false || alert.mlPredictionStatus === 'unavailable');
       case 'guardrail-applied':
         return isScoreGuardrailApplied(alert);
       case 'exception-trust-gate':

@@ -13,10 +13,19 @@ interface InvestigationsPanelProps {
   alert?: FeedbackAdjustedAlert;
   analystAlert?: AnalystAlertV1;
   onApplyFeedback?: (alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) => void;
-  onResetFeedback?: (alert: FeedbackAdjustedAlert) => void;
+  onClearSessionPreview?: (alert: FeedbackAdjustedAlert) => void;
+  sessionNote?: string;
+  onSessionNoteChange?: (alert: FeedbackAdjustedAlert, note: string) => void;
 }
 
-export function InvestigationsPanel({ alert, analystAlert, onApplyFeedback, onResetFeedback }: InvestigationsPanelProps) {
+export function InvestigationsPanel({
+  alert,
+  analystAlert,
+  onApplyFeedback,
+  onClearSessionPreview,
+  sessionNote = '',
+  onSessionNoteChange,
+}: InvestigationsPanelProps) {
   if (!alert || !analystAlert) {
     return (
       <section className="panel full-panel">
@@ -74,11 +83,13 @@ export function InvestigationsPanel({ alert, analystAlert, onApplyFeedback, onRe
         </p>
         <FeedbackControls
           activeAction={alert.localFeedbackAction}
-          disabled={!onApplyFeedback || !onResetFeedback}
+          disabled={!onApplyFeedback || !onClearSessionPreview || !onSessionNoteChange}
           onApplyFeedback={(action) => onApplyFeedback?.(alert, action)}
-          onResetFeedback={() => onResetFeedback?.(alert)}
+          onClearSessionPreview={() => onClearSessionPreview?.(alert)}
+          onSessionNoteChange={(note) => onSessionNoteChange?.(alert, note)}
+          sessionNote={sessionNote}
         />
-        <FeedbackImpactPanel alert={alert} />
+        <FeedbackImpactPanel alert={alert} sessionNote={sessionNote} />
       </div>
 
       <div className="explain-panel">

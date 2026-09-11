@@ -3,7 +3,9 @@ export type AnalystFeedbackAction =
   | 'FALSE_POSITIVE'
   | 'EXPECTED_ACTIVITY'
   | 'NEEDS_INVESTIGATION'
-  | 'ESCALATED';
+  | 'UNCERTAIN'
+  | 'ESCALATED'
+  | 'DUPLICATE';
 
 export interface LocalFeedbackOverride {
   alertId: string;
@@ -16,6 +18,7 @@ export interface LocalFeedbackOverride {
 }
 
 export type LocalFeedbackMap = Record<string, LocalFeedbackOverride>;
+export type LocalAnalystNoteMap = Record<string, string>;
 
 export type ReplaySpeed = 1 | 2 | 5;
 

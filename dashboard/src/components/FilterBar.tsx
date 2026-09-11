@@ -6,18 +6,13 @@ interface FilterOption {
 }
 
 const filters: FilterOption[] = [
-  { key: 'active-alerts', label: 'Active Alert Queue' },
-  { key: 'all-records', label: 'All Detection Records' },
-  { key: 'requires-review', label: 'Requires Review' },
-  { key: 'high-risk', label: 'High Priority' },
-  { key: 'medium-risk', label: 'Medium Priority' },
-  { key: 'low-risk', label: 'Low Priority' },
-  { key: 'suppressed-resolved', label: 'Suppressed / Resolved' },
-  { key: 'feedback-applied', label: 'Feedback Applied' },
-  { key: 'guardrail-applied', label: 'Score Guardrail Applied' },
-  { key: 'exception-trust-gate', label: 'Exception Trust Gate' },
-  { key: 'signature-hit', label: 'Signature Hit' },
-  { key: 'signature-ml-disagree', label: 'Signature / ML Disagree' },
+  { key: 'active-alerts', label: 'Active Alerts' },
+  { key: 'requires-review', label: 'Review Required' },
+  { key: 'signature-ml-disagree', label: 'Signature / ML Disagreement' },
+  { key: 'feedback-applied', label: 'HITL Adjusted' },
+  { key: 'guardrail-applied', label: 'Guardrail Applied' },
+  { key: 'ml-unavailable', label: 'ML Unavailable' },
+  { key: 'all-records', label: 'All Records' },
 ];
 
 interface FilterBarProps {

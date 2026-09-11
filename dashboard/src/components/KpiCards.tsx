@@ -29,7 +29,7 @@ export function KpiCards({
     ['Requires Review', metric(flowAlertCounts.reviewRequiredAlerts)],
     ['Suppressed / Resolved', metric(flowAlertCounts.suppressedOrResolvedRecords)],
     ['High Priority Records', metric(flowAlertCounts.highRiskRecords)],
-    ['Average Operational Priority', formatScore(sessionKpis.averageCurrentRisk)],
+    ['Average Priority incl. Preview', formatScore(sessionKpis.averageCurrentRisk)],
     ['Feedback Adjusted', metric(flowAlertCounts.feedbackAdjustedRecords)],
     ['Visible Records', metric(sessionKpis.visibleRecords)],
     ['Replay Progress', sessionKpis.replayProgress],
@@ -46,8 +46,8 @@ export function KpiCards({
     ['Prediction ID overlap', formatPercent(fusionSummary.idAlignmentSummary?.overlapRateAgainstStage2)],
   ];
   const sessionImpactCards = [
-    ['Reviewed This Session', metric(sessionKpis.reviewedInSession)],
-    ['Local Feedback Applied', metric(sessionKpis.localFeedbackApplied)],
+    ['Alerts Actioned This Session', metric(sessionKpis.reviewedInSession)],
+    ['Session Actions Applied', metric(sessionKpis.localFeedbackApplied)],
     ['False Positives Marked', metric(sessionKpis.falsePositivesMarked)],
     ['Expected Activity Marked', metric(sessionKpis.expectedActivityMarked)],
     ['Confirmed Threats', metric(sessionKpis.confirmedThreats)],
@@ -56,8 +56,8 @@ export function KpiCards({
     ['Avg Priority Before Preview', formatScore(sessionKpis.averageRiskBeforeLocalFeedback)],
     ['Avg Priority After Preview', formatScore(sessionKpis.averageRiskAfterLocalFeedback)],
     ['Avg Priority Change', formatScore(sessionKpis.averageRiskChange)],
-    ['Review Before Local Feedback', metric(sessionKpis.reviewRequiredBeforeLocalFeedback)],
-    ['Review After Local Feedback', metric(sessionKpis.reviewRequiredAfterLocalFeedback)],
+    ['Review Before Session Preview', metric(sessionKpis.reviewRequiredBeforeLocalFeedback)],
+    ['Review After Session Preview', metric(sessionKpis.reviewRequiredAfterLocalFeedback)],
     ['Guardrails Triggered', metric(sessionKpis.guardrailsTriggered)],
   ];
 
@@ -77,7 +77,7 @@ export function KpiCards({
       </div>
       <div className="kpi-title secondary">
         <strong>Current Session Metrics</strong>
-        <span>UI-only analyst feedback impact. No JSON files are modified.</span>
+        <span>Session-only action preview. No JSON files or historical feedback are modified.</span>
       </div>
       <div className="kpi-grid session-impact">
         {sessionImpactCards.map(([label, value]) => (

@@ -35,6 +35,8 @@ jobs:
 
       - name: Build dashboard
         working-directory: dashboard
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
 
       - name: Configure Pages

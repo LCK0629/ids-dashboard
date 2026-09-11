@@ -71,13 +71,14 @@ npm run test:data
 
 ## GitHub Pages
 
-Public URL:
+Deployment URLs:
 
 ```txt
 https://lck0629.github.io/ids-dashboard/
+https://csit-321.github.io/CSIT321-Human-in-the-loop_IDS/
 ```
 
-Deployment is rebuilt from `main` using GitHub Actions. Local development continues to use `npm run dev`. The published site contains static, offline research data only and does not imply production IDS operation.
+Deployment is rebuilt from `main` using GitHub Actions. The workflow derives the Vite base path from the repository name, so each repository mirror serves assets from its own GitHub Pages project path. Local development continues to use `npm run dev`. The published site contains static, offline research data only and does not imply production IDS operation.
 
 ## Current UI Scope
 

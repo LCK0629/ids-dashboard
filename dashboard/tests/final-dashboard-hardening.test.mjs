@@ -22,6 +22,7 @@ const filterSource = read('dashboard/src/utils/alertFilters.ts');
 const feedbackPanelSource = read('dashboard/src/components/FeedbackSummaryPanel.tsx');
 const stylesSource = read('dashboard/src/styles.css');
 const viteConfigSource = read('dashboard/vite.config.ts');
+const pagesWorkflowSource = read('.github/workflows/deploy-dashboard-pages.yml');
 
 function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
@@ -72,7 +73,8 @@ test('1 analyst artifact is imported as a Vite URL, not bundled JSON data', () =
 });
 
 test('2 production analyst asset URL is delegated to Vite and respects project base', () => {
-  assert.match(viteConfigSource, /command === 'build' \|\| isPreview \? '\/ids-dashboard\/' : '\/'/);
+  assert.match(viteConfigSource, /command === 'build' \|\| isPreview \? productionBase\(\) : '\/'/);
+  assert.match(viteConfigSource, /process\.env\.VITE_BASE_PATH/);
   assert.doesNotMatch(appSource, /['"]\/data\/analyst-alerts/);
 });
 
@@ -253,9 +255,9 @@ test('32 active controls expose semantic selection state', () => {
   assert.match(replaySource, /aria-pressed=\{replaySpeed === speed\}/);
 });
 
-test('33 GitHub Pages production base remains ids-dashboard', () => {
+test('33 GitHub Pages production base follows the repository name with a local fallback', () => {
   assert.match(viteConfigSource, /'\/ids-dashboard\/'/);
-  assert.ok(fs.existsSync(path.join(repoRoot, '.github/workflows/deploy-dashboard-pages.yml')));
+  assert.match(pagesWorkflowSource, /VITE_BASE_PATH: \/\$\{\{ github\.event\.repository\.name \}\}\//);
 });
 
 test('34 demo metadata still states no actual XGBoost inference', () => {

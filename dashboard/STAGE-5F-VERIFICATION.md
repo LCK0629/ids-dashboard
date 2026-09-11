@@ -28,7 +28,7 @@ The canonical analyst JSON remains in `dashboard/src/data/analyst-alerts.v1.json
 | Responsive | Pass | 360, 390, 768, 1024, and 1440 CSS/viewport checks |
 | Accessibility | Pass | Native labels, fieldsets, pressed/current states, keyboard rows, and visible focus |
 | Performance | Pass | Analyst JSON removed from the JavaScript module payload |
-| GitHub Pages | Pass | Vite production base remains `/ids-dashboard/`; deployment workflow retained |
+| GitHub Pages | Pass | Workflow supplies a repository-specific Vite base; local builds retain `/ids-dashboard/` as the fallback |
 | Ground-truth isolation | Pass | No forbidden ground-truth fields in the analyst artifact |
 | Formal/demo separation | Pass | Six controlled demo IDs remain outside all 995 formal records |
 

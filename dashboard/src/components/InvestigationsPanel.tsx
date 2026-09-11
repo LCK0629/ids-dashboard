@@ -1,9 +1,9 @@
 import type { AnalystAlertV1 } from '../types/dashboardData';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import type { AnalystFeedbackAction } from '../types/feedback';
-import { formatScore } from '../utils/alertFilters';
 import { analystRecommendation, buildFeatureInterpretation } from '../utils/investigation';
 import { AutomatedDetectionEvidence } from './automated-evidence/AutomatedDetectionEvidence';
+import { HitlAdaptationEvidence } from './hitl-adaptation/HitlAdaptationEvidence';
 import { FeatureSummaryPanel } from './FeatureSummaryPanel';
 import { FeedbackControls } from './FeedbackControls';
 import { FeedbackImpactPanel } from './FeedbackImpactPanel';
@@ -53,6 +53,10 @@ export function InvestigationsPanel({ alert, analystAlert, onApplyFeedback, onRe
         <AutomatedDetectionEvidence alert={analystAlert} density="expanded" />
       </div>
 
+      <div className="investigation-section hitl-investigation-section">
+        <HitlAdaptationEvidence alert={analystAlert} density="expanded" />
+      </div>
+
       <div className="investigation-section">
         <h3>General Investigation Context</h3>
         <p className="helper-text">
@@ -63,19 +67,10 @@ export function InvestigationsPanel({ alert, analystAlert, onApplyFeedback, onRe
         </div>
       </div>
 
-      <div className="explain-panel">
-        <h3>Current Feedback Context</h3>
-        <p>{alert.feedbackReason || 'No pipeline feedback reason recorded.'}</p>
-        <p className="helper-text">
-          Detection Score remains {formatScore(alert.detectionScore)}. Operational Priority is {formatScore(alert.operationalPriorityScore)}.
-          Detailed historical adaptation causality is reserved for the next dashboard increment.
-        </p>
-      </div>
-
       <div className="investigation-section feedback-decision-section">
-        <h3>Analyst Feedback Decision</h3>
+        <h3>Session Preview</h3>
         <p className="helper-text">
-          Feedback submitted here is session-only and previews dashboard priority. It does not write to JSON or retrain the model.
+          This temporary browser action is not persisted and has not yet become historical feedback for future alerts. It does not write to JSON or retrain the model.
         </p>
         <FeedbackControls
           activeAction={alert.localFeedbackAction}

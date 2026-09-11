@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import analystAlertsData from './data/analyst-alerts.v1.json';
+import adaptationDemoData from './data/adaptation-demo-scenarios.v1.json';
 import evaluatorSummaryData from './data/evaluator-summary.v1.json';
 import { AlertDetailPanel } from './components/AlertDetailPanel';
 import { AlertQueue } from './components/AlertQueue';
@@ -21,8 +22,8 @@ import type {
   FusionEvaluationSummary,
 } from './types/alerts';
 import type { AnalystFeedbackAction, LocalFeedbackMap, ReplaySpeed } from './types/feedback';
-import type { AnalystArtifactV1, EvaluatorSummaryArtifactV1 } from './types/dashboardData';
-import { validateAnalystArtifact, validateEvaluatorArtifact } from './data-contract/analystDashboardContract.js';
+import type { AnalystArtifactV1, DemoArtifactV1, EvaluatorSummaryArtifactV1 } from './types/dashboardData';
+import { validateAnalystArtifact, validateDemoArtifact, validateEvaluatorArtifact } from './data-contract/analystDashboardContract.js';
 import { adaptAnalystAlertsForLegacyComponents } from './utils/dashboardAdapter';
 import {
   applySessionPreviewOverrides,
@@ -46,6 +47,8 @@ const evaluatorArtifactValidation = validateEvaluatorArtifact(evaluatorSummaryDa
 const evaluatorArtifact = evaluatorArtifactValidation.valid
   ? evaluatorSummaryData as EvaluatorSummaryArtifactV1
   : null;
+const demoArtifactValidation = validateDemoArtifact(adaptationDemoData);
+const demoArtifact = demoArtifactValidation.valid ? adaptationDemoData as DemoArtifactV1 : null;
 const alerts = analystArtifact
   ? adaptAnalystAlertsForLegacyComponents(analystArtifact.alerts)
   : [];
@@ -305,7 +308,12 @@ export default function App() {
           />
         )}
         {activeView === 'feedback' && (
-          <FeedbackSummaryPanel sessionKpis={sessionKpis} summary={feedbackSummary} />
+          <FeedbackSummaryPanel
+            demoArtifact={demoArtifact}
+            demoErrors={demoArtifactValidation.errors}
+            sessionKpis={sessionKpis}
+            summary={feedbackSummary}
+          />
         )}
         {activeView === 'reports' && (
           <ReportsPanel feedbackSummary={feedbackSummary} fusionSummary={fusionSummary} />

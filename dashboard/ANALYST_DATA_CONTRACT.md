@@ -18,7 +18,7 @@ These artifacts have separate purposes:
 
 - `analyst-alerts.v1.json`: analyst-facing held-out detection records. It contains no per-alert ground truth.
 - `evaluator-summary.v1.json`: aggregate evaluation metrics. It is not an analyst-record source.
-- `adaptation-demo-scenarios.v1.json`: deterministic demonstrations generated through the real Stage 5 core. They are not formal evaluation results.
+- `adaptation-demo-scenarios.v1.json`: deterministic demonstrations generated through the real Stage 4 fusion and Stage 5 adaptation cores. They are not formal evaluation results and do not claim actual XGBoost inference.
 - `dashboard-data-manifest.v1.json`: portable paths, hashes, counts, provenance, and publication checks.
 
 Formal evaluation is not demonstration data. Analyst data is not evaluator data.
@@ -32,6 +32,16 @@ Formal evaluation is not demonstration data. Analyst data is not evaluator data.
 - TreeSHAP values: predicted-class raw-margin attribution. They are not probability changes or risk points.
 
 Legacy `fusionRiskScore` and `currentRiskScore` names exist only in `dashboard/src/utils/dashboardAdapter.ts` while older React components are migrated. They are not canonical contract fields.
+
+## HITL Adaptation Evidence
+
+Each alert carries a compact `adaptation.diagnostics` snapshot produced by the authoritative Stage 5 engine. It records whether adaptation was evaluated, candidate learning-feedback and comparison-attempt counts, configured similarity and evidence-coverage thresholds, matched feedback counts, historical outcome counts, agreement/conflict state, eligibility thresholds, and at most three analyst-safe matched examples. The dashboard does not recompute similarity or historical agreement.
+
+Candidate and matched counts distinguish a true cold start from a rejected-history case. Zero candidates means no learning history was available. A positive candidate count with zero applicable matches means history existed but did not pass similarity or evidence-coverage gates. When `evaluated` is false, the UI reports `NOT EVALUATED` rather than claiming no history.
+
+Similarity measures whether prior feedback is applicable to the current alert. Evidence coverage measures how much configured comparison evidence was available. Neither value represents attack probability or contributes directly to Detection Score or Operational Priority. Historical analyst feedback is operational evidence, not ground truth.
+
+The demo artifact uses the same canonical alert contract and is validated separately. Its metadata identifies `stage-4/core/fusion-engine.js` and `stage-5/core/feedback-engine.js` as the automated detection and adaptation authorities. Runtime validation rejects malformed scores, counts, similarity values, IDs, privacy-sensitive paths, and forbidden evaluator fields.
 
 ## ML States
 

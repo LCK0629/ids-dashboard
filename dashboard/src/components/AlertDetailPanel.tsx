@@ -2,6 +2,7 @@ import type { AnalystAlertV1 } from '../types/dashboardData';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import type { AnalystFeedbackAction } from '../types/feedback';
 import { AutomatedDetectionEvidence } from './automated-evidence/AutomatedDetectionEvidence';
+import { HitlAdaptationEvidence } from './hitl-adaptation/HitlAdaptationEvidence';
 import { FeedbackControls } from './FeedbackControls';
 import { FeedbackImpactPanel } from './FeedbackImpactPanel';
 import { ScoreComparison } from './ScoreComparison';
@@ -38,6 +39,7 @@ export function AlertDetailPanel({ alert, analystAlert, onApplyFeedback, onReset
 
       <ScoreComparison alert={alert} />
       <AutomatedDetectionEvidence alert={analystAlert} density="compact" />
+      <HitlAdaptationEvidence alert={analystAlert} density="compact" />
 
       <FeedbackControls
         activeAction={alert.localFeedbackAction}
@@ -47,7 +49,8 @@ export function AlertDetailPanel({ alert, analystAlert, onApplyFeedback, onReset
       />
 
       <section className="evidence-block">
-        <h3>Feedback Impact</h3>
+        <h3>Session Preview</h3>
+        <p className="helper-text">This temporary browser action is not persisted and has not yet become historical feedback for future alerts.</p>
         <FeedbackImpactPanel alert={alert} />
       </section>
 
@@ -63,7 +66,6 @@ export function AlertDetailPanel({ alert, analystAlert, onApplyFeedback, onReset
         <p>{alert.feedbackReason || 'No feedback reason recorded.'}</p>
         {alert.localFeedbackReason && <p>{alert.localFeedbackReason}</p>}
         {alert.localGuardrailMessage && <p className="guardrail-message">{alert.localGuardrailMessage}</p>}
-        <p className="helper-text">Historical adaptation detail will be expanded in the dedicated feedback-causal-chain increment.</p>
       </section>
     </aside>
   );

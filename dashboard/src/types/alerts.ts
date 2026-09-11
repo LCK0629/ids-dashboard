@@ -128,6 +128,7 @@ export interface FeedbackAdjustedAlert {
 
 export interface FeedbackEvaluationSummary {
   totalAlerts?: number;
+  heldOutAlertCount?: number;
   alertsAdjusted?: number;
   alertsUnchanged?: number;
   directFeedbackAppliedCount?: number;

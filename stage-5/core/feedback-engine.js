@@ -347,11 +347,18 @@ function expectedActivityEligible(aggregation, config = {}) {
 function checkAdaptationEligibility(aggregation, config = {}) {
   const minimumFeedbackCount = Number(config.minimumFeedbackCount ?? 3);
   const minimumAgreementRatio = Number(config.minimumAgreementRatio ?? 0.67);
+  const learningFeedbackEventCount = Number(aggregation?.learningFeedbackEventCount || 0);
 
-  if (!aggregation || aggregation.matchedFeedbackCount === 0) {
+  if (!aggregation || learningFeedbackEventCount === 0) {
     return {
       eligible: false,
-      reason: 'Cold start: no sufficiently similar historical feedback was found.',
+      reason: 'Cold start: no historical learning feedback is available.',
+    };
+  }
+  if (aggregation.matchedFeedbackCount === 0) {
+    return {
+      eligible: false,
+      reason: 'Historical learning feedback exists, but none produced an applicable historical match.',
     };
   }
   if (aggregation.matchedFeedbackCount < minimumFeedbackCount) {
@@ -441,6 +448,52 @@ function setReviewFlag(alert, operationalPriorityScore, forceReview) {
   return operationalPriorityScore >= Number(alert.reviewThreshold ?? 70);
 }
 
+function buildAdaptationDiagnostics(aggregation, config = {}) {
+  const similarityConfig = config.similarity || {};
+  const aggregationConfig = config.aggregation || {};
+  const matchedFeedback = aggregation?.matchedFeedback || [];
+
+  return {
+    evaluated: Boolean(aggregation),
+    similarity: {
+      averageScore: Number(aggregation?.averageSimilarity || 0),
+      averageEvidenceCoverage: Number(aggregation?.averageEvidenceCoverage || 0),
+      threshold: Number(similarityConfig.threshold ?? 0),
+      minimumEvidenceCoverage: Number(similarityConfig.minimumEvidenceCoverage ?? 0),
+      matchedCount: Number(aggregation?.matchedFeedbackCount || 0),
+      comparisonAttemptCount: Number(aggregation?.similarityAttempts?.length || 0),
+      lowSimilarityAttemptCount: Number(aggregation?.lowSimilarityCount || 0),
+      lowEvidenceCoverageAttemptCount: Number(aggregation?.lowEvidenceCoverageCount || 0),
+    },
+    historicalFeedback: {
+      candidateLearningFeedbackCount: Number(aggregation?.learningFeedbackEventCount || 0),
+      counts: {
+        falsePositive: Number(aggregation?.falsePositiveCount || 0),
+        confirmedThreat: Number(aggregation?.confirmedThreatCount || 0),
+        expectedActivity: Number(aggregation?.expectedActivityCount || 0),
+      },
+      dominantFeedback: aggregation?.dominantFeedback || null,
+      agreementRatio: Number(aggregation?.agreementRatio || 0),
+      conflictDetected: Boolean(aggregation?.conflictDetected),
+    },
+    eligibilityThresholds: {
+      minimumFeedbackCount: Number(aggregationConfig.minimumFeedbackCount ?? 3),
+      minimumAgreementRatio: Number(aggregationConfig.minimumAgreementRatio ?? 0.67),
+      strongAgreementRatio: Number(aggregationConfig.strongAgreementRatio ?? 0.8),
+    },
+    matchedExamples: matchedFeedback.slice(0, 3).map((item) => ({
+      feedbackId: item.feedbackId,
+      historicalAlertId: item.alertId,
+      feedbackType: item.feedbackType,
+      similarityScore: item.similarityScore,
+      evidenceCoverage: item.evidenceCoverage,
+      matchedFields: [...item.matchedFields],
+      differedFields: [...item.differedFields],
+      unavailableFields: [...item.unavailableFields],
+    })),
+  };
+}
+
 function buildDefaultResult(alert, reason = 'No direct feedback or trusted historical feedback matched this alert.') {
   const detectionScore = clampScore(alert.fusionRiskScore);
   return {
@@ -473,6 +526,7 @@ function buildDefaultResult(alert, reason = 'No direct feedback or trusted histo
     historicalAgreementRatio: 0,
     conflictDetected: false,
     adaptationExplanation: reason,
+    adaptationDiagnostics: null,
   };
 }
 
@@ -494,7 +548,10 @@ function adjustAlertWithFeedback(alert, context = {}) {
   const matchingException = useManualExceptionMemory
     ? findMatchingException(alertWithDetectionScore, exceptionMemory)
     : null;
-  let result = buildDefaultResult(alertWithDetectionScore);
+  let result = {
+    ...buildDefaultResult(alertWithDetectionScore),
+    adaptationDiagnostics: buildAdaptationDiagnostics(null, config),
+  };
 
   if (directFeedback) {
     const directResult = applyDirectFeedback(alertWithDetectionScore, directFeedback, config.guardrails || {});
@@ -543,6 +600,7 @@ function adjustAlertWithFeedback(alert, context = {}) {
       lowSimilarityCount: aggregation.lowSimilarityCount,
       adaptationEligible: eligibility.eligible,
       adaptationEligibilityReason: eligibility.reason,
+      adaptationDiagnostics: buildAdaptationDiagnostics(aggregation, config),
     };
 
     if (eligibility.eligible) {
@@ -618,6 +676,7 @@ function adjustAlertWithFeedback(alert, context = {}) {
     conflictDetected: result.conflictDetected,
     lowEvidenceCoverageCount: result.lowEvidenceCoverageCount || 0,
     lowSimilarityCount: result.lowSimilarityCount || 0,
+    adaptationDiagnostics: result.adaptationDiagnostics,
   };
 }
 
@@ -908,6 +967,7 @@ module.exports = {
   expectedActivityEligible,
   checkAdaptationEligibility,
   proposeHistoricalAdjustment,
+  buildAdaptationDiagnostics,
   adjustAlertWithFeedback,
   adjustAlertsWithFeedback,
   attachGroundTruthFields,

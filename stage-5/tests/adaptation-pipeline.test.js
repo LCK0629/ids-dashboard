@@ -12,6 +12,7 @@ const {
   applyGuardrails,
   adjustAlertsWithFeedback,
   buildEvaluatorRecords,
+  checkAdaptationEligibility,
   stripGroundTruthFields,
 } = require('../core/feedback-engine');
 const {
@@ -339,6 +340,45 @@ test('workflow feedback does not contribute to future learning aggregation', () 
 
   assert.equal(aggregation.learningFeedbackEventCount, 0);
   assert.equal(aggregation.matchedFeedbackCount, 0);
+});
+
+test('zero historical learning feedback is reported as a true cold start', () => {
+  const eligibility = checkAdaptationEligibility({
+    learningFeedbackEventCount: 0,
+    matchedFeedbackCount: 0,
+  }, adaptationConfig.aggregation);
+
+  assert.equal(eligibility.eligible, false);
+  assert.equal(eligibility.reason, 'Cold start: no historical learning feedback is available.');
+});
+
+test('existing candidate history with zero matches is not reported as a cold start', () => {
+  const eligibility = checkAdaptationEligibility({
+    learningFeedbackEventCount: 4,
+    matchedFeedbackCount: 0,
+  }, adaptationConfig.aggregation);
+
+  assert.equal(eligibility.reason, 'Historical learning feedback exists, but none produced an applicable historical match.');
+  assert.doesNotMatch(eligibility.reason, /cold start/i);
+});
+
+test('existing candidate history with zero matches remains ineligible', () => {
+  const eligibility = checkAdaptationEligibility({
+    learningFeedbackEventCount: 4,
+    matchedFeedbackCount: 0,
+  }, adaptationConfig.aggregation);
+
+  assert.equal(eligibility.eligible, false);
+});
+
+test('matched history below the minimum retains the insufficient-feedback reason', () => {
+  const eligibility = checkAdaptationEligibility({
+    learningFeedbackEventCount: 4,
+    matchedFeedbackCount: 1,
+  }, adaptationConfig.aggregation);
+
+  assert.equal(eligibility.eligible, false);
+  assert.equal(eligibility.reason, 'Not enough similar learning feedback. Required 3, found 1.');
 });
 
 test('Expected Activity does not propagate without the stricter context gate', () => {

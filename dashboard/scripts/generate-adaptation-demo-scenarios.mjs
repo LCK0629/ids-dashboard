@@ -7,32 +7,31 @@ import {
   ANALYST_SCHEMA_VERSION,
   DEMO_ARTIFACT_TYPE,
   findForbiddenGroundTruthPaths,
-  validateAnalystAlert,
+  validateDemoArtifact,
 } from '../src/data-contract/analystDashboardContract.js';
 import { buildAnalystAlert, findPrivacyViolations } from './export-dashboard-data.mjs';
 
 const require = createRequire(import.meta.url);
+const { fuseAlert } = require('../../stage-4/core/fusion-engine.js');
 const { adjustAlertsWithFeedback } = require('../../stage-5/core/feedback-engine.js');
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
 const defaultConfigPath = path.join(repoRoot, 'stage-5', 'config', 'adaptation-config.json');
 const defaultOutputPath = path.join(repoRoot, 'dashboard', 'src', 'data', 'adaptation-demo-scenarios.v1.json');
 
-function baseAlert(id, overrides = {}) {
+function signatureInput(id, overrides = {}) {
   return {
     id,
-    flowFeatureSummary: {
-      protocol: 'TCP',
-      destinationPort: 443,
-      flowDuration: 1200,
-      totalFwdPackets: 24,
-      totalBackwardPackets: 8,
-      flowPacketsPerSecond: 26.7,
-      flowBytesPerSecond: 4800,
-      packetLengthMean: 180,
-      synFlagCount: 2,
-      ackFlagCount: 8,
-    },
+    protocol: 'TCP',
+    destinationPort: 443,
+    flowDuration: 1200,
+    totalFwdPackets: 24,
+    totalBwdPackets: 8,
+    flowPacketsPerSecond: 26.7,
+    flowBytesPerSecond: 4800,
+    packetLengthMean: 180,
+    synFlagCount: 2,
+    ackFlagCount: 8,
     signatureHit: false,
     signatureId: null,
     signatureAttackType: null,
@@ -40,13 +39,16 @@ function baseAlert(id, overrides = {}) {
     signaturePlainExplanation: null,
     matchedConditionsReadable: [],
     signatureTechnicalDetails: null,
-    mlRecordPresent: true,
-    mlPredictionStatus: 'available',
-    mlEvidenceAvailable: true,
-    mlFailureReason: null,
-    mlSchemaMode: 'new',
-    mlPredictedClassIndex: 4,
-    mlPredictedAttackType: 'DoS',
+    ...overrides,
+  };
+}
+
+function mlInput(id, overrides = {}) {
+  return {
+    id,
+    predictionStatus: 'available',
+    predictedClassIndex: 4,
+    predictedAttackType: 'DoS',
     modelConfidence: 0.9,
     classProbabilities: { Benign: 0.1, DoS: 0.9 },
     secondBestClass: 'Benign',
@@ -54,27 +56,27 @@ function baseAlert(id, overrides = {}) {
     modelProvenance: null,
     mlExplanation: {
       status: 'unavailable',
-      reason: 'demonstration_scenario_has_no_model_run',
+      reason: 'demonstration_scenario_no_model_run',
       method: null,
     },
-    mlThreatEvidenceScore: 90,
-    fusionAttackType: 'DoS',
-    fusionRiskScore: 80,
-    fusionDecision: 'ML_ONLY_HIGH_CONFIDENCE',
-    fusionEvidence: 'Deterministic demonstration input for Stage 5 adaptation behaviour.',
-    requiresAnalystReview: true,
-    fusionConfidenceLevel: 'High',
     ...overrides,
   };
 }
 
-function historicalFixture(prefix, count, feedbackTypes, alertOverrides = {}) {
+function fusedDetectorRecord(id, detectorOverrides = {}) {
+  return fuseAlert(
+    signatureInput(id, detectorOverrides.signature),
+    mlInput(id, detectorOverrides.ml)
+  );
+}
+
+function historicalFixture(prefix, count, feedbackTypes, detectorOverrides = {}) {
   const alerts = [];
   const feedback = [];
   for (let index = 0; index < count; index += 1) {
     const sequence = index + 1;
     const alertId = `${prefix}-H${sequence}`;
-    alerts.push(baseAlert(alertId, alertOverrides));
+    alerts.push(fusedDetectorRecord(alertId, detectorOverrides));
     feedback.push({
       feedbackId: `${prefix}-FB${sequence}`,
       alertId,
@@ -105,69 +107,98 @@ function runScenario(currentAlert, historicalAlerts, feedbackEvents, config) {
 }
 
 export function buildDemoScenarioArtifact(config) {
-  const coldCurrent = baseAlert('DEMO-COLD-1', { fusionRiskScore: 72 });
+  const coldCurrent = fusedDetectorRecord('DEMO-COLD-1', {
+    ml: {
+      modelConfidence: 0.82,
+      classProbabilities: { Benign: 0.18, DoS: 0.82 },
+      predictionMargin: 0.64,
+    },
+  });
 
   const repeatedFp = historicalFixture(
     'DEMO-FP',
     3,
     ['mark_false_positive', 'mark_false_positive', 'mark_false_positive']
   );
-  const fpCurrent = baseAlert('DEMO-FP-CURRENT', { fusionRiskScore: 80 });
+  const fpCurrent = fusedDetectorRecord('DEMO-FP-CURRENT');
 
   const confirmedThreat = historicalFixture(
     'DEMO-TP',
     3,
     ['confirm_true_positive', 'confirm_true_positive', 'confirm_true_positive']
   );
-  const tpCurrent = baseAlert('DEMO-TP-CURRENT', { fusionRiskScore: 60 });
+  const mediumMlOverrides = {
+    ml: {
+      modelConfidence: 0.79,
+      classProbabilities: { Benign: 0.21, DoS: 0.79 },
+      predictionMargin: 0.58,
+    },
+  };
+  confirmedThreat.alerts = confirmedThreat.alerts.map((alert) => fusedDetectorRecord(alert.id, mediumMlOverrides));
+  const tpCurrent = fusedDetectorRecord('DEMO-TP-CURRENT', mediumMlOverrides);
 
   const conflict = historicalFixture(
     'DEMO-CONFLICT',
     4,
     ['mark_false_positive', 'mark_false_positive', 'confirm_true_positive', 'confirm_true_positive']
   );
-  const conflictCurrent = baseAlert('DEMO-CONFLICT-CURRENT', { fusionRiskScore: 70 });
+  const thresholdMlOverrides = {
+    ml: {
+      modelConfidence: 0.8,
+      classProbabilities: { Benign: 0.2, DoS: 0.8 },
+      predictionMargin: 0.6,
+    },
+  };
+  conflict.alerts = conflict.alerts.map((alert) => fusedDetectorRecord(alert.id, thresholdMlOverrides));
+  const conflictCurrent = fusedDetectorRecord('DEMO-CONFLICT-CURRENT', thresholdMlOverrides);
 
-  const criticalOverrides = {
-    fusionRiskScore: 85,
-    fusionConfidenceLevel: 'Critical',
-    signatureHit: true,
-    signatureId: 'SIG-DEMO-CRITICAL-DOS',
-    signatureAttackType: 'DoS',
-    signatureSeverity: 'Critical',
-    fusionDecision: 'SIGNATURE_ML_AGREE',
+  const guardrailDetectorOverrides = {
+    signature: {
+      signatureHit: true,
+      signatureId: 'SIG-DEMO-CRITICAL-DOS',
+      signatureAttackType: 'DoS',
+      signatureSeverity: 'High',
+      signaturePlainExplanation: 'Synthetic high-severity signature input for deterministic guardrail demonstration.',
+    },
+    ml: {
+      predictedClassIndex: 0,
+      predictedAttackType: 'Benign',
+      modelConfidence: 0.95,
+      classProbabilities: { Benign: 0.95, DoS: 0.05 },
+      secondBestClass: 'DoS',
+      predictionMargin: 0.9,
+    },
   };
   const guardrail = historicalFixture(
     'DEMO-GUARDRAIL',
     3,
     ['mark_false_positive', 'mark_false_positive', 'mark_false_positive'],
-    criticalOverrides
+    guardrailDetectorOverrides
   );
-  const guardrailCurrent = baseAlert('DEMO-GUARDRAIL-CURRENT', criticalOverrides);
+  const guardrailCurrent = fusedDetectorRecord('DEMO-GUARDRAIL-CURRENT', guardrailDetectorOverrides);
 
-  const unavailableCurrent = baseAlert('DEMO-ML-UNAVAILABLE', {
-    fusionRiskScore: 80,
-    signatureHit: true,
-    signatureId: 'SIG-DEMO-DOS',
-    signatureAttackType: 'DoS',
-    signatureSeverity: 'High',
-    fusionDecision: 'SIGNATURE_ONLY_ML_UNAVAILABLE',
-    mlRecordPresent: true,
-    mlPredictionStatus: 'unavailable',
-    mlEvidenceAvailable: false,
-    mlFailureReason: 'invalid_numeric_feature_values',
-    mlSchemaMode: 'new_unavailable',
-    mlPredictedClassIndex: null,
-    mlPredictedAttackType: null,
-    modelConfidence: null,
-    classProbabilities: null,
-    secondBestClass: null,
-    predictionMargin: null,
-    mlThreatEvidenceScore: null,
-    mlExplanation: {
-      status: 'unavailable',
-      reason: 'prediction_unavailable',
-      method: 'xgboost_native_treeshap_pred_contribs',
+  const unavailableCurrent = fusedDetectorRecord('DEMO-ML-UNAVAILABLE', {
+    signature: {
+      signatureHit: true,
+      signatureId: 'SIG-DEMO-DOS',
+      signatureAttackType: 'DoS',
+      signatureSeverity: 'High',
+      signaturePlainExplanation: 'Synthetic signature input retained while ML prediction is unavailable.',
+    },
+    ml: {
+      predictionStatus: 'unavailable',
+      failureReason: 'invalid_numeric_feature_values',
+      predictedClassIndex: null,
+      predictedAttackType: null,
+      modelConfidence: null,
+      classProbabilities: null,
+      secondBestClass: null,
+      predictionMargin: null,
+      mlExplanation: {
+        status: 'unavailable',
+        reason: 'prediction_unavailable',
+        method: 'xgboost_native_treeshap_pred_contribs',
+      },
     },
   });
 
@@ -199,7 +230,7 @@ export function buildDemoScenarioArtifact(config) {
     {
       scenarioId: 'guardrail_protection',
       title: 'Guardrail Protection',
-      purpose: 'A proposed reduction is constrained by Critical signature/evidence protection.',
+      purpose: 'A proposed reduction is constrained by the configured Critical detection-score floor.',
       alert: runScenario(guardrailCurrent, guardrail.alerts, guardrail.feedback, config),
     },
     {
@@ -210,19 +241,16 @@ export function buildDemoScenarioArtifact(config) {
     },
   ];
 
-  scenarios.forEach((scenario, index) => {
-    const validation = validateAnalystAlert(scenario.alert, index);
-    if (!validation.valid) throw new Error(`${scenario.scenarioId}: ${validation.errors.join(' ')}`);
-  });
-
   const artifact = {
     schemaVersion: ANALYST_SCHEMA_VERSION,
     artifactType: DEMO_ARTIFACT_TYPE,
     generationMetadata: {
-      generationMode: 'deterministic_stage5_core_demonstration',
+      generationMode: 'deterministic_stage4_stage5_demonstration',
       generatedAtPolicy: 'omitted_for_deterministic_artifact',
       formalEvaluationResult: false,
-      scoringAuthority: 'stage-5/core/feedback-engine.js',
+      automatedDetectionAuthority: 'stage-4/core/fusion-engine.js',
+      adaptationAuthority: 'stage-5/core/feedback-engine.js',
+      actualXgboostInference: false,
       manualExceptionMemoryEnabled: false,
     },
     summary: {
@@ -238,6 +266,8 @@ export function buildDemoScenarioArtifact(config) {
     scenarios,
   };
 
+  const validation = validateDemoArtifact(artifact);
+  if (!validation.valid) throw new Error(`Invalid demo artifact: ${validation.errors.join(' ')}`);
   const privacyViolations = findPrivacyViolations(artifact);
   if (artifact.summary.groundTruthFieldCount > 0) throw new Error('Demo artifact contains evaluator ground truth.');
   if (privacyViolations.length > 0) throw new Error(`Demo privacy scan failed: ${privacyViolations.join(', ')}`);

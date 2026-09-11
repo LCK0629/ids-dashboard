@@ -32,6 +32,48 @@ export interface MlExplanation {
   } | null;
 }
 
+export interface AdaptationMatchedExample {
+  feedbackId: string;
+  historicalAlertId: string;
+  feedbackType: string;
+  similarityScore: number;
+  evidenceCoverage: number;
+  matchedFields: string[];
+  differedFields: string[];
+  unavailableFields: string[];
+}
+
+export interface AdaptationDiagnostics {
+  evaluated: boolean;
+  similarity: {
+    averageScore: number;
+    averageEvidenceCoverage: number;
+    threshold: number;
+    minimumEvidenceCoverage: number;
+    matchedCount: number;
+    comparisonAttemptCount: number;
+    lowSimilarityAttemptCount: number;
+    lowEvidenceCoverageAttemptCount: number;
+  };
+  historicalFeedback: {
+    candidateLearningFeedbackCount: number;
+    counts: {
+      falsePositive: number;
+      confirmedThreat: number;
+      expectedActivity: number;
+    };
+    dominantFeedback: string | null;
+    agreementRatio: number;
+    conflictDetected: boolean;
+  };
+  eligibilityThresholds: {
+    minimumFeedbackCount: number;
+    minimumAgreementRatio: number;
+    strongAgreementRatio: number;
+  };
+  matchedExamples: AdaptationMatchedExample[];
+}
+
 export interface AnalystAlertV1 {
   identity: { id: string };
   flowFeatures: Record<string, string | number | null>;
@@ -96,6 +138,7 @@ export interface AnalystAlertV1 {
     operationalPriorityScore: number;
     source: string;
     explanation: string;
+    diagnostics: AdaptationDiagnostics;
   };
   workflow: {
     requiresAnalystReviewBeforeFeedback: boolean;
@@ -129,4 +172,25 @@ export interface EvaluatorSummaryArtifactV1 {
   generationMetadata: Record<string, unknown>;
   fusionSummary: Record<string, unknown>;
   feedbackSummary: Record<string, unknown>;
+}
+
+export interface DemoScenarioV1 {
+  scenarioId: string;
+  title: string;
+  purpose: string;
+  alert: AnalystAlertV1;
+}
+
+export interface DemoArtifactV1 {
+  schemaVersion: 'ids-dashboard-analyst-v1';
+  artifactType: 'demonstration_scenarios';
+  generationMetadata: {
+    generationMode: 'deterministic_stage4_stage5_demonstration';
+    formalEvaluationResult: false;
+    automatedDetectionAuthority: 'stage-4/core/fusion-engine.js';
+    adaptationAuthority: 'stage-5/core/feedback-engine.js';
+    actualXgboostInference: false;
+  } & Record<string, unknown>;
+  summary: Record<string, number> & { scenarioCount: number };
+  scenarios: DemoScenarioV1[];
 }

@@ -17,6 +17,7 @@ export function validateAnalystArtifact(
   options?: { expectedArtifactType?: string }
 ): ValidationResult;
 export function validateEvaluatorArtifact(artifact: unknown): ValidationResult;
+export function validateDemoArtifact(artifact: unknown): ValidationResult;
 export function assertValidAnalystArtifact<T>(
   artifact: T,
   options?: { expectedArtifactType?: string }

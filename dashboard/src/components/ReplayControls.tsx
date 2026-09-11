@@ -43,7 +43,7 @@ export function ReplayControls({
       <div className="panel-header">
         <div>
           <h2>Simulated Replay</h2>
-          <p>Static JSON replay dataset · Not live packet capture · UI-only analyst feedback</p>
+          <p>Static JSON replay dataset · Not live packet capture · Session-only analyst actions</p>
         </div>
         <span className="impact-pill">{status}</span>
       </div>

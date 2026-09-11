@@ -21,7 +21,12 @@ import type {
   FilterKey,
   FusionEvaluationSummary,
 } from './types/alerts';
-import type { AnalystFeedbackAction, LocalFeedbackMap, ReplaySpeed } from './types/feedback';
+import type {
+  AnalystFeedbackAction,
+  LocalAnalystNoteMap,
+  LocalFeedbackMap,
+  ReplaySpeed,
+} from './types/feedback';
 import type { AnalystArtifactV1, DemoArtifactV1, EvaluatorSummaryArtifactV1 } from './types/dashboardData';
 import { validateAnalystArtifact, validateDemoArtifact, validateEvaluatorArtifact } from './data-contract/analystDashboardContract.js';
 import { adaptAnalystAlertsForLegacyComponents } from './utils/dashboardAdapter';
@@ -38,6 +43,7 @@ import {
   sortAlerts,
 } from './utils/alertFilters';
 import { replayIntervalMs } from './utils/replay';
+import { boundSessionNote } from './utils/sessionPreview.js';
 
 const analystArtifactValidation = validateAnalystArtifact(analystAlertsData);
 const analystArtifact = analystArtifactValidation.valid
@@ -76,6 +82,7 @@ const filterTitles: Record<FilterKey, string> = {
   'suppressed-resolved': 'Suppressed / Resolved Records',
   'signature-hit': 'Signature Hit Records',
   'signature-ml-disagree': 'Signature / ML Disagreement Records',
+  'ml-unavailable': 'ML Unavailable Records',
   'guardrail-applied': 'Score Guardrail Applied Records',
   'exception-trust-gate': 'Exception Trust Gate Rejected Records',
 };
@@ -89,6 +96,7 @@ export default function App() {
   const [replayIndex, setReplayIndex] = useState(alerts.length);
   const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
   const [localFeedbackMap, setLocalFeedbackMap] = useState<LocalFeedbackMap>({});
+  const [localAnalystNoteMap, setLocalAnalystNoteMap] = useState<LocalAnalystNoteMap>({});
 
   const locallyAdjustedAlerts = useMemo(
     () => applySessionPreviewOverrides(alerts, localFeedbackMap),
@@ -113,6 +121,7 @@ export default function App() {
     || filteredAlerts[0]
     || sortedAlerts[0];
   const selectedAnalystAlert = selectedAlert ? analystAlertsById.get(selectedAlert.id) : undefined;
+  const selectedSessionNote = selectedAlert ? localAnalystNoteMap[selectedAlert.id] || '' : '';
   const sessionKpis = useMemo(
     () => calculateSessionKpis(filteredAlerts, sortedAlerts, localFeedbackMap, isReplayMode ? replayIndex : alerts.length, alerts.length),
     [filteredAlerts, isReplayMode, localFeedbackMap, replayIndex, sortedAlerts]
@@ -156,7 +165,7 @@ export default function App() {
     setSelectedAlertId(alert.id);
   }
 
-  function resetFeedback(alert: FeedbackAdjustedAlert) {
+  function clearSessionPreview(alert: FeedbackAdjustedAlert) {
     setLocalFeedbackMap((currentMap) => {
       const nextMap = { ...currentMap };
       delete nextMap[alert.id];
@@ -165,11 +174,25 @@ export default function App() {
     setSelectedAlertId(alert.id);
   }
 
+  function updateSessionNote(alert: FeedbackAdjustedAlert, note: string) {
+    const nextNote = boundSessionNote(note);
+    setLocalAnalystNoteMap((currentMap) => {
+      const updatedMap = { ...currentMap };
+      if (nextNote.length === 0) {
+        delete updatedMap[alert.id];
+      } else {
+        updatedMap[alert.id] = nextNote;
+      }
+      return updatedMap;
+    });
+  }
+
   function resetReplay() {
     setReplayIndex(0);
     setIsReplayMode(true);
     setIsReplayRunning(false);
     setLocalFeedbackMap({});
+    setLocalAnalystNoteMap({});
     setSelectedAlertId(undefined);
   }
 
@@ -225,6 +248,7 @@ export default function App() {
                 setIsReplayMode(true);
                 setReplayIndex(0);
                 setLocalFeedbackMap({});
+                setLocalAnalystNoteMap({});
                 setIsReplayRunning(true);
                 setSelectedAlertId(undefined);
               }}
@@ -235,6 +259,7 @@ export default function App() {
                   setReplayIndex(nextValue ? 0 : alerts.length);
                   if (nextValue) {
                     setLocalFeedbackMap({});
+                    setLocalAnalystNoteMap({});
                   }
                   return nextValue;
                 });
@@ -257,6 +282,7 @@ export default function App() {
               />
               <LatestActivityPanel
                 alerts={isReplayMode ? replayVisibleAlerts : []}
+                analystAlertsById={analystAlertsById}
                 isReplayMode={isReplayMode}
                 onSelectAlert={(alert) => setSelectedAlertId(alert.id)}
                 replayIndex={isReplayMode ? replayIndex : 0}
@@ -283,6 +309,7 @@ export default function App() {
               <div className="main-column">
               <AlertQueue
                 alerts={filteredAlerts}
+                analystAlertsById={analystAlertsById}
                 title={filterTitles[activeFilter]}
                 totalDetectionRecords={sortedAlerts.length}
                 selectedAlertId={selectedAlert?.id}
@@ -293,7 +320,9 @@ export default function App() {
                 alert={selectedAlert}
                 analystAlert={selectedAnalystAlert}
                 onApplyFeedback={applyFeedback}
-                onResetFeedback={resetFeedback}
+                onClearSessionPreview={clearSessionPreview}
+                onSessionNoteChange={updateSessionNote}
+                sessionNote={selectedSessionNote}
               />
             </section>
           </>
@@ -304,7 +333,9 @@ export default function App() {
             alert={selectedAlert}
             analystAlert={selectedAnalystAlert}
             onApplyFeedback={applyFeedback}
-            onResetFeedback={resetFeedback}
+            onClearSessionPreview={clearSessionPreview}
+            onSessionNoteChange={updateSessionNote}
+            sessionNote={selectedSessionNote}
           />
         )}
         {activeView === 'feedback' && (

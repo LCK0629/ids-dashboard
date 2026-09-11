@@ -4,6 +4,7 @@ import { formatScore, isExceptionTrustGateRejected, isScoreGuardrailApplied } fr
 
 interface FeedbackImpactPanelProps {
   alert: FeedbackAdjustedAlert;
+  sessionNote?: string;
 }
 
 function value(input: unknown): string {
@@ -25,10 +26,10 @@ function DetailItem({ label, children }: { label: string; children: ReactNode })
   );
 }
 
-export function FeedbackImpactPanel({ alert }: FeedbackImpactPanelProps) {
-  const originalPipelineRisk = Number(alert.stage5CurrentRiskScore ?? alert.currentRiskScore ?? 0);
-  const interactiveCurrentRisk = Number(alert.currentRiskScore ?? 0);
-  const interactiveAdjustment = interactiveCurrentRisk - originalPipelineRisk;
+export function FeedbackImpactPanel({ alert, sessionNote = '' }: FeedbackImpactPanelProps) {
+  const pipelinePriority = Number(alert.pipelineOperationalPriorityScore ?? alert.operationalPriorityScore ?? 0);
+  const sessionPriority = alert.sessionPreviewPriorityScore;
+  const interactiveAdjustment = Number(alert.localFeedbackScoreDelta ?? 0);
   const reviewBefore = Boolean(alert.stage5RequiresAnalystReview ?? alert.requiresAnalystReview);
   const reviewAfter = Boolean(alert.requiresAnalystReview);
   const scoreGuardrailResult = alert.localGuardrailMessage
@@ -42,10 +43,12 @@ export function FeedbackImpactPanel({ alert }: FeedbackImpactPanelProps) {
   return (
     <div className="feedback-impact-panel">
       <div className="detail-grid">
-        <DetailItem label="Before feedback">{formatScore(originalPipelineRisk)}</DetailItem>
-        <DetailItem label="After feedback">{formatScore(interactiveCurrentRisk)}</DetailItem>
         <DetailItem label="Detection Score">{formatScore(alert.detectionScore)}</DetailItem>
-        <DetailItem label="Score adjustment">
+        <DetailItem label="Pipeline Operational Priority">{formatScore(pipelinePriority)}</DetailItem>
+        {sessionPriority !== undefined && (
+          <DetailItem label="Session Preview Priority">{formatScore(sessionPriority)}</DetailItem>
+        )}
+        <DetailItem label="Session preview adjustment">
           {interactiveAdjustment > 0 ? `+${interactiveAdjustment}` : interactiveAdjustment}
         </DetailItem>
         <DetailItem label="Review status before">{value(reviewBefore)}</DetailItem>
@@ -53,12 +56,13 @@ export function FeedbackImpactPanel({ alert }: FeedbackImpactPanelProps) {
         <DetailItem label="Local analyst feedback">{value(alert.localFeedbackLabel)}</DetailItem>
         <DetailItem label="Score guardrail result">{scoreGuardrailResult}</DetailItem>
         <DetailItem label="Exception trust gate">{trustGateResult}</DetailItem>
+        <DetailItem label="Session-only analyst note">{sessionNote || 'No session note'}</DetailItem>
       </div>
       <p>
         {alert.localFeedbackReason || 'No local analyst feedback applied in this session.'}
       </p>
       <p className="helper-text">
-        Human feedback changes local dashboard priority only. No JSON files are modified and no model retraining is performed.
+        Session Preview changes only the temporary browser view. Pipeline Operational Priority, historical HITL diagnostics, and Detection Score remain unchanged.
       </p>
     </div>
   );

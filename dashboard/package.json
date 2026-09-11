@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test:data": "node --test tests/dashboard-data-integration.test.mjs",
     "test:evidence": "node --test tests/automated-evidence-ui.test.mjs",
-    "test:adaptation": "node --test tests/hitl-adaptation-ui.test.mjs"
+    "test:adaptation": "node --test tests/hitl-adaptation-ui.test.mjs",
+    "test:workflow": "node --test tests/analyst-workflow-ui.test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

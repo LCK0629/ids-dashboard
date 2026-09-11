@@ -11,7 +11,9 @@ interface AlertDetailPanelProps {
   alert?: FeedbackAdjustedAlert;
   analystAlert?: AnalystAlertV1;
   onApplyFeedback?: (alert: FeedbackAdjustedAlert, action: AnalystFeedbackAction) => void;
-  onResetFeedback?: (alert: FeedbackAdjustedAlert) => void;
+  onClearSessionPreview?: (alert: FeedbackAdjustedAlert) => void;
+  sessionNote?: string;
+  onSessionNoteChange?: (alert: FeedbackAdjustedAlert, note: string) => void;
 }
 
 function value(input: unknown): string {
@@ -20,7 +22,14 @@ function value(input: unknown): string {
   return String(input);
 }
 
-export function AlertDetailPanel({ alert, analystAlert, onApplyFeedback, onResetFeedback }: AlertDetailPanelProps) {
+export function AlertDetailPanel({
+  alert,
+  analystAlert,
+  onApplyFeedback,
+  onClearSessionPreview,
+  sessionNote = '',
+  onSessionNoteChange,
+}: AlertDetailPanelProps) {
   if (!alert || !analystAlert) {
     return (
       <aside className="panel detail-panel empty">
@@ -43,25 +52,27 @@ export function AlertDetailPanel({ alert, analystAlert, onApplyFeedback, onReset
 
       <FeedbackControls
         activeAction={alert.localFeedbackAction}
-        disabled={!onApplyFeedback || !onResetFeedback}
+        disabled={!onApplyFeedback || !onClearSessionPreview || !onSessionNoteChange}
         onApplyFeedback={(action) => onApplyFeedback?.(alert, action)}
-        onResetFeedback={() => onResetFeedback?.(alert)}
+        onClearSessionPreview={() => onClearSessionPreview?.(alert)}
+        onSessionNoteChange={(note) => onSessionNoteChange?.(alert, note)}
+        sessionNote={sessionNote}
       />
 
       <section className="evidence-block">
         <h3>Session Preview</h3>
         <p className="helper-text">This temporary browser action is not persisted and has not yet become historical feedback for future alerts.</p>
-        <FeedbackImpactPanel alert={alert} />
+        <FeedbackImpactPanel alert={alert} sessionNote={sessionNote} />
       </section>
 
       <section className="evidence-block">
         <h3>Feedback Evidence</h3>
         <div className="detail-grid">
           <div className="detail-item"><span>Feedback applied</span><strong>{value(alert.feedbackApplied)}</strong></div>
-          <div className="detail-item"><span>Adjustment</span><strong>{value(alert.feedbackAdjustment)}</strong></div>
+          <div className="detail-item"><span>Historical adjustment</span><strong>{value(alert.feedbackAdjustment)}</strong></div>
           <div className="detail-item"><span>Matched feedback</span><strong>{value(alert.matchedFeedbackId)}</strong></div>
           <div className="detail-item"><span>Feedback status</span><strong>{value(alert.analystFeedbackStatus)}</strong></div>
-          <div className="detail-item"><span>Local feedback</span><strong>{value(alert.localFeedbackLabel)}</strong></div>
+          <div className="detail-item"><span>Session action</span><strong>{value(alert.localFeedbackLabel)}</strong></div>
         </div>
         <p>{alert.feedbackReason || 'No feedback reason recorded.'}</p>
         {alert.localFeedbackReason && <p>{alert.localFeedbackReason}</p>}

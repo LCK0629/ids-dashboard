@@ -9,6 +9,7 @@ export type FilterKey =
   | 'suppressed-resolved'
   | 'signature-hit'
   | 'signature-ml-disagree'
+  | 'ml-unavailable'
   | 'guardrail-applied'
   | 'exception-trust-gate';
 
@@ -119,6 +120,9 @@ export interface FeedbackAdjustedAlert {
   lowSimilarityCount?: number;
   stage5CurrentRiskScore?: number;
   stage5RequiresAnalystReview?: boolean;
+  pipelineOperationalPriorityScore?: number;
+  sessionPreviewPriorityScore?: number;
+  localFeedbackScoreDelta?: number;
   localFeedbackAction?: string;
   localFeedbackLabel?: string;
   localFeedbackReason?: string;

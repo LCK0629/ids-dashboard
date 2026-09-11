@@ -174,7 +174,7 @@ export function buildInvestigationTimeline(record: FeedbackAdjustedAlert): Array
     ],
     [
       'Human feedback',
-      `Feedback can adjust Operational Priority to ${formatScore(record.operationalPriorityScore)} while guardrails prevent unsafe suppression. ${record.localFeedbackLabel || record.analystFeedbackStatus || 'No local feedback selected.'}`,
+      `Historical feedback produced pipeline Operational Priority ${formatScore(record.operationalPriorityScore)}. ${record.localFeedbackLabel ? `The temporary session action is ${record.localFeedbackLabel} and its preview remains separate.` : `Pipeline status: ${record.analystFeedbackStatus || 'no historical adjustment'}.`}`,
     ],
     ['Analyst recommendation', analystRecommendation(record)],
   ];

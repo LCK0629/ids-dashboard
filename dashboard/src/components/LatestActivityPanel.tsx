@@ -1,5 +1,7 @@
+import type { AnalystAlertV1 } from '../types/dashboardData';
 import type { FeedbackAdjustedAlert } from '../types/alerts';
 import { formatScore } from '../utils/alertFilters';
+import { getDetectorStatePresentation } from '../utils/automatedEvidence.js';
 
 interface LatestActivityPanelProps {
   alerts: FeedbackAdjustedAlert[];
@@ -7,6 +9,7 @@ interface LatestActivityPanelProps {
   isReplayMode: boolean;
   replayIndex: number;
   totalAlerts: number;
+  analystAlertsById: Map<string, AnalystAlertV1>;
   onSelectAlert: (alert: FeedbackAdjustedAlert) => void;
 }
 
@@ -16,6 +19,7 @@ export function LatestActivityPanel({
   isReplayMode,
   replayIndex,
   totalAlerts,
+  analystAlertsById,
   onSelectAlert,
 }: LatestActivityPanelProps) {
   const startIndex = Math.max(0, alerts.length - 8);
@@ -45,24 +49,30 @@ export function LatestActivityPanel({
             Start replay to see incoming detection activity.
           </div>
         )}
-        {latestAlerts.map(({ alert, sequence }) => (
-          <button
-            className={`latest-activity-item${selectedAlertId === alert.id ? ' selected' : ''}`}
-            key={`${sequence}-${alert.id}`}
-            onClick={() => onSelectAlert(alert)}
-            type="button"
-          >
-            <span className="sequence-badge">#{sequence}</span>
-            <span className="latest-activity-main">
-              <strong>{alert.id}</strong>
-              <span>{alert.fusionAttackType || alert.signatureAttackType || 'Unknown'}</span>
-            </span>
-            <span className="latest-activity-meta">
-              <b>{formatScore(alert.operationalPriorityScore)}</b>
-              <small>{alert.localFeedbackLabel || alert.fusionDecision || 'No decision'}</small>
-            </span>
-          </button>
-        ))}
+        {latestAlerts.map(({ alert, sequence }) => {
+          const analystAlert = analystAlertsById.get(alert.id);
+          const detectorLabel = analystAlert
+            ? getDetectorStatePresentation(analystAlert).label
+            : 'Evidence unavailable';
+          return (
+            <button
+              className={`latest-activity-item${selectedAlertId === alert.id ? ' selected' : ''}`}
+              key={`${sequence}-${alert.id}`}
+              onClick={() => onSelectAlert(alert)}
+              type="button"
+            >
+              <span className="sequence-badge">#{sequence}</span>
+              <span className="latest-activity-main">
+                <strong>{alert.id}</strong>
+                <span>{alert.fusionAttackType || alert.signatureAttackType || 'Unknown'}</span>
+              </span>
+              <span className="latest-activity-meta">
+                <b>{formatScore(alert.operationalPriorityScore)}</b>
+                <small>{alert.localFeedbackLabel ? `Session: ${alert.localFeedbackLabel}` : detectorLabel}</small>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

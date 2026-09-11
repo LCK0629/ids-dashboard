@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -429,4 +430,97 @@ test('59 demo scenario count comes from the loaded artifact', () => {
   assert.match(feedbackPanelSource, /demoArtifact\.summary\.scenarioCount/);
   assert.doesNotMatch(feedbackPanelSource, /Six controlled scenarios/);
   assert.equal(demoArtifact.summary.scenarioCount, 6);
+});
+
+test('60 actual Cold Start demo retains the authoritative cold-start reason', () => {
+  assert.equal(
+    scenario('cold_start').adaptation.eligibilityReason,
+    'Cold start: no historical learning feedback is available.',
+  );
+});
+
+test('61 formal rejected-history alert does not claim a cold start', () => {
+  const rejected = analystArtifact.alerts.find((alert) => (
+    alert.adaptation.diagnostics.historicalFeedback.candidateLearningFeedbackCount > 0
+      && alert.adaptation.diagnostics.similarity.matchedCount === 0
+  ));
+  assert.ok(rejected);
+  assert.equal(
+    rejected.adaptation.eligibilityReason,
+    'Historical learning feedback exists, but none produced an applicable historical match.',
+  );
+  assert.doesNotMatch(rejected.adaptation.eligibilityReason, /cold start/i);
+});
+
+test('62 formal rejected-history state chain remains internally consistent', () => {
+  const rejected = analystArtifact.alerts.find((alert) => (
+    alert.adaptation.diagnostics.historicalFeedback.candidateLearningFeedbackCount > 0
+      && alert.adaptation.diagnostics.similarity.matchedCount === 0
+  ));
+  assert.ok(rejected);
+  assert.equal(rejected.adaptation.eligible, false);
+  assert.equal(rejected.adaptation.diagnostics.evaluated, true);
+  assert.match(hitlSource, /'NO APPLICABLE HISTORY'/);
+  assert.match(hitlSource, /similarity\.matchedCount > 0 \? 'PASSED' : 'NO MATCH'/);
+  assert.match(hitlSource, /adaptation\.eligibilityReason/);
+});
+
+test('63 regenerated analyst Detection Scores retain their approved fingerprint', () => {
+  const values = analystArtifact.alerts.map((alert) => [
+    alert.identity.id,
+    alert.automatedDetection.detectionScore,
+  ]);
+  assert.equal(
+    crypto.createHash('sha256').update(JSON.stringify(values)).digest('hex'),
+    '5530d9e773e57ee7a4ce134e7054f4b8ff03c22953e7bd38aecfa315d09565c7',
+  );
+});
+
+test('64 regenerated Operational Priorities retain their approved fingerprint', () => {
+  const values = analystArtifact.alerts.map((alert) => [
+    alert.identity.id,
+    alert.adaptation.operationalPriorityScore,
+  ]);
+  assert.equal(
+    crypto.createHash('sha256').update(JSON.stringify(values)).digest('hex'),
+    '5530d9e773e57ee7a4ce134e7054f4b8ff03c22953e7bd38aecfa315d09565c7',
+  );
+});
+
+test('65 regenerated formal queue ordering retains its approved fingerprint', () => {
+  assert.equal(
+    crypto.createHash('sha256')
+      .update(JSON.stringify(analystArtifact.alerts.map((alert) => alert.identity.id)))
+      .digest('hex'),
+    '18bb980043b2f1564801786559530d345d905f766c0c87abefe0388fea424d33',
+  );
+});
+
+test('66 regenerated formal counts remain frozen', () => {
+  assert.deepEqual({
+    records: analystArtifact.summary.recordCount,
+    matches: analystArtifact.summary.similarityMatchCount,
+    eligible: analystArtifact.summary.adaptationEligibleCount,
+    adapted: analystArtifact.summary.actualAdaptationCount,
+  }, { records: 995, matches: 204, eligible: 0, adapted: 0 });
+});
+
+test('67 regenerated analyst artifact still contains no ground-truth fields', () => {
+  assert.equal(analystArtifact.summary.groundTruthFieldCount, 0);
+  assert.deepEqual(findForbiddenGroundTruthPaths(analystArtifact), []);
+});
+
+test('68 demonstration scores remain frozen after the reason-only correction', () => {
+  assert.deepEqual(demoArtifact.scenarios.map(({ scenarioId, alert }) => [
+    scenarioId,
+    alert.automatedDetection.detectionScore,
+    alert.adaptation.operationalPriorityScore,
+  ]), [
+    ['cold_start', 72, 72],
+    ['repeated_false_positive', 80, 55],
+    ['confirmed_threat', 59, 74],
+    ['conflicting_history', 70, 70],
+    ['guardrail_protection', 90, 70],
+    ['ml_unavailable', 80, 80],
+  ]);
 });

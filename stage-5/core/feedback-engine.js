@@ -347,11 +347,18 @@ function expectedActivityEligible(aggregation, config = {}) {
 function checkAdaptationEligibility(aggregation, config = {}) {
   const minimumFeedbackCount = Number(config.minimumFeedbackCount ?? 3);
   const minimumAgreementRatio = Number(config.minimumAgreementRatio ?? 0.67);
+  const learningFeedbackEventCount = Number(aggregation?.learningFeedbackEventCount || 0);
 
-  if (!aggregation || aggregation.matchedFeedbackCount === 0) {
+  if (!aggregation || learningFeedbackEventCount === 0) {
     return {
       eligible: false,
-      reason: 'Cold start: no sufficiently similar historical feedback was found.',
+      reason: 'Cold start: no historical learning feedback is available.',
+    };
+  }
+  if (aggregation.matchedFeedbackCount === 0) {
+    return {
+      eligible: false,
+      reason: 'Historical learning feedback exists, but none produced an applicable historical match.',
     };
   }
   if (aggregation.matchedFeedbackCount < minimumFeedbackCount) {

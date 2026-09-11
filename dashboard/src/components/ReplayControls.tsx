@@ -45,10 +45,10 @@ export function ReplayControls({
           <h2>Simulated Replay</h2>
           <p>Static JSON replay dataset · Not live packet capture · Session-only analyst actions</p>
         </div>
-        <span className="impact-pill">{status}</span>
+        <span className="impact-pill" aria-live="polite">{status}</span>
       </div>
       <div className="replay-controls">
-        <button type="button" onClick={onToggleReplayMode}>
+        <button aria-pressed={isReplayMode} type="button" onClick={onToggleReplayMode}>
           {isReplayMode ? 'Replay Mode On' : 'Replay Mode Off'}
         </button>
         <button type="button" onClick={onStart}>Start Replay</button>
@@ -59,6 +59,7 @@ export function ReplayControls({
         <div className="speed-group" aria-label="Replay speed">
           {[1, 2, 5].map((speed) => (
             <button
+              aria-pressed={replaySpeed === speed}
               className={replaySpeed === speed ? 'active' : ''}
               key={speed}
               onClick={() => onSpeedChange(speed as ReplaySpeed)}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import analystAlertsData from './data/analyst-alerts.v1.json';
+import analystArtifactUrl from './data/analyst-alerts.v1.json?url';
 import adaptationDemoData from './data/adaptation-demo-scenarios.v1.json';
 import evaluatorSummaryData from './data/evaluator-summary.v1.json';
 import { AlertDetailPanel } from './components/AlertDetailPanel';
@@ -28,7 +28,8 @@ import type {
   ReplaySpeed,
 } from './types/feedback';
 import type { AnalystArtifactV1, DemoArtifactV1, EvaluatorSummaryArtifactV1 } from './types/dashboardData';
-import { validateAnalystArtifact, validateDemoArtifact, validateEvaluatorArtifact } from './data-contract/analystDashboardContract.js';
+import { validateDemoArtifact, validateEvaluatorArtifact } from './data-contract/analystDashboardContract.js';
+import { AnalystArtifactLoadError, loadValidatedAnalystArtifact } from './data-contract/loadAnalystArtifact.js';
 import { adaptAnalystAlertsForLegacyComponents } from './utils/dashboardAdapter';
 import {
   applySessionPreviewOverrides,
@@ -45,24 +46,19 @@ import {
 import { replayIntervalMs } from './utils/replay';
 import { boundSessionNote } from './utils/sessionPreview.js';
 
-const analystArtifactValidation = validateAnalystArtifact(analystAlertsData);
-const analystArtifact = analystArtifactValidation.valid
-  ? analystAlertsData as AnalystArtifactV1
-  : null;
 const evaluatorArtifactValidation = validateEvaluatorArtifact(evaluatorSummaryData);
 const evaluatorArtifact = evaluatorArtifactValidation.valid
   ? evaluatorSummaryData as EvaluatorSummaryArtifactV1
   : null;
 const demoArtifactValidation = validateDemoArtifact(adaptationDemoData);
 const demoArtifact = demoArtifactValidation.valid ? adaptationDemoData as DemoArtifactV1 : null;
-const alerts = analystArtifact
-  ? adaptAnalystAlertsForLegacyComponents(analystArtifact.alerts)
-  : [];
-const analystAlertsById = new Map(
-  (analystArtifact?.alerts || []).map((alert) => [alert.identity.id, alert])
-);
 const feedbackSummary = (evaluatorArtifact?.feedbackSummary || {}) as unknown as FeedbackEvaluationSummary;
 const fusionSummary = (evaluatorArtifact?.fusionSummary || {}) as unknown as FusionEvaluationSummary;
+
+type AnalystArtifactState =
+  | { status: 'loading'; artifact: null; errors: string[] }
+  | { status: 'ready'; artifact: AnalystArtifactV1; errors: string[] }
+  | { status: 'error'; artifact: null; errors: string[] };
 
 const viewLabels: Record<DashboardView, string> = {
   operations: 'Operations',
@@ -88,19 +84,56 @@ const filterTitles: Record<FilterKey, string> = {
 };
 
 export default function App() {
+  const [analystArtifactState, setAnalystArtifactState] = useState<AnalystArtifactState>({
+    status: 'loading',
+    artifact: null,
+    errors: [],
+  });
   const [activeFilter, setActiveFilter] = useState<FilterKey>('active-alerts');
   const [activeAttackType, setActiveAttackType] = useState<AttackTypeFilter>('all');
   const [activeView, setActiveView] = useState<DashboardView>('operations');
   const [isReplayMode, setIsReplayMode] = useState(false);
   const [isReplayRunning, setIsReplayRunning] = useState(false);
-  const [replayIndex, setReplayIndex] = useState(alerts.length);
+  const [replayIndex, setReplayIndex] = useState(0);
   const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
   const [localFeedbackMap, setLocalFeedbackMap] = useState<LocalFeedbackMap>({});
   const [localAnalystNoteMap, setLocalAnalystNoteMap] = useState<LocalAnalystNoteMap>({});
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    loadValidatedAnalystArtifact(analystArtifactUrl, { signal: controller.signal })
+      .then((artifact) => {
+        setAnalystArtifactState({ status: 'ready', artifact, errors: [] });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        const loadError = error instanceof AnalystArtifactLoadError ? error : null;
+        setAnalystArtifactState({
+          status: 'error',
+          artifact: null,
+          errors: loadError
+            ? [loadError.message, ...loadError.diagnostics]
+            : ['The analyst data asset could not be loaded safely.'],
+        });
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const analystArtifact = analystArtifactState.artifact;
+  const alerts = useMemo(
+    () => analystArtifact ? adaptAnalystAlertsForLegacyComponents(analystArtifact.alerts) : [],
+    [analystArtifact],
+  );
+  const analystAlertsById = useMemo(
+    () => new Map((analystArtifact?.alerts || []).map((alert) => [alert.identity.id, alert])),
+    [analystArtifact],
+  );
+
   const locallyAdjustedAlerts = useMemo(
     () => applySessionPreviewOverrides(alerts, localFeedbackMap),
-    [localFeedbackMap]
+    [alerts, localFeedbackMap]
   );
   const replayVisibleAlerts = useMemo(
     () => (isReplayMode ? locallyAdjustedAlerts.slice(0, replayIndex) : locallyAdjustedAlerts),
@@ -126,6 +159,10 @@ export default function App() {
     () => calculateSessionKpis(filteredAlerts, sortedAlerts, localFeedbackMap, isReplayMode ? replayIndex : alerts.length, alerts.length),
     [filteredAlerts, isReplayMode, localFeedbackMap, replayIndex, sortedAlerts]
   );
+
+  useEffect(() => {
+    if (!isReplayMode) setReplayIndex(alerts.length);
+  }, [alerts.length, isReplayMode]);
 
   useEffect(() => {
     if (!isReplayMode || !isReplayRunning) {
@@ -196,20 +233,27 @@ export default function App() {
     setSelectedAlertId(undefined);
   }
 
-  if (!analystArtifact || !evaluatorArtifact) {
-    const artifactErrors = [
-      ...analystArtifactValidation.errors.map((error) => `Analyst artifact: ${error}`),
-      ...evaluatorArtifactValidation.errors.map((error) => `Evaluator artifact: ${error}`),
-    ];
+  if (analystArtifactState.status === 'loading') {
+    return (
+      <main className="dashboard artifact-status" aria-busy="true" aria-live="polite">
+        <section className="panel full-panel">
+          <div className="panel-header"><h1>Loading validated analyst data...</h1></div>
+          <p>Operational records will appear only after the analyst artifact passes validation.</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (analystArtifactState.status === 'error' || !analystArtifact) {
     return (
       <main className="dashboard artifact-error" role="alert">
         <section className="panel full-panel">
           <div className="panel-header">
-            <h1>Dashboard data unavailable</h1>
+            <h1>Analyst data unavailable</h1>
           </div>
-          <p>A dashboard data artifact failed schema validation. No alert records or evaluator metrics were loaded.</p>
+          <p>Validated operational records could not be loaded. No unvalidated or fabricated alerts are shown.</p>
           <ul>
-            {artifactErrors.map((error) => <li key={error}>{error}</li>)}
+            {analystArtifactState.errors.map((error) => <li key={error}>{error}</li>)}
           </ul>
         </section>
       </main>
@@ -228,6 +272,12 @@ export default function App() {
 
       <main className="dashboard">
         <Header activeLabel={viewLabels[activeView]} />
+        {!evaluatorArtifact && (
+          <section className="data-warning" role="status">
+            <strong>Evaluation summary unavailable</strong>
+            <span>Operational records remain available, but unvalidated evaluator metrics are not shown.</span>
+          </section>
+        )}
         {activeView === 'operations' && (
           <>
             <ReplayControls

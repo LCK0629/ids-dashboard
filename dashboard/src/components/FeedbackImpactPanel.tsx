@@ -34,7 +34,7 @@ export function FeedbackImpactPanel({ alert, sessionNote = '' }: FeedbackImpactP
   const reviewAfter = Boolean(alert.requiresAnalystReview);
   const scoreGuardrailResult = alert.localGuardrailMessage
     || (isScoreGuardrailApplied(alert)
-      ? `Score guardrail applied: ${(alert.feedbackGuardrailsApplied || []).join(', ') || 'local feedback guardrail'}`
+      ? `Score guardrail applied: ${(alert.feedbackGuardrailsApplied || []).join(', ') || 'session preview guardrail'}`
       : 'No score guardrail triggered in this session.');
   const trustGateResult = isExceptionTrustGateRejected(alert)
     ? `Exception trust gate rejected: ${(alert.feedbackGuardrailsApplied || []).join(', ')}`
@@ -53,13 +53,13 @@ export function FeedbackImpactPanel({ alert, sessionNote = '' }: FeedbackImpactP
         </DetailItem>
         <DetailItem label="Review status before">{value(reviewBefore)}</DetailItem>
         <DetailItem label="Review status after">{value(reviewAfter)}</DetailItem>
-        <DetailItem label="Local analyst feedback">{value(alert.localFeedbackLabel)}</DetailItem>
+        <DetailItem label="Session action">{value(alert.localFeedbackLabel)}</DetailItem>
         <DetailItem label="Score guardrail result">{scoreGuardrailResult}</DetailItem>
         <DetailItem label="Exception trust gate">{trustGateResult}</DetailItem>
         <DetailItem label="Session-only analyst note">{sessionNote || 'No session note'}</DetailItem>
       </div>
       <p>
-        {alert.localFeedbackReason || 'No local analyst feedback applied in this session.'}
+        {alert.localFeedbackReason || 'No analyst session action applied.'}
       </p>
       <p className="helper-text">
         Session Preview changes only the temporary browser view. Pipeline Operational Priority, historical HITL diagnostics, and Detection Score remain unchanged.

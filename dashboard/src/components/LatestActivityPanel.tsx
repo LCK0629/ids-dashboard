@@ -38,15 +38,15 @@ export function LatestActivityPanel({
     <section className="panel latest-activity-panel">
       <div className="panel-header">
         <div>
-          <h2>Latest Activity</h2>
-          <p>Newest replayed detection records in arrival order, separate from risk priority</p>
+          <h2>Replay Activity</h2>
+          <p>Most recently replayed records in artifact sequence, separate from risk-priority order</p>
         </div>
         <span className="status-pill muted">{replayText}</span>
       </div>
       <div className="latest-activity-list">
         {latestAlerts.length === 0 && (
           <div className="latest-empty">
-            Start replay to see incoming detection activity.
+            Start replay to view detection records in replay sequence.
           </div>
         )}
         {latestAlerts.map(({ alert, sequence }) => {

@@ -33,7 +33,7 @@ export function FeedbackSummaryPanel({ summary, sessionKpis, demoArtifact, demoE
     ['Average Operational Priority', formatScore(summary.averageRiskAfterFeedback)],
   ];
   const sessionMetrics = [
-    ['Local feedback applied', value(sessionKpis.localFeedbackApplied)],
+    ['Session actions applied', value(sessionKpis.localFeedbackApplied)],
     ['Confirmed threats', value(sessionKpis.confirmedThreats)],
     ['False positives marked', value(sessionKpis.falsePositivesMarked)],
     ['Expected activity marked', value(sessionKpis.expectedActivityMarked)],

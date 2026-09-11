@@ -38,6 +38,7 @@ export function Sidebar({
       <nav className="nav-list">
         {navItems.map((item) => (
           <button
+            aria-current={activeView === item.view ? 'page' : undefined}
             className={activeView === item.view ? 'nav-item active' : 'nav-item'}
             key={item.view}
             onClick={() => onViewChange(item.view)}

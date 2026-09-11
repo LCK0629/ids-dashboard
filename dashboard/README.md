@@ -101,7 +101,7 @@ Detection Score
 
 The explanation uses Stage 5 diagnostics directly. Similarity is feedback applicability, evidence coverage is the share of configured comparison evidence available, and historical agreement is consistency rather than truth. None of these explanation fields changes scoring.
 
-The Feedback Model view keeps three contexts separate: formal held-out evaluation, six controlled deterministic demonstrations, and temporary browser-session feedback preview. Demo alerts never enter the formal Operations queue or formal metrics.
+The Feedback Model view keeps three contexts separate: formal held-out evaluation, controlled deterministic demonstrations, and temporary browser-session feedback preview. Counts are read from the loaded artifacts. The demo uses synthetic detector inputs, not actual XGBoost inference or TreeSHAP generation, while still exercising the real Stage 4 fusion and Stage 5 adaptation engines. Demo alerts never enter the formal Operations queue or formal metrics.
 
 TreeSHAP bars use relative visual widths within one explanation only. The displayed signed values remain the original raw-margin contributions. They are not probability changes, risk points, causal effects, or inputs to fusion and priority scoring.
 

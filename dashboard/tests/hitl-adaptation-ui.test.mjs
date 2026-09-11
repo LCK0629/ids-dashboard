@@ -63,6 +63,8 @@ function fixtureAggregation() {
     dominantFeedback: 'mark_false_positive',
     agreementRatio: 1,
     conflictDetected: false,
+    learningFeedbackEventCount: 4,
+    similarityAttempts: [{}, {}, {}, {}],
     matchedFeedback: [{
       feedbackId: 'FB-HIST-1', alertId: 'AL-HIST-1', feedbackType: 'mark_false_positive',
       similarityScore: 0.86, evidenceCoverage: 0.9,
@@ -346,4 +348,85 @@ test('47 demo runtime validation rejects false model-run or manual-memory proven
   const manualMemoryClaim = structuredClone(demoArtifact);
   manualMemoryClaim.generationMetadata.manualExceptionMemoryEnabled = true;
   assert.equal(validateDemoArtifact(manualMemoryClaim).valid, false);
+});
+
+test('48 true cold start is distinguishable from rejected historical matches', () => {
+  const cold = scenario('cold_start').adaptation.diagnostics;
+  const rejected = analystArtifact.alerts.find((alert) => (
+    alert.adaptation.diagnostics.historicalFeedback.candidateLearningFeedbackCount > 0
+      && alert.adaptation.diagnostics.similarity.matchedCount === 0
+  ));
+  assert.equal(cold.historicalFeedback.candidateLearningFeedbackCount, 0);
+  assert.equal(cold.similarity.comparisonAttemptCount, 0);
+  assert.ok(rejected);
+  assert.ok(rejected.adaptation.diagnostics.similarity.comparisonAttemptCount > 0);
+});
+
+test('49 historical candidates with zero matches do not display NO HISTORY', () => {
+  assert.match(hitlSource, /history\.candidateLearningFeedbackCount === 0\s*\? 'NO HISTORY'/);
+  assert.match(hitlSource, /similarity\.matchedCount === 0\s*\? 'NO APPLICABLE HISTORY'/);
+});
+
+test('50 matched historical feedback still displays N MATCHED', () => {
+  const repeated = scenario('repeated_false_positive').adaptation.diagnostics;
+  assert.equal(repeated.historicalFeedback.candidateLearningFeedbackCount, 3);
+  assert.equal(repeated.similarity.matchedCount, 3);
+  assert.match(hitlSource, /`\$\{similarity\.matchedCount\} MATCHED`/);
+});
+
+test('51 diagnostics evaluated false produces NOT EVALUATED semantics', () => {
+  const diagnostics = buildAdaptationDiagnostics(null, adaptationConfig);
+  assert.equal(diagnostics.evaluated, false);
+  assert.match(hitlSource, /!diagnostics\.evaluated\s*\? 'NOT EVALUATED'/);
+});
+
+test('52 authoritative Stage 5 similarity reason is displayable', () => {
+  const rejected = analystArtifact.alerts.find((alert) => (
+    alert.adaptation.diagnostics.similarity.matchedCount === 0
+      && alert.adaptation.diagnostics.historicalFeedback.candidateLearningFeedbackCount > 0
+  ));
+  assert.match(rejected.adaptation.similarityReason, /No sufficiently similar historical learning feedback/);
+  assert.match(hitlSource, /adaptation\.similarityReason/);
+});
+
+test('53 rejected comparison counts remain distinct from valid matches', () => {
+  const alert = analystArtifact.alerts.find((item) => (
+    item.adaptation.diagnostics.similarity.matchedCount > 0
+      && item.adaptation.diagnostics.similarity.lowSimilarityAttemptCount > 0
+  ));
+  assert.ok(alert);
+  assert.ok(alert.adaptation.diagnostics.similarity.comparisonAttemptCount
+    > alert.adaptation.diagnostics.similarity.matchedCount);
+  assert.match(hitlSource, /Other comparison attempts rejected/);
+  assert.match(hitlSource, /Valid matches above remain valid/);
+});
+
+test('54 demo UI explicitly states synthetic detector inputs', () => {
+  assert.match(feedbackPanelSource, /Synthetic detector inputs/);
+});
+
+test('55 demo UI explicitly states no actual XGBoost inference', () => {
+  assert.match(feedbackPanelSource, /no actual XGBoost inference/);
+});
+
+test('56 real Stage 4 and Stage 5 demonstration wording remains visible', () => {
+  assert.match(feedbackPanelSource, /Real Stage 4 fusion and Stage 5 adaptation logic are used/);
+});
+
+test('57 guardrail scenario purpose names the configured detection-score floor', () => {
+  const guardrail = demoArtifact.scenarios.find((item) => item.scenarioId === 'guardrail_protection');
+  assert.equal(guardrail.purpose, 'A proposed reduction is constrained by the configured Critical detection-score floor.');
+  assert.doesNotMatch(guardrail.purpose, /signature\/evidence protection/i);
+});
+
+test('58 formal held-out count comes from loaded summary data', () => {
+  assert.match(feedbackPanelSource, /summary\.heldOutAlertCount/);
+  assert.doesNotMatch(feedbackPanelSource, />995 held-out records/);
+  assert.equal(evaluatorArtifact.feedbackSummary.heldOutAlertCount, 995);
+});
+
+test('59 demo scenario count comes from the loaded artifact', () => {
+  assert.match(feedbackPanelSource, /demoArtifact\.summary\.scenarioCount/);
+  assert.doesNotMatch(feedbackPanelSource, /Six controlled scenarios/);
+  assert.equal(demoArtifact.summary.scenarioCount, 6);
 });

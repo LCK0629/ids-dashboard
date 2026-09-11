@@ -63,10 +63,12 @@ function validAdaptationDiagnostics() {
       threshold: 0.7,
       minimumEvidenceCoverage: 0.6,
       matchedCount: 3,
+      comparisonAttemptCount: 3,
       lowSimilarityAttemptCount: 0,
       lowEvidenceCoverageAttemptCount: 0,
     },
     historicalFeedback: {
+      candidateLearningFeedbackCount: 3,
       counts: { falsePositive: 3, confirmedThreat: 0, expectedActivity: 0 },
       dominantFeedback: 'mark_false_positive',
       agreementRatio: 1,

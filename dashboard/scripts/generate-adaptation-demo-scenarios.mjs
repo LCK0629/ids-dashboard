@@ -230,7 +230,7 @@ export function buildDemoScenarioArtifact(config) {
     {
       scenarioId: 'guardrail_protection',
       title: 'Guardrail Protection',
-      purpose: 'A proposed reduction is constrained by Critical signature/evidence protection.',
+      purpose: 'A proposed reduction is constrained by the configured Critical detection-score floor.',
       alert: runScenario(guardrailCurrent, guardrail.alerts, guardrail.feedback, config),
     },
     {

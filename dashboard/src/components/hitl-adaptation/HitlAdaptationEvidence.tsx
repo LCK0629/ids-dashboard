@@ -58,8 +58,19 @@ export function HitlAdaptationEvidence({ alert, density = 'compact' }: HitlAdapt
   const history = diagnostics.historicalFeedback;
   const thresholds = diagnostics.eligibilityThresholds;
   const totalHistory = history.counts.falsePositive + history.counts.confirmedThreat + history.counts.expectedActivity;
-  const similarityStatus = similarity.matchedCount > 0 ? 'PASSED' : 'NO MATCH';
-  const agreementStatus = history.conflictDetected
+  const historicalFeedbackStatus = !diagnostics.evaluated
+    ? 'NOT EVALUATED'
+    : history.candidateLearningFeedbackCount === 0
+      ? 'NO HISTORY'
+      : similarity.matchedCount === 0
+        ? 'NO APPLICABLE HISTORY'
+        : `${similarity.matchedCount} MATCHED`;
+  const similarityStatus = !diagnostics.evaluated
+    ? 'NOT EVALUATED'
+    : similarity.matchedCount > 0 ? 'PASSED' : 'NO MATCH';
+  const agreementStatus = !diagnostics.evaluated
+    ? 'NOT EVALUATED'
+    : history.conflictDetected
     ? 'BLOCKED'
     : totalHistory === 0
       ? 'NOT APPLICABLE'
@@ -89,14 +100,18 @@ export function HitlAdaptationEvidence({ alert, density = 'compact' }: HitlAdapt
           <strong className="hitl-score">{alert.automatedDetection.detectionScore}</strong>
           <p>Immutable automated Signature + ML result before historical feedback.</p>
         </Step>
-        <Step number={2} title="Historical Feedback" status={totalHistory ? `${totalHistory} MATCHED` : 'NO HISTORY'}>
+        <Step number={2} title="Historical Feedback" status={historicalFeedbackStatus}>
           <dl className="hitl-mini-grid">
+            <div><dt>Candidate feedback</dt><dd>{history.candidateLearningFeedbackCount}</dd></div>
+            <div><dt>Applicable matches</dt><dd>{similarity.matchedCount}</dd></div>
             <div><dt>False Positive</dt><dd>{history.counts.falsePositive}</dd></div>
             <div><dt>Confirmed Threat</dt><dd>{history.counts.confirmedThreat}</dd></div>
             <div><dt>Expected Activity</dt><dd>{history.counts.expectedActivity}</dd></div>
             <div><dt>Dominant feedback</dt><dd>{feedbackLabel(history.dominantFeedback)}</dd></div>
           </dl>
-          <p>Historical analyst feedback is operational evidence, not ground truth.</p>
+          <p>{diagnostics.evaluated
+            ? 'Historical analyst feedback is operational evidence, not ground truth.'
+            : 'Historical adaptation was not evaluated for this alert.'}</p>
         </Step>
         <Step number={3} title="Similarity / Applicability" status={similarityStatus}>
           <dl className="hitl-mini-grid">
@@ -105,8 +120,14 @@ export function HitlAdaptationEvidence({ alert, density = 'compact' }: HitlAdapt
             <div><dt>Evidence coverage</dt><dd>{similarity.matchedCount ? similarity.averageEvidenceCoverage.toFixed(2) : 'N/A'}</dd></div>
             <div><dt>Minimum coverage</dt><dd>{similarity.minimumEvidenceCoverage.toFixed(2)}</dd></div>
           </dl>
+          <p>{diagnostics.evaluated
+            ? adaptation.similarityReason
+            : 'Similarity applicability was not evaluated for this alert.'}</p>
           <p>Similarity measures whether previous feedback is applicable, not the probability of an attack.</p>
-          {(similarity.lowSimilarityAttemptCount > 0 || similarity.lowEvidenceCoverageAttemptCount > 0) && (
+          {diagnostics.evaluated && similarity.comparisonAttemptCount > 0 && (
+            <p>Historical comparisons attempted: {similarity.comparisonAttemptCount}.</p>
+          )}
+          {diagnostics.evaluated && (similarity.lowSimilarityAttemptCount > 0 || similarity.lowEvidenceCoverageAttemptCount > 0) && (
             <p>
               Other comparison attempts rejected: {similarity.lowSimilarityAttemptCount} low similarity,{' '}
               {similarity.lowEvidenceCoverageAttemptCount} low evidence coverage. Valid matches above remain valid.

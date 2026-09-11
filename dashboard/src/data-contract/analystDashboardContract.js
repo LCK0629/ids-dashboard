@@ -170,7 +170,7 @@ function validateAdaptationDiagnostics(diagnostics, path, errors) {
     ['averageScore', 'averageEvidenceCoverage', 'threshold', 'minimumEvidenceCoverage'].forEach((field) => {
       if (!isUnitInterval(similarity[field])) errors.push(`${path}.similarity.${field} must be between 0 and 1.`);
     });
-    ['matchedCount', 'lowSimilarityAttemptCount', 'lowEvidenceCoverageAttemptCount'].forEach((field) => {
+    ['matchedCount', 'comparisonAttemptCount', 'lowSimilarityAttemptCount', 'lowEvidenceCoverageAttemptCount'].forEach((field) => {
       if (!isNonNegativeInteger(similarity[field])) errors.push(`${path}.similarity.${field} must be a non-negative integer.`);
     });
   }
@@ -179,6 +179,9 @@ function validateAdaptationDiagnostics(diagnostics, path, errors) {
   if (!isObject(history) || !isObject(history.counts)) {
     errors.push(`${path}.historicalFeedback and counts are required.`);
   } else {
+    if (!isNonNegativeInteger(history.candidateLearningFeedbackCount)) {
+      errors.push(`${path}.historicalFeedback.candidateLearningFeedbackCount must be a non-negative integer.`);
+    }
     ['falsePositive', 'confirmedThreat', 'expectedActivity'].forEach((field) => {
       if (!isNonNegativeInteger(history.counts[field])) {
         errors.push(`${path}.historicalFeedback.counts.${field} must be a non-negative integer.`);

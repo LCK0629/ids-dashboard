@@ -61,7 +61,7 @@ export function FeedbackSummaryPanel({ summary, sessionKpis, demoArtifact, demoE
       </div>
       <div className="kpi-title feedback-panel-title">
         <strong>Formal Held-out Evaluation</strong>
-        <span>995 held-out records; frozen calibration feedback; manual exception memory disabled</span>
+        <span>{value(summary.heldOutAlertCount)} held-out records; frozen calibration feedback; manual exception memory disabled</span>
       </div>
       <div className="feedback-context-banner formal">Formal evaluation results</div>
       <div className="metric-grid">
@@ -76,9 +76,13 @@ export function FeedbackSummaryPanel({ summary, sessionKpis, demoArtifact, demoE
       <section className="feedback-demo-section" aria-labelledby="hitl-demo-title">
         <div className="kpi-title feedback-panel-title">
           <strong id="hitl-demo-title">HITL Adaptation Demonstrations</strong>
-          <span>Six controlled scenarios processed by the real fusion and adaptation engines</span>
+          <span>{demoArtifact ? demoArtifact.summary.scenarioCount : 'N/A'} controlled scenarios processed by the real fusion and adaptation engines</span>
         </div>
-        <div className="feedback-context-banner demonstration">Demonstration scenarios — not formal evaluation results.</div>
+        <div className="feedback-context-banner demonstration">
+          <strong>Demonstration scenarios — not formal evaluation results.</strong>
+          <span>Synthetic detector inputs — no actual XGBoost inference.</span>
+          <span>Real Stage 4 fusion and Stage 5 adaptation logic are used.</span>
+        </div>
         {!demoArtifact ? (
           <div className="artifact-error" role="alert">
             <strong>Demonstration data unavailable</strong>

@@ -51,10 +51,12 @@ export interface AdaptationDiagnostics {
     threshold: number;
     minimumEvidenceCoverage: number;
     matchedCount: number;
+    comparisonAttemptCount: number;
     lowSimilarityAttemptCount: number;
     lowEvidenceCoverageAttemptCount: number;
   };
   historicalFeedback: {
+    candidateLearningFeedbackCount: number;
     counts: {
       falsePositive: number;
       confirmedThreat: number;

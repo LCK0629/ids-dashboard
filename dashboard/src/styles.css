@@ -1681,6 +1681,16 @@ button {
   font-weight: 700;
 }
 
+.feedback-context-banner strong,
+.feedback-context-banner span {
+  display: block;
+}
+
+.feedback-context-banner span {
+  margin-top: 3px;
+  font-weight: 500;
+}
+
 .feedback-context-banner.demonstration {
   border-color: #f59e0b;
   background: rgba(120, 53, 15, 0.2);

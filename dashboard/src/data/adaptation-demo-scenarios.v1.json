@@ -130,10 +130,12 @@
               "threshold": 0.7,
               "minimumEvidenceCoverage": 0.7,
               "matchedCount": 0,
+              "comparisonAttemptCount": 0,
               "lowSimilarityAttemptCount": 0,
               "lowEvidenceCoverageAttemptCount": 0
             },
             "historicalFeedback": {
+              "candidateLearningFeedbackCount": 0,
               "counts": {
                 "falsePositive": 0,
                 "confirmedThreat": 0,
@@ -272,10 +274,12 @@
               "threshold": 0.7,
               "minimumEvidenceCoverage": 0.7,
               "matchedCount": 3,
+              "comparisonAttemptCount": 3,
               "lowSimilarityAttemptCount": 0,
               "lowEvidenceCoverageAttemptCount": 0
             },
             "historicalFeedback": {
+              "candidateLearningFeedbackCount": 3,
               "counts": {
                 "falsePositive": 3,
                 "confirmedThreat": 0,
@@ -466,10 +470,12 @@
               "threshold": 0.7,
               "minimumEvidenceCoverage": 0.7,
               "matchedCount": 3,
+              "comparisonAttemptCount": 3,
               "lowSimilarityAttemptCount": 0,
               "lowEvidenceCoverageAttemptCount": 0
             },
             "historicalFeedback": {
+              "candidateLearningFeedbackCount": 3,
               "counts": {
                 "falsePositive": 0,
                 "confirmedThreat": 3,
@@ -661,10 +667,12 @@
               "threshold": 0.7,
               "minimumEvidenceCoverage": 0.7,
               "matchedCount": 4,
+              "comparisonAttemptCount": 4,
               "lowSimilarityAttemptCount": 0,
               "lowEvidenceCoverageAttemptCount": 0
             },
             "historicalFeedback": {
+              "candidateLearningFeedbackCount": 4,
               "counts": {
                 "falsePositive": 2,
                 "confirmedThreat": 2,
@@ -745,7 +753,7 @@
     {
       "scenarioId": "guardrail_protection",
       "title": "Guardrail Protection",
-      "purpose": "A proposed reduction is constrained by Critical signature/evidence protection.",
+      "purpose": "A proposed reduction is constrained by the configured Critical detection-score floor.",
       "alert": {
         "identity": {
           "id": "DEMO-GUARDRAIL-CURRENT"
@@ -864,10 +872,12 @@
               "threshold": 0.7,
               "minimumEvidenceCoverage": 0.7,
               "matchedCount": 3,
+              "comparisonAttemptCount": 3,
               "lowSimilarityAttemptCount": 0,
               "lowEvidenceCoverageAttemptCount": 0
             },
             "historicalFeedback": {
+              "candidateLearningFeedbackCount": 3,
               "counts": {
                 "falsePositive": 3,
                 "confirmedThreat": 0,
@@ -1048,10 +1058,12 @@
               "threshold": 0.7,
               "minimumEvidenceCoverage": 0.7,
               "matchedCount": 0,
+              "comparisonAttemptCount": 0,
               "lowSimilarityAttemptCount": 0,
               "lowEvidenceCoverageAttemptCount": 0
             },
             "historicalFeedback": {
+              "candidateLearningFeedbackCount": 0,
               "counts": {
                 "falsePositive": 0,
                 "confirmedThreat": 0,

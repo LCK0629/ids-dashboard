@@ -128,12 +128,18 @@ function copyAdaptationDiagnostics(source) {
       threshold: numberOrNull(similarity.threshold),
       minimumEvidenceCoverage: numberOrNull(similarity.minimumEvidenceCoverage),
       matchedCount: Number.isInteger(similarity.matchedCount) ? similarity.matchedCount : null,
+      comparisonAttemptCount: Number.isInteger(similarity.comparisonAttemptCount)
+        ? similarity.comparisonAttemptCount
+        : null,
       lowSimilarityAttemptCount: Number.isInteger(similarity.lowSimilarityAttemptCount) ? similarity.lowSimilarityAttemptCount : null,
       lowEvidenceCoverageAttemptCount: Number.isInteger(similarity.lowEvidenceCoverageAttemptCount)
         ? similarity.lowEvidenceCoverageAttemptCount
         : null,
     },
     historicalFeedback: {
+      candidateLearningFeedbackCount: Number.isInteger(history.candidateLearningFeedbackCount)
+        ? history.candidateLearningFeedbackCount
+        : null,
       counts: {
         falsePositive: Number.isInteger(counts.falsePositive) ? counts.falsePositive : null,
         confirmedThreat: Number.isInteger(counts.confirmedThreat) ? counts.confirmedThreat : null,

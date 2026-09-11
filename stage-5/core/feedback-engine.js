@@ -454,10 +454,12 @@ function buildAdaptationDiagnostics(aggregation, config = {}) {
       threshold: Number(similarityConfig.threshold ?? 0),
       minimumEvidenceCoverage: Number(similarityConfig.minimumEvidenceCoverage ?? 0),
       matchedCount: Number(aggregation?.matchedFeedbackCount || 0),
+      comparisonAttemptCount: Number(aggregation?.similarityAttempts?.length || 0),
       lowSimilarityAttemptCount: Number(aggregation?.lowSimilarityCount || 0),
       lowEvidenceCoverageAttemptCount: Number(aggregation?.lowEvidenceCoverageCount || 0),
     },
     historicalFeedback: {
+      candidateLearningFeedbackCount: Number(aggregation?.learningFeedbackEventCount || 0),
       counts: {
         falsePositive: Number(aggregation?.falsePositiveCount || 0),
         confirmedThreat: Number(aggregation?.confirmedThreatCount || 0),

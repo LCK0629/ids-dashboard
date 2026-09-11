@@ -35,7 +35,9 @@ Legacy `fusionRiskScore` and `currentRiskScore` names exist only in `dashboard/s
 
 ## HITL Adaptation Evidence
 
-Each alert carries a compact `adaptation.diagnostics` snapshot produced by the authoritative Stage 5 engine. It records the configured similarity and evidence-coverage thresholds, matched feedback counts, historical outcome counts, agreement/conflict state, eligibility thresholds, and at most three analyst-safe matched examples. The dashboard does not recompute similarity or historical agreement.
+Each alert carries a compact `adaptation.diagnostics` snapshot produced by the authoritative Stage 5 engine. It records whether adaptation was evaluated, candidate learning-feedback and comparison-attempt counts, configured similarity and evidence-coverage thresholds, matched feedback counts, historical outcome counts, agreement/conflict state, eligibility thresholds, and at most three analyst-safe matched examples. The dashboard does not recompute similarity or historical agreement.
+
+Candidate and matched counts distinguish a true cold start from a rejected-history case. Zero candidates means no learning history was available. A positive candidate count with zero applicable matches means history existed but did not pass similarity or evidence-coverage gates. When `evaluated` is false, the UI reports `NOT EVALUATED` rather than claiming no history.
 
 Similarity measures whether prior feedback is applicable to the current alert. Evidence coverage measures how much configured comparison evidence was available. Neither value represents attack probability or contributes directly to Detection Score or Operational Priority. Historical analyst feedback is operational evidence, not ground truth.
 
